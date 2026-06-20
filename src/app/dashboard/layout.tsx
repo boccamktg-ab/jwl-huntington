@@ -14,7 +14,8 @@ export default async function DashboardLayout({ children }: { children: React.Re
     .eq('auth_id', user.id)
     .single()
 
-  if (!sw || sw.status !== 'approved') redirect('/dashboard')
+  if (!sw) redirect('/login')
+  if (sw.status !== 'approved') redirect('/login?notice=pending')
 
   return (
     <div className="min-h-screen bg-gray-50">

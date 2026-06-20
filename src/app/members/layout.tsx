@@ -21,20 +21,8 @@ export default async function MembersLayout({ children }: { children: React.Reac
 
   if (!member) redirect('/login')
 
-  if (member.status === 'pending') {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="bg-white rounded-xl border border-gray-200 p-8 max-w-md text-center space-y-4">
-          <Image src="/jwl-logo.png" alt="JWL" width={72} height={72} className="mx-auto object-contain" />
-          <h1 className="text-lg font-semibold text-gray-900">Account pending approval</h1>
-          <p className="text-sm text-gray-500">Your account is awaiting admin approval. You'll be able to log in once approved.</p>
-          <form action="/api/auth/logout" method="POST">
-            <button className="text-sm text-[#1B52C1] hover:underline">Sign out</button>
-          </form>
-        </div>
-      </div>
-    )
-  }
+  if (member.status === 'pending') redirect('/login?notice=pending')
+  if (member.status === 'disabled') redirect('/login?notice=disabled')
 
   return (
     <div className="min-h-screen bg-gray-50">
