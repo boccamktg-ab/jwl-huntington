@@ -1,13 +1,37 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+import { createClient as adminSupabase } from '@supabase/supabase-js'
 import Link from 'next/link'
 import Image from 'next/image'
+
+function db() {
+  return adminSupabase(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    { auth: { autoRefreshToken: false, persistSession: false } }
+  )
+}
 
 export default async function GrantsLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
+  // Admins and grants reviewers bypass this layout — their own nested layout handles auth
+  const isSuperAdmin = user.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL
+  if (isSuperAdmin) return <>{children}</>
+
+  const { data: member } = await db()
+    .from('jwl_members')
+    .select('is_admin, is_grants_reviewer, status')
+    .eq('auth_id', user.id)
+    .maybeSingle()
+
+  if (member?.is_admin || (member?.is_grants_reviewer && member?.status === 'approved')) {
+    return <>{children}</>
+  }
+
+  // Social worker path
   const { data: sw } = await supabase
     .from('social_workers')
     .select('name, status')
