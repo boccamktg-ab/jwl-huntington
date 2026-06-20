@@ -19,12 +19,14 @@ export default async function AdminDashboard() {
     { data: schools },
     { data: pendingMembers },
     { data: notifications },
+    { data: grantApplications },
   ] = await Promise.all([
     supabase.from('families').select('id, status, school_id, schools(name, districts(name))'),
     supabase.from('children').select('id, family_id, families(status, schools(name, districts(name)))'),
     supabase.from('schools').select('id, name, districts(name)').order('name'),
     supabase.from('jwl_members').select('id, name, email').eq('status', 'pending').order('name'),
     supabase.from('admin_notifications').select('id, message, created_at').eq('read', false).order('created_at', { ascending: false }),
+    supabase.from('grant_applications').select('id, status').neq('status', 'draft'),
   ])
 
   const totalFamilies = families?.length ?? 0
@@ -46,6 +48,11 @@ export default async function AdminDashboard() {
   }
   const schoolRows = Object.values(bySchool).sort((a, b) => b.count - a.count)
 
+  const openGrants = (grantApplications ?? []).filter(g =>
+    ['submitted', 'needs_more_info', 'under_review'].includes(g.status)
+  ).length
+  const totalGrants = grantApplications?.length ?? 0
+
   return (
     <div className="space-y-8">
       <h1 className="text-2xl font-semibold text-gray-900">Admin Dashboard</h1>
@@ -57,6 +64,26 @@ export default async function AdminDashboard() {
         <StatCard label="Awaiting approval" value={submittedFamilies} color="amber" />
         <StatCard label="Draft families" value={draftFamilies} color="gray" />
       </div>
+
+      {/* Grants summary */}
+      <Link href="/grants/reviewer" className="block">
+        <div className={`rounded-xl border p-5 flex items-center justify-between transition-colors hover:shadow-md ${
+          openGrants > 0 ? 'bg-amber-50 border-amber-300' : 'bg-white border-gray-200'
+        }`}>
+          <div>
+            <p className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Grant Applications</p>
+            <p className={`text-3xl font-bold mt-1 ${openGrants > 0 ? 'text-amber-700' : 'text-gray-400'}`}>
+              {openGrants}
+            </p>
+            <p className={`text-xs mt-0.5 ${openGrants > 0 ? 'text-amber-600' : 'text-gray-400'}`}>
+              open {totalGrants > 0 ? `· ${totalGrants} total` : ''}
+            </p>
+          </div>
+          <span className={`text-sm font-medium ${openGrants > 0 ? 'text-amber-700' : 'text-gray-400'}`}>
+            Review grants →
+          </span>
+        </div>
+      </Link>
 
       {/* Pending JWL members */}
       {pendingMembers && pendingMembers.length > 0 && (
@@ -103,6 +130,10 @@ export default async function AdminDashboard() {
         <Link href="/admin/setup" className="block p-5 bg-white rounded-xl border border-gray-200 hover:border-blue-400 transition-colors">
           <h2 className="font-medium text-gray-900 mb-1">Districts &amp; Schools</h2>
           <p className="text-sm text-gray-500">Manage districts and schools</p>
+        </Link>
+        <Link href="/grants/reviewer" className="block p-5 bg-white rounded-xl border border-gray-200 hover:border-blue-400 transition-colors">
+          <h2 className="font-medium text-gray-900 mb-1">Grants Portal</h2>
+          <p className="text-sm text-gray-500">Review Charitable Children and Lift Fund applications</p>
         </Link>
       </div>
 
