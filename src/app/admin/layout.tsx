@@ -34,7 +34,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     <div className="min-h-screen bg-gray-50">
       <nav className="bg-[#1B52C1] px-6 py-3 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <Image src="/jwl-logo.png" alt="JWL" width={36} height={36} className="object-contain brightness-0 invert" />
+          <Image src="/jwl-logo.png" alt="JWL" width={36} height={36} className="object-contain bg-white rounded-full p-0.5" />
           <span className="font-semibold text-white text-sm">Holiday Charities — Admin</span>
         </div>
         <div className="flex items-center gap-6 text-sm">

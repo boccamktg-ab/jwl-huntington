@@ -49,7 +49,7 @@ export default function SiteNav() {
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <a href="https://jwlhuntington.org" className="flex items-center gap-3 shrink-0">
-            <Image src="/jwl-logo.png" alt="JWL" width={40} height={40} className="object-contain brightness-0 invert" />
+            <Image src="/jwl-logo.png" alt="JWL" width={40} height={40} className="object-contain bg-white rounded-full p-0.5" />
             <span className="font-semibold text-sm hidden sm:block leading-tight">
               Junior Welfare League<br />
               <span className="font-normal text-blue-200 text-xs">of Huntington</span>
