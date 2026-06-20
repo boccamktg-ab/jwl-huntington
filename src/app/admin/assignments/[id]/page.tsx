@@ -2,6 +2,7 @@ import { createClient } from '@supabase/supabase-js'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import ExportButton from './ExportButton'
+import UnassignButton from './UnassignButton'
 
 function adminClient() {
   return createClient(
@@ -69,6 +70,7 @@ export default async function AssignmentDetailPage({ params }: { params: Promise
               <th className="text-left px-4 py-3 text-gray-500 font-medium">School</th>
               <th className="text-left px-4 py-3 text-gray-500 font-medium">Gift requests</th>
               <th className="text-left px-4 py-3 text-gray-500 font-medium">Sizes</th>
+              <th className="px-4 py-3"></th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
@@ -92,6 +94,9 @@ export default async function AssignmentDetailPage({ params }: { params: Promise
                     child.bottom_size ? `Bottom: ${child.bottom_size}` : null,
                     child.shoe_size ? `Shoes: ${child.shoe_size}` : null,
                   ].filter(Boolean).join(', ') || '—'}
+                </td>
+                <td className="px-4 py-3 text-right">
+                  <UnassignButton assignmentId={assignment.id} childId={child.id} childName={child.first_name} />
                 </td>
               </tr>
             ))}
