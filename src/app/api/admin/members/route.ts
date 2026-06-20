@@ -25,6 +25,14 @@ export async function PATCH(request: NextRequest) {
     return NextResponse.json({ ok: true })
   }
 
+  if (action === 'toggle_grants_reviewer') {
+    const { data: member } = await db().from('jwl_members').select('is_grants_reviewer').eq('id', memberId).single()
+    if (!member) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+    const { error } = await db().from('jwl_members').update({ is_grants_reviewer: !member.is_grants_reviewer }).eq('id', memberId)
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json({ ok: true })
+  }
+
   const statusMap: Record<string, string> = {
     approve: 'approved',
     disable: 'disabled',
