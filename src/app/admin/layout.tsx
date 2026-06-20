@@ -35,7 +35,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       <nav className="bg-[#1B52C1] px-6 py-3 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <Image src="/jwl-logo.png" alt="JWL" width={36} height={36} className="object-contain bg-white rounded-full p-0.5" />
-          <span className="font-semibold text-white text-sm">Holiday Charities — Admin</span>
+          <span className="font-semibold text-white text-sm">JWL — Admin</span>
         </div>
         <div className="flex items-center gap-6 text-sm">
           <Link href="/admin" className="text-blue-100 hover:text-white">Dashboard</Link>
@@ -44,6 +44,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           <Link href="/admin/social-workers" className="text-blue-100 hover:text-white">Social Workers</Link>
           <Link href="/admin/members" className="text-blue-100 hover:text-white">Members</Link>
           <Link href="/admin/setup" className="text-blue-100 hover:text-white">Setup</Link>
+          <Link href="/grants/reviewer" className="text-blue-100 hover:text-white">Grants</Link>
           {isMemberAdmin && (
             <Link href="/members/dashboard" className="text-blue-100 hover:text-white">My Assignment</Link>
           )}

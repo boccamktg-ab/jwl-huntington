@@ -15,13 +15,18 @@ async function requireGrantsReviewer(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return null
 
+  const isSuperAdmin = user.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL
+
   const { data: member } = await db()
     .from('jwl_members')
-    .select('id, status, is_grants_reviewer')
+    .select('id, status, is_grants_reviewer, is_admin')
     .eq('auth_id', user.id)
-    .single()
+    .maybeSingle()
 
-  if (!member || member.status !== 'approved' || !member.is_grants_reviewer) return null
+  const isAdmin = isSuperAdmin || (member?.is_admin ?? false)
+  const isReviewer = member?.status === 'approved' && (member?.is_grants_reviewer ?? false)
+
+  if (!isAdmin && !isReviewer) return null
   return { user, member }
 }
 

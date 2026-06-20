@@ -17,15 +17,18 @@ export default async function GrantsReviewerLayout({ children }: { children: Rea
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
+  const isSuperAdmin = user.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL
+
   const { data: member } = await db()
     .from('jwl_members')
-    .select('name, status, is_grants_reviewer')
+    .select('name, status, is_grants_reviewer, is_admin')
     .eq('auth_id', user.id)
-    .single()
+    .maybeSingle()
 
-  if (!member || member.status !== 'approved' || !member.is_grants_reviewer) {
-    redirect('/login')
-  }
+  const isAdmin = isSuperAdmin || (member?.is_admin ?? false)
+  const isReviewer = member?.status === 'approved' && (member?.is_grants_reviewer ?? false)
+
+  if (!isAdmin && !isReviewer) redirect('/login')
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -37,7 +40,7 @@ export default async function GrantsReviewerLayout({ children }: { children: Rea
         <div className="flex items-center gap-6 text-sm">
           <Link href="/grants/reviewer" className="text-blue-100 hover:text-white">Applications</Link>
           <Link href="/members/dashboard" className="text-blue-100 hover:text-white">Holiday Charities</Link>
-          <span className="text-blue-200">{member.name}</span>
+          <span className="text-blue-200">{member?.name ?? 'Admin'}</span>
           <form action="/api/auth/logout" method="POST">
             <button className="text-blue-200 hover:text-white">Sign out</button>
           </form>
