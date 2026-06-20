@@ -46,7 +46,7 @@ export async function PATCH(request: NextRequest) {
   }
 
   const updates: Record<string, any> = {
-    reviewer_id: auth.member.id,
+    reviewer_id: auth.member?.id ?? null,
     updated_at: new Date().toISOString(),
   }
 
