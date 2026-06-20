@@ -39,12 +39,17 @@ export default async function ReviewerApplicationPage({ params }: { params: Prom
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return notFound()
 
+  const isSuperAdmin = user.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL
+
   const { data: reviewer } = await db()
     .from('jwl_members')
-    .select('id, name')
+    .select('id, name, is_admin, is_grants_reviewer, status')
     .eq('auth_id', user.id)
-    .single()
-  if (!reviewer) return notFound()
+    .maybeSingle()
+
+  const isAdmin = isSuperAdmin || (reviewer?.is_admin ?? false)
+  const isReviewer = reviewer?.status === 'approved' && (reviewer?.is_grants_reviewer ?? false)
+  if (!isAdmin && !isReviewer) return notFound()
 
   const { data: app } = await db()
     .from('grant_applications')
@@ -217,7 +222,7 @@ export default async function ReviewerApplicationPage({ params }: { params: Prom
           currentStatus={app.status}
           requestedAmount={Number(app.requested_amount)}
           maxAmount={isCharitable ? lifetimeRemaining : 3000}
-          reviewerId={reviewer.id}
+          reviewerId={reviewer?.id ?? null}
         />
       )}
 

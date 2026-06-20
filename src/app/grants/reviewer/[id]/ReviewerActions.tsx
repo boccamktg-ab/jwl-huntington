@@ -8,7 +8,7 @@ type Props = {
   currentStatus: string
   requestedAmount: number
   maxAmount: number
-  reviewerId: string
+  reviewerId: string | null
 }
 
 export default function ReviewerActions({ applicationId, currentStatus, requestedAmount, maxAmount, reviewerId }: Props) {
