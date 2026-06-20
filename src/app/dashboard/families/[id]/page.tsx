@@ -17,7 +17,7 @@ export default async function FamilyDetailPage({ params }: { params: Promise<{ i
       .from('families')
       .select(`
         id, family_number, num_children, status, language_pref, link_token,
-        school_id,
+        school_id, social_worker_id,
         schools ( id, name, districts ( name ) ),
         children ( id, first_name, age, gender, gift_requests, top_size, bottom_size, shoe_size, created_at )
       `)
@@ -31,6 +31,7 @@ export default async function FamilyDetailPage({ params }: { params: Promise<{ i
   ])
 
   if (!family) notFound()
+  if (!sw || family.social_worker_id !== sw.id) notFound()
 
   // Get the SW's schools for the edit form
   const { data: swSchools } = await supabase

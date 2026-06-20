@@ -38,6 +38,7 @@ export default async function DashboardPage() {
       schools ( id, name, district_id, districts ( name ) ),
       children ( id )
     `)
+    .eq('social_worker_id', sw.id)
 
   const cutoff = new Date(Date.now() - 72 * 60 * 60 * 1000).toISOString()
   const overdueCount = (families ?? []).filter(

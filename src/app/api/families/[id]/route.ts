@@ -18,17 +18,16 @@ export async function PATCH(
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
+  const { data: sw } = await supabase.from('social_workers').select('id').eq('auth_id', user.id).single()
+  if (!sw) return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
+
   const { familyNumber, numChildren, languagePref, schoolId } = await request.json()
 
   const { error } = await supabase
     .from('families')
-    .update({
-      family_number: familyNumber,
-      num_children: numChildren,
-      language_pref: languagePref,
-      school_id: schoolId,
-    })
+    .update({ family_number: familyNumber, num_children: numChildren, language_pref: languagePref, school_id: schoolId })
     .eq('id', id)
+    .eq('social_worker_id', sw.id)
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   return NextResponse.json({ ok: true })
