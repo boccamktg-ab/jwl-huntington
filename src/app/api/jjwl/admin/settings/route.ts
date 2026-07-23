@@ -1,3 +1,4 @@
+import { isSuperAdminEmail } from '@/lib/admin'
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createClient as adminClient } from '@supabase/supabase-js'
@@ -15,7 +16,7 @@ export async function POST(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const isSuperAdmin = user.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL
+  const isSuperAdmin = isSuperAdminEmail(user.email)
   if (!isSuperAdmin) {
     const { data: member } = await db()
       .from('jwl_members')

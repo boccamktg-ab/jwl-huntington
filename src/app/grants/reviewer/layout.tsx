@@ -1,3 +1,4 @@
+import { isSuperAdminEmail } from '@/lib/admin'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { createClient as adminSupabase } from '@supabase/supabase-js'
@@ -17,7 +18,7 @@ export default async function GrantsReviewerLayout({ children }: { children: Rea
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const isSuperAdmin = user.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL
+  const isSuperAdmin = isSuperAdminEmail(user.email)
 
   const { data: member } = await db()
     .from('jwl_members')

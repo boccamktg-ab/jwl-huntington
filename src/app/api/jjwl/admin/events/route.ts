@@ -1,3 +1,4 @@
+import { isSuperAdminEmail } from '@/lib/admin'
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createClient as adminClient } from '@supabase/supabase-js'
@@ -15,7 +16,7 @@ async function requireJJWLAdmin() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return null
 
-  if (user.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL) return user
+  if (isSuperAdminEmail(user.email)) return user
 
   const admin = db()
   const { data: member } = await admin

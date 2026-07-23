@@ -1,3 +1,4 @@
+import { isSuperAdminEmail } from '@/lib/admin'
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient as createServiceClient } from '@supabase/supabase-js'
 import { createServerClient } from '@supabase/ssr'
@@ -53,7 +54,7 @@ export async function GET(
   if (!assignment) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
   const member = assignment.jwl_members as any
-  const isAdmin = user.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL
+  const isAdmin = isSuperAdminEmail(user.email)
   const isMember = member?.auth_id === user.id
 
   if (!isAdmin && !isMember) {

@@ -1,3 +1,4 @@
+import { isSuperAdminEmail } from '@/lib/admin'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { createClient as adminSupabase } from '@supabase/supabase-js'
@@ -18,7 +19,7 @@ export default async function GrantsLayout({ children }: { children: React.React
   if (!user) redirect('/login')
 
   // Admins and grants reviewers bypass this layout — their own nested layout handles auth
-  const isSuperAdmin = user.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL
+  const isSuperAdmin = isSuperAdminEmail(user.email)
   if (isSuperAdmin) return <>{children}</>
 
   const { data: member } = await db()

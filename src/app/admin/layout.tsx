@@ -1,3 +1,4 @@
+import { isSuperAdminEmail } from '@/lib/admin'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { createClient as adminSupabase } from '@supabase/supabase-js'
@@ -9,7 +10,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const isSuperAdmin = user.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL
+  const isSuperAdmin = isSuperAdminEmail(user.email)
 
   // Also allow JWL members with is_admin = true
   let isMemberAdmin = false

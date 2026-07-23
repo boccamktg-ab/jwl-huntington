@@ -1,3 +1,4 @@
+import { isSuperAdminEmail } from '@/lib/admin'
 import { createClient } from '@/lib/supabase/server'
 import { createClient as adminSupabase } from '@supabase/supabase-js'
 import { notFound } from 'next/navigation'
@@ -39,7 +40,7 @@ export default async function ReviewerApplicationPage({ params }: { params: Prom
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return notFound()
 
-  const isSuperAdmin = user.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL
+  const isSuperAdmin = isSuperAdminEmail(user.email)
 
   const { data: reviewer } = await db()
     .from('jwl_members')

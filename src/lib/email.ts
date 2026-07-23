@@ -49,7 +49,7 @@ export async function getJjwlAdminEmails(): Promise<string[]> {
   const { data } = await db
     .from('jwl_members')
     .select('email')
-    .eq('is_jjwl_admin', true)
+    .or('is_jjwl_admin.eq.true,is_super_admin.eq.true')
     .eq('status', 'approved')
 
   for (const m of data ?? []) {
@@ -531,7 +531,7 @@ export async function getPortalAdminEmails(): Promise<string[]> {
   const { data } = await db
     .from('jwl_members')
     .select('email')
-    .eq('is_admin', true)
+    .or('is_admin.eq.true,is_super_admin.eq.true')
     .eq('status', 'approved')
 
   for (const m of data ?? []) {
@@ -552,7 +552,7 @@ export async function getGrantsReviewerEmails(): Promise<string[]> {
   const { data } = await db
     .from('jwl_members')
     .select('email')
-    .eq('is_grants_reviewer', true)
+    .or('is_grants_reviewer.eq.true,is_super_admin.eq.true')
     .eq('status', 'approved')
 
   for (const m of data ?? []) {
