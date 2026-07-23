@@ -18,11 +18,11 @@ export default async function AdminJJWLLayout({ children }: { children: React.Re
   )
   const { data: member } = await db
     .from('jwl_members')
-    .select('is_admin, is_jjwl_admin, status')
+    .select('is_admin, is_super_admin, is_programs_admin, is_jjwl_admin, status')
     .eq('auth_id', user.id)
     .maybeSingle()
 
-  if (member?.is_admin || (member?.is_jjwl_admin && member?.status === 'approved')) {
+  if (member?.is_admin || member?.is_super_admin || member?.is_programs_admin || (member?.is_jjwl_admin && member?.status === 'approved')) {
     return <>{children}</>
   }
 

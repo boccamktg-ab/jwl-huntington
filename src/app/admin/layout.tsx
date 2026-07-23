@@ -12,8 +12,8 @@ export default async function AdminLayout({ children }: { children: React.ReactN
 
   const isSuperAdmin = isSuperAdminEmail(user.email)
 
-  // Also allow JWL members with is_admin = true
-  let isMemberAdmin = false
+  let member: { is_admin: boolean; is_super_admin: boolean; is_programs_admin: boolean; is_jjwl_admin: boolean; is_grants_reviewer: boolean } | null = null
+
   if (!isSuperAdmin) {
     const db = adminSupabase(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -22,13 +22,19 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     )
     const { data } = await db
       .from('jwl_members')
-      .select('is_admin, is_super_admin, is_programs_admin')
+      .select('is_admin, is_super_admin, is_programs_admin, is_jjwl_admin, is_grants_reviewer')
       .eq('auth_id', user.id)
       .maybeSingle()
-    isMemberAdmin = !!(data?.is_admin || data?.is_super_admin || data?.is_programs_admin)
+    member = data
   }
 
-  if (!isSuperAdmin && !isMemberAdmin) redirect('/login')
+  const hasAccess = isSuperAdmin || member?.is_admin || member?.is_super_admin || member?.is_programs_admin || member?.is_jjwl_admin || member?.is_grants_reviewer
+  if (!hasAccess) redirect('/login')
+
+  const isFullAdmin = isSuperAdmin || !!(member?.is_admin || member?.is_super_admin)
+  const isProgramsAdmin = isFullAdmin || !!member?.is_programs_admin
+  const isJjwlAdmin = isFullAdmin || !!member?.is_jjwl_admin
+  const isGrantsReviewer = isFullAdmin || !!member?.is_grants_reviewer
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -38,17 +44,15 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           <span className="font-semibold text-white text-sm">JWL — Admin</span>
         </div>
         <div className="flex items-center gap-6 text-sm">
-          <Link href="/admin" className="text-blue-100 hover:text-white">Dashboard</Link>
-          <Link href="/admin/children" className="text-blue-100 hover:text-white">Children</Link>
-          <Link href="/admin/assignments" className="text-blue-100 hover:text-white">Assignments</Link>
-          <Link href="/admin/social-workers" className="text-blue-100 hover:text-white">Social Workers</Link>
-          <Link href="/admin/members" className="text-blue-100 hover:text-white">Members</Link>
-          <Link href="/admin/setup" className="text-blue-100 hover:text-white">Setup</Link>
-          <Link href="/grants/reviewer" className="text-blue-100 hover:text-white">Grants</Link>
-          <Link href="/admin/jjwl" className="text-blue-100 hover:text-white">JJWL</Link>
-          {isMemberAdmin && (
-            <Link href="/members/dashboard" className="text-blue-100 hover:text-white">My Assignment</Link>
-          )}
+          {isProgramsAdmin && <Link href="/admin" className="text-blue-100 hover:text-white">Dashboard</Link>}
+          {isProgramsAdmin && <Link href="/admin/children" className="text-blue-100 hover:text-white">Children</Link>}
+          {isProgramsAdmin && <Link href="/admin/assignments" className="text-blue-100 hover:text-white">Assignments</Link>}
+          {isProgramsAdmin && <Link href="/admin/social-workers" className="text-blue-100 hover:text-white">Social Workers</Link>}
+          {isFullAdmin && <Link href="/admin/members" className="text-blue-100 hover:text-white">Members</Link>}
+          {isFullAdmin && <Link href="/admin/setup" className="text-blue-100 hover:text-white">Setup</Link>}
+          {isGrantsReviewer && <Link href="/grants/reviewer" className="text-blue-100 hover:text-white">Grants</Link>}
+          {isJjwlAdmin && <Link href="/admin/jjwl" className="text-blue-100 hover:text-white">JJWL</Link>}
+          <Link href="/members/dashboard" className="text-blue-100 hover:text-white">My Dashboard</Link>
           <form action="/api/auth/logout" method="POST">
             <button className="text-blue-200 hover:text-white">Sign out</button>
           </form>
