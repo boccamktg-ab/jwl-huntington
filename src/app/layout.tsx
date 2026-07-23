@@ -16,7 +16,7 @@ export const metadata: Metadata = {
   title: "JWL Portal",
   description: "Member portal for the Junior Welfare League of Huntington.",
   icons: {
-    icon: "/favicon.ico",
+    icon: "/jwl-logo.png",
     apple: "/jwl-logo.png",
   },
 };
