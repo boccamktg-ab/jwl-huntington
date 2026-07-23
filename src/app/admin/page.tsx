@@ -20,6 +20,7 @@ export default async function AdminDashboard() {
     { data: pendingMembers },
     { data: notifications },
     { data: grantApplications },
+    { data: jjwlMembers },
   ] = await Promise.all([
     supabase.from('families').select('id, status, school_id, schools(name, districts(name))'),
     supabase.from('children').select('id, family_id, families(status, schools(name, districts(name)))'),
@@ -27,6 +28,7 @@ export default async function AdminDashboard() {
     supabase.from('jwl_members').select('id, name, email').eq('status', 'pending').order('name'),
     supabase.from('admin_notifications').select('id, message, created_at').eq('read', false).order('created_at', { ascending: false }),
     supabase.from('grant_applications').select('id, status').neq('status', 'draft'),
+    supabase.from('jjwl_members').select('id, status'),
   ])
 
   const totalFamilies = families?.length ?? 0
@@ -47,6 +49,9 @@ export default async function AdminDashboard() {
     bySchool[schoolName].count++
   }
   const schoolRows = Object.values(bySchool).sort((a, b) => b.count - a.count)
+
+  const pendingJjwl = (jjwlMembers ?? []).filter(m => m.status === 'pending_approval').length
+  const activeJjwl = (jjwlMembers ?? []).filter(m => m.status === 'active').length
 
   const openGrants = (grantApplications ?? []).filter(g =>
     ['submitted', 'needs_more_info', 'under_review'].includes(g.status)
@@ -134,6 +139,10 @@ export default async function AdminDashboard() {
         <Link href="/grants/reviewer" className="block p-5 bg-white rounded-xl border border-gray-200 hover:border-blue-400 transition-colors">
           <h2 className="font-medium text-gray-900 mb-1">Grants Portal</h2>
           <p className="text-sm text-gray-500">Review Charitable Children and Lift Fund applications</p>
+        </Link>
+        <Link href="/admin/jjwl" className="block p-5 bg-white rounded-xl border border-gray-200 hover:border-blue-400 transition-colors">
+          <h2 className="font-medium text-gray-900 mb-1">JJWL</h2>
+          <p className="text-sm text-gray-500">{activeJjwl} active member{activeJjwl !== 1 ? 's' : ''}{pendingJjwl > 0 ? ` · ${pendingJjwl} pending` : ''}</p>
         </Link>
       </div>
 

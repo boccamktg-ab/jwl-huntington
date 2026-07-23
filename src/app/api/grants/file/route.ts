@@ -23,7 +23,8 @@ export async function GET(req: NextRequest) {
     .createSignedUrl(path, 60 * 60) // 1 hour
 
   if (error || !data?.signedUrl) {
-    return NextResponse.json({ error: 'Could not generate file link' }, { status: 500 })
+    console.error('Signed URL error:', error, 'path:', path)
+    return NextResponse.json({ error: error?.message ?? 'Could not generate file link', path }, { status: 500 })
   }
 
   return NextResponse.redirect(data.signedUrl)

@@ -45,6 +45,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           <Link href="/admin/members" className="text-blue-100 hover:text-white">Members</Link>
           <Link href="/admin/setup" className="text-blue-100 hover:text-white">Setup</Link>
           <Link href="/grants/reviewer" className="text-blue-100 hover:text-white">Grants</Link>
+          <Link href="/admin/jjwl" className="text-blue-100 hover:text-white">JJWL</Link>
           {isMemberAdmin && (
             <Link href="/members/dashboard" className="text-blue-100 hover:text-white">My Assignment</Link>
           )}

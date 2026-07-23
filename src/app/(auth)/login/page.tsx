@@ -64,6 +64,18 @@ function LoginForm() {
 
     if (member) {
       router.push(member.is_admin ? '/admin' : '/members/dashboard')
+      return
+    }
+
+    // Check for JJWL member account
+    const { data: jjwlMember } = await supabase2
+      .from('jjwl_members')
+      .select('id, status')
+      .eq('auth_id', data.user.id)
+      .maybeSingle()
+
+    if (jjwlMember) {
+      router.push('/jjwl/dashboard')
     } else {
       router.push('/portal')
     }

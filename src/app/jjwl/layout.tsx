@@ -4,7 +4,7 @@ import { createClient as adminClient } from '@supabase/supabase-js'
 import Image from 'next/image'
 import Link from 'next/link'
 
-export default async function MembersLayout({ children }: { children: React.ReactNode }) {
+export default async function JJWLLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
@@ -14,29 +14,28 @@ export default async function MembersLayout({ children }: { children: React.Reac
     process.env.SUPABASE_SERVICE_ROLE_KEY!,
     { auth: { autoRefreshToken: false, persistSession: false } }
   )
+
   const { data: member } = await db
-    .from('jwl_members')
-    .select('name, status, is_grants_reviewer')
+    .from('jjwl_members')
+    .select('name, status')
     .eq('auth_id', user.id)
-    .single()
+    .maybeSingle()
 
   if (!member) redirect('/login')
-
-  if (member.status === 'pending') redirect('/login?notice=pending')
-  if (member.status === 'disabled') redirect('/login?notice=disabled')
+  if (member.status === 'pending_approval') redirect('/jjwl/pending')
+  if (member.status === 'approved_unpaid') redirect('/jjwl/pending?payment=1')
+  if (member.status === 'inactive') redirect('/login?notice=disabled')
 
   return (
     <div className="min-h-screen bg-gray-50">
       <nav className="bg-[#1B52C1] px-6 py-3 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <Image src="/jwl-logo.png" alt="JWL" width={36} height={36} className="object-contain bg-white rounded-full p-0.5" />
-          <span className="font-semibold text-white text-sm">JWL Huntington</span>
+          <span className="font-semibold text-white text-sm">JJWL</span>
         </div>
-        <div className="flex items-center gap-4 text-sm">
-          <Link href="/members/dashboard" className="text-blue-100 hover:text-white">Holiday Charities</Link>
-          {member.is_grants_reviewer && (
-            <Link href="/grants/reviewer" className="text-blue-100 hover:text-white">Grants</Link>
-          )}
+        <div className="flex items-center gap-5 text-sm">
+          <Link href="/jjwl/dashboard" className="text-blue-100 hover:text-white">My Hours</Link>
+          <Link href="/jjwl/events" className="text-blue-100 hover:text-white">Events</Link>
           <span className="text-blue-200 border-l border-blue-400 pl-4">{member.name}</span>
           <form action="/api/auth/logout" method="POST">
             <button className="text-blue-200 hover:text-white">Sign out</button>
