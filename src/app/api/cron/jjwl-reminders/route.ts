@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { sendEmail, emailEventReminder } from '@/lib/email'
+import { sendEmail, emailMemberEventReminder } from '@/lib/email'
 
 function db() {
   return createClient(
@@ -10,59 +10,82 @@ function db() {
   )
 }
 
+function dateInNDays(n: number): string {
+  const d = new Date()
+  d.setDate(d.getDate() + n)
+  return d.toISOString().slice(0, 10)
+}
+
+function formatTime(t: string | null) {
+  return t ? t.slice(0, 5) : null
+}
+
+function formatDate(d: string) {
+  return new Date(d).toLocaleDateString('en-US', {
+    weekday: 'long', month: 'long', day: 'numeric', year: 'numeric', timeZone: 'UTC',
+  })
+}
+
 export async function GET(request: NextRequest) {
   const authHeader = request.headers.get('authorization')
   if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const now = new Date()
-  const in7Days = new Date(now)
-  in7Days.setDate(in7Days.getDate() + 7)
-  const targetDate = in7Days.toISOString().slice(0, 10)
-
-  // Find events happening exactly 7 days from now
   const admin = db()
-  const { data: events } = await admin
-    .from('jjwl_events')
-    .select('id, title, location, event_date, start_time')
-    .eq('status', 'active')
-    .eq('event_date', targetDate)
+  let totalSent = 0
 
-  if (!events || events.length === 0) {
-    return NextResponse.json({ sent: 0 })
-  }
+  // Run for both 7-day and 2-day reminders
+  for (const daysOut of [7, 2]) {
+    const targetDate = dateInNDays(daysOut)
 
-  let sent = 0
-  for (const evt of events) {
-    // Get all active signups for this event
-    const { data: signups } = await admin
-      .from('jjwl_signups')
-      .select('id, jjwl_members(name, email)')
-      .eq('event_id', evt.id)
-      .eq('status', 'signed_up')
+    const { data: events } = await admin
+      .from('jjwl_events')
+      .select('id, title, location, event_date, start_time, end_time')
+      .eq('status', 'active')
+      .eq('event_date', targetDate)
 
-    for (const s of signups ?? []) {
-      const member = Array.isArray(s.jjwl_members) ? s.jjwl_members[0] : s.jjwl_members
-      if (!member?.email) continue
+    for (const evt of events ?? []) {
+      const { data: signups } = await admin
+        .from('jjwl_signups')
+        .select('id, time_slot, jjwl_members(name, email, parent_email)')
+        .eq('event_id', evt.id)
+        .eq('status', 'signed_up')
 
-      const dateStr = new Date(evt.event_date).toLocaleDateString('en-US', {
-        weekday: 'long', month: 'long', day: 'numeric', timeZone: 'UTC',
-      })
-      const { subject, html } = emailEventReminder(member.name, evt.title, dateStr, evt.location)
-      const result = await sendEmail({ to: member.email, subject, html })
+      for (const s of signups ?? []) {
+        const member = Array.isArray(s.jjwl_members) ? s.jjwl_members[0] : s.jjwl_members
+        if (!member?.email) continue
 
-      await admin.from('jjwl_notifications_log').insert({
-        trigger: 'event_reminder',
-        recipient: member.email,
-        event_id: evt.id,
-        success: result.success,
-        error: result.error ?? null,
-      })
+        const { subject, html } = emailMemberEventReminder(
+          member.name,
+          evt.title,
+          formatDate(evt.event_date),
+          formatTime(evt.start_time),
+          formatTime(evt.end_time),
+          evt.location,
+          s.time_slot ?? null,
+          daysOut,
+        )
 
-      if (result.success) sent++
+        const result = await sendEmail({
+          to: member.email,
+          cc: member.parent_email || undefined,
+          subject,
+          html,
+        })
+
+        await admin.from('jjwl_notifications_log').insert({
+          trigger: `event_reminder_${daysOut}d`,
+          recipient: member.email,
+          event_id: evt.id,
+          success: result.success,
+          error: result.error ?? null,
+        })
+
+        if (result.success) totalSent++
+      }
     }
   }
 
-  return NextResponse.json({ sent })
+  return NextResponse.json({ sent: totalSent })
 }

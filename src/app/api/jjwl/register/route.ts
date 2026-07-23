@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import {
   sendEmail,
+  getJjwlAdminEmails,
   emailRegistrationSubmitted,
   emailAdminNewRegistration,
 } from '@/lib/email'
@@ -23,6 +24,13 @@ export async function POST(request: NextRequest) {
   }
 
   const admin = db()
+
+  // Look up school name for admin email
+  const { data: school } = await admin
+    .from('schools')
+    .select('name')
+    .eq('id', school_id)
+    .maybeSingle()
 
   // Create Supabase Auth account
   const { data: authData, error: authError } = await admin.auth.admin.createUser({
@@ -49,31 +57,31 @@ export async function POST(request: NextRequest) {
   })
 
   if (insertError) {
-    // Roll back auth user
     await admin.auth.admin.deleteUser(authData.user.id)
     return NextResponse.json({ error: insertError.message }, { status: 500 })
   }
 
-  // Send confirmation to applicant
+  // Confirm to applicant (CC parent if provided)
   const { subject, html } = emailRegistrationSubmitted(name)
-  await sendEmail({ to: email, subject, html })
+  await sendEmail({
+    to: email,
+    cc: parent_email || undefined,
+    subject,
+    html,
+  })
 
-  // Notify parent if provided
-  if (parent_email) {
-    await sendEmail({ to: parent_email, subject, html })
-  }
-
-  // Notify admin(s)
-  const adminEmail = process.env.NEXT_PUBLIC_ADMIN_EMAIL
-  if (adminEmail) {
+  // Notify all JJWL admins
+  const adminEmails = await getJjwlAdminEmails()
+  if (adminEmails.length > 0) {
     const { subject: aSubject, html: aHtml } = emailAdminNewRegistration(
       name,
-      `${process.env.NEXT_PUBLIC_SITE_URL ?? 'https://portal.jwlhuntington.org'}/admin/jjwl/members`
+      email,
+      grade,
+      school?.name ?? 'Unknown',
     )
-    await sendEmail({ to: adminEmail, subject: aSubject, html: aHtml })
+    await sendEmail({ to: adminEmails, subject: aSubject, html: aHtml })
   }
 
-  // Log notification
   await admin.from('jjwl_notifications_log').insert({
     trigger: 'registration_submitted',
     recipient: email,
