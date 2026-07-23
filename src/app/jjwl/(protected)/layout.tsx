@@ -36,6 +36,7 @@ export default async function JJWLLayout({ children }: { children: React.ReactNo
         <div className="flex items-center gap-5 text-sm">
           <Link href="/jjwl/dashboard" className="text-blue-100 hover:text-white">My Hours</Link>
           <Link href="/jjwl/events" className="text-blue-100 hover:text-white">Events</Link>
+          <Link href="/jjwl/account" className="text-blue-100 hover:text-white">Account</Link>
           <span className="text-blue-200 border-l border-blue-400 pl-4">{member.name}</span>
           <form action="/api/auth/logout" method="POST">
             <button className="text-blue-200 hover:text-white">Sign out</button>
