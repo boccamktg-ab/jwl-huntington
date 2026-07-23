@@ -9,7 +9,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
         <div className="w-full max-w-md bg-white rounded-xl shadow-sm border border-gray-200 p-8">
           <div className="mb-8 flex flex-col items-center gap-3">
             <Image src="/jwl-logo.png" alt="Junior Welfare League" width={100} height={100} className="object-contain" />
-            <p className="text-sm font-medium text-gray-500 tracking-wide uppercase">Holiday Charities</p>
+            <p className="text-sm font-medium text-gray-500 tracking-wide uppercase">Member Portal</p>
           </div>
           {children}
         </div>
