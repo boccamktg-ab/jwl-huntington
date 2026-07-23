@@ -3,11 +3,11 @@
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 
-export default function MemberActions({ memberId, status, isAdmin, isGrantsReviewer }: { memberId: string; status: string; isAdmin: boolean; isGrantsReviewer: boolean }) {
+export default function MemberActions({ memberId, status, isAdmin, isGrantsReviewer, isJjwlAdmin }: { memberId: string; status: string; isAdmin: boolean; isGrantsReviewer: boolean; isJjwlAdmin: boolean }) {
   const router = useRouter()
   const [loading, setLoading] = useState<string | null>(null)
 
-  async function act(action: 'approve' | 'disable' | 'enable' | 'toggle_admin' | 'toggle_grants_reviewer') {
+  async function act(action: 'approve' | 'disable' | 'enable' | 'toggle_admin' | 'toggle_grants_reviewer' | 'toggle_jjwl_admin') {
     setLoading(action)
     await fetch('/api/admin/members', {
       method: 'PATCH',
@@ -37,6 +37,10 @@ export default function MemberActions({ memberId, status, isAdmin, isGrantsRevie
           <button onClick={() => act('toggle_grants_reviewer')} disabled={!!loading}
             className={`text-xs px-3 py-1.5 rounded-lg disabled:opacity-50 ${isGrantsReviewer ? 'bg-purple-600 text-white hover:bg-purple-700' : 'bg-purple-100 text-purple-700 hover:bg-purple-200'}`}>
             {loading === 'toggle_grants_reviewer' ? '…' : isGrantsReviewer ? 'Grants ✓' : 'Grants'}
+          </button>
+          <button onClick={() => act('toggle_jjwl_admin')} disabled={!!loading}
+            className={`text-xs px-3 py-1.5 rounded-lg disabled:opacity-50 ${isJjwlAdmin ? 'bg-teal-600 text-white hover:bg-teal-700' : 'bg-teal-100 text-teal-700 hover:bg-teal-200'}`}>
+            {loading === 'toggle_jjwl_admin' ? '…' : isJjwlAdmin ? 'JJWL ✓' : 'JJWL'}
           </button>
           <button onClick={() => act('toggle_admin')} disabled={!!loading}
             className={`text-xs px-3 py-1.5 rounded-lg disabled:opacity-50 ${isAdmin ? 'bg-[#1B52C1] text-white hover:bg-[#1540A0]' : 'bg-blue-100 text-[#1B52C1] hover:bg-blue-200'}`}>
