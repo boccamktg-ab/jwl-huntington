@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { sendEmail, getPortalAdminEmails, emailAdminNewSocialWorker } from '@/lib/email'
+import { sendEmail, getPortalAdminEmails, emailAdminNewSocialWorker, createApprovalToken } from '@/lib/email'
 
 function adminClient() {
   return createClient(
@@ -57,7 +57,8 @@ export async function POST(request: NextRequest) {
   const schoolNames = (schoolRows ?? []).map((s: any) => s.name).join(', ') || 'Unknown'
   const adminEmails = await getPortalAdminEmails()
   if (adminEmails.length > 0) {
-    const { subject, html } = emailAdminNewSocialWorker(name, email, schoolNames)
+    const approvalUrl = await createApprovalToken('social_worker', sw.id)
+    const { subject, html } = emailAdminNewSocialWorker(name, email, schoolNames, approvalUrl ?? undefined)
     await sendEmail({ to: adminEmails, subject, html })
   }
 

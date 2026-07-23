@@ -324,11 +324,37 @@ export function emailAdminRoster(
   }
 }
 
+// ─── Approval token helper ────────────────────────────────────────────────────
+
+export async function createApprovalToken(
+  entityType: 'social_worker' | 'jwl_member',
+  entityId: string,
+): Promise<string | null> {
+  const { randomBytes } = await import('crypto')
+  const token = randomBytes(32).toString('hex')
+  const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
+
+  const db = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    { auth: { autoRefreshToken: false, persistSession: false } }
+  )
+
+  const { error } = await db.from('approval_tokens').insert({
+    token,
+    entity_type: entityType,
+    entity_id: entityId,
+    expires_at: expiresAt,
+  })
+
+  return error ? null : `https://portal.jwlhuntington.org/api/approve/${token}`
+}
+
 // ─── Holiday Charities / Portal emails ───────────────────────────────────────
 
 const ADMIN_URL = 'https://portal.jwlhuntington.org/admin'
 
-export function emailAdminNewSocialWorker(name: string, email: string, schools: string) {
+export function emailAdminNewSocialWorker(name: string, email: string, schools: string, approvalUrl?: string) {
   return {
     subject: `JWL Portal — New social worker registration: ${name}`,
     html: wrap(`
@@ -339,12 +365,16 @@ export function emailAdminNewSocialWorker(name: string, email: string, schools: 
         { label: 'Email', value: email },
         { label: 'Schools', value: schools },
       ])}
-      ${btn('Review in portal →', `${ADMIN_URL}/social-workers`)}
+      ${approvalUrl ? `
+        ${btn('Approve now →', approvalUrl)}
+        ${p('<small style="color:#6b7280;">This approval link expires in 7 days. After that, approve from the portal.</small>')}
+      ` : ''}
+      ${btn('View in portal →', `${ADMIN_URL}/social-workers`)}
     `),
   }
 }
 
-export function emailAdminNewMember(name: string, email: string) {
+export function emailAdminNewMember(name: string, email: string, approvalUrl?: string) {
   return {
     subject: `JWL Portal — New member registration: ${name}`,
     html: wrap(`
@@ -354,7 +384,11 @@ export function emailAdminNewMember(name: string, email: string) {
         { label: 'Name', value: name },
         { label: 'Email', value: email },
       ])}
-      ${btn('Review in portal →', `${ADMIN_URL}/members`)}
+      ${approvalUrl ? `
+        ${btn('Approve now →', approvalUrl)}
+        ${p('<small style="color:#6b7280;">This approval link expires in 7 days. After that, approve from the portal.</small>')}
+      ` : ''}
+      ${btn('View in portal →', `${ADMIN_URL}/members`)}
     `),
   }
 }

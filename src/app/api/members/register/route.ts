@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { sendEmail, getPortalAdminEmails, emailAdminNewMember } from '@/lib/email'
+import { sendEmail, getPortalAdminEmails, emailAdminNewMember, createApprovalToken } from '@/lib/email'
 
 function adminClient() {
   return createClient(
@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
   })
   if (authError) return NextResponse.json({ error: authError.message }, { status: 400 })
 
-  const { error: memberError } = await supabase
+  const { data: newMember, error: memberError } = await supabase
     .from('jwl_members')
     .insert({
       name,
@@ -32,6 +32,8 @@ export async function POST(request: NextRequest) {
       status: 'pending',
       children_requested: childrenRequested ?? null,
     })
+    .select('id')
+    .single()
 
   if (memberError) {
     await supabase.auth.admin.deleteUser(authData.user.id)
@@ -40,7 +42,8 @@ export async function POST(request: NextRequest) {
 
   const adminEmails = await getPortalAdminEmails()
   if (adminEmails.length > 0) {
-    const { subject, html } = emailAdminNewMember(name, email)
+    const approvalUrl = await createApprovalToken('jwl_member', newMember.id)
+    const { subject, html } = emailAdminNewMember(name, email, approvalUrl ?? undefined)
     await sendEmail({ to: adminEmails, subject, html })
   }
 
