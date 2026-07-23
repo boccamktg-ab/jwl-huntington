@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 
-export default function ApprovalActions({ id, name }: { id: string; name: string }) {
+export default function ApprovalActions({ id, name, status }: { id: string; name: string; status: string }) {
   const router = useRouter()
   const [loading, setLoading] = useState<string | null>(null)
 
@@ -42,20 +42,42 @@ export default function ApprovalActions({ id, name }: { id: string; name: string
 
   return (
     <div className="flex gap-2 shrink-0">
-      <button
-        onClick={() => updateStatus('approved')}
-        disabled={!!loading}
-        className="text-sm px-3 py-1.5 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50"
-      >
-        {loading === 'approved' ? '…' : 'Approve'}
-      </button>
-      <button
-        onClick={() => updateStatus('disabled')}
-        disabled={!!loading}
-        className="text-sm px-3 py-1.5 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 disabled:opacity-50"
-      >
-        {loading === 'disabled' ? '…' : 'Reject'}
-      </button>
+      {status === 'pending' && (
+        <>
+          <button
+            onClick={() => updateStatus('approved')}
+            disabled={!!loading}
+            className="text-sm px-3 py-1.5 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50"
+          >
+            {loading === 'approved' ? '…' : 'Approve'}
+          </button>
+          <button
+            onClick={() => updateStatus('disabled')}
+            disabled={!!loading}
+            className="text-sm px-3 py-1.5 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 disabled:opacity-50"
+          >
+            {loading === 'disabled' ? '…' : 'Reject'}
+          </button>
+        </>
+      )}
+      {status === 'approved' && (
+        <button
+          onClick={() => updateStatus('disabled')}
+          disabled={!!loading}
+          className="text-sm px-3 py-1.5 bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 disabled:opacity-50"
+        >
+          {loading === 'disabled' ? '…' : 'Disable'}
+        </button>
+      )}
+      {status === 'disabled' && (
+        <button
+          onClick={() => updateStatus('approved')}
+          disabled={!!loading}
+          className="text-sm px-3 py-1.5 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 disabled:opacity-50"
+        >
+          {loading === 'approved' ? '…' : 'Re-enable'}
+        </button>
+      )}
       <button
         onClick={deleteSocialWorker}
         disabled={!!loading}

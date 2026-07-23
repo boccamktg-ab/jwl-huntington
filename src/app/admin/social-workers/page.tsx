@@ -70,7 +70,7 @@ export default async function SocialWorkersPage() {
         )}
         <div className="space-y-3">
           {others.map(sw => (
-            <SocialWorkerCard key={sw.id} sw={sw} overdueCount={overdueMap[sw.id] ?? 0} showActions={false} />
+            <SocialWorkerCard key={sw.id} sw={sw} overdueCount={overdueMap[sw.id] ?? 0} showActions />
           ))}
         </div>
       </section>
@@ -115,7 +115,7 @@ function SocialWorkerCard({ sw, overdueCount, showActions }: { sw: any; overdueC
         {sw.status === 'approved' && (
           <SwSubmissionsToggle swId={sw.id} enabled={sw.submissions_enabled ?? true} />
         )}
-        {showActions && <ApprovalActions id={sw.id} name={sw.name} />}
+        {showActions && <ApprovalActions id={sw.id} name={sw.name} status={sw.status} />}
       </div>
     </div>
   )
