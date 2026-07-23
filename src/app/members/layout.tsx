@@ -16,7 +16,7 @@ export default async function MembersLayout({ children }: { children: React.Reac
   )
   const { data: member } = await db
     .from('jwl_members')
-    .select('name, status, is_grants_reviewer')
+    .select('name, status, is_admin, is_super_admin, is_grants_reviewer, is_jjwl_admin')
     .eq('auth_id', user.id)
     .single()
 
@@ -36,6 +36,12 @@ export default async function MembersLayout({ children }: { children: React.Reac
           <Link href="/members/dashboard" className="text-blue-100 hover:text-white">Holiday Charities</Link>
           {member.is_grants_reviewer && (
             <Link href="/grants/reviewer" className="text-blue-100 hover:text-white">Grants</Link>
+          )}
+          {member.is_jjwl_admin && (
+            <Link href="/admin/jjwl" className="text-blue-100 hover:text-white">JJWL Admin</Link>
+          )}
+          {(member.is_admin || member.is_super_admin) && (
+            <Link href="/admin" className="text-blue-100 hover:text-white">Admin</Link>
           )}
           <span className="text-blue-200 border-l border-blue-400 pl-4">{member.name}</span>
           <form action="/api/auth/logout" method="POST">
