@@ -40,7 +40,7 @@ export async function PATCH(request: NextRequest) {
 
   const { data: member } = await admin
     .from('jjwl_members')
-    .select('name, email, parent_email, status')
+    .select('name, email, parent_email, status, auth_id')
     .eq('id', member_id)
     .maybeSingle()
 
@@ -94,6 +94,14 @@ export async function PATCH(request: NextRequest) {
 
   if (action === 'reject') {
     await admin.from('jjwl_members').update({ status: 'inactive' }).eq('id', member_id)
+    return NextResponse.json({ ok: true })
+  }
+
+  if (action === 'delete') {
+    const authId = member.auth_id ?? null
+    const { error } = await admin.from('jjwl_members').delete().eq('id', member_id)
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    if (authId) await admin.auth.admin.deleteUser(authId)
     return NextResponse.json({ ok: true })
   }
 

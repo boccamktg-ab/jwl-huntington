@@ -94,6 +94,7 @@ export default async function AdminJJWLMemberDetailPage({ params }: { params: Pr
         </p>
         <MemberAdminActions
           memberId={id}
+          memberName={member.name}
           currentStatus={member.status}
           membershipPaid={member.membership_paid}
         />

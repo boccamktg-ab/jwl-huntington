@@ -3,7 +3,7 @@
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 
-export default function MemberActions({ memberId, status, isAdmin, isGrantsReviewer, isJjwlAdmin, isSuperAdmin }: { memberId: string; status: string; isAdmin: boolean; isGrantsReviewer: boolean; isJjwlAdmin: boolean; isSuperAdmin: boolean }) {
+export default function MemberActions({ memberId, name, status, isAdmin, isGrantsReviewer, isJjwlAdmin, isSuperAdmin }: { memberId: string; name: string; status: string; isAdmin: boolean; isGrantsReviewer: boolean; isJjwlAdmin: boolean; isSuperAdmin: boolean }) {
   const router = useRouter()
   const [loading, setLoading] = useState<string | null>(null)
 
@@ -13,6 +13,18 @@ export default function MemberActions({ memberId, status, isAdmin, isGrantsRevie
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ memberId, action }),
+    })
+    setLoading(null)
+    router.refresh()
+  }
+
+  async function deleteMember() {
+    if (!confirm(`Permanently delete ${name}? Their assignment records will be kept but unlinked. This cannot be undone.`)) return
+    setLoading('delete')
+    await fetch('/api/admin/members', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ memberId }),
     })
     setLoading(null)
     router.refresh()
@@ -62,6 +74,10 @@ export default function MemberActions({ memberId, status, isAdmin, isGrantsRevie
           {loading === 'enable' ? '…' : 'Re-enable'}
         </button>
       )}
+      <button onClick={deleteMember} disabled={!!loading}
+        className="text-xs px-3 py-1.5 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50">
+        {loading === 'delete' ? '…' : 'Delete'}
+      </button>
     </div>
   )
 }

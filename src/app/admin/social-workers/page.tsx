@@ -115,7 +115,7 @@ function SocialWorkerCard({ sw, overdueCount, showActions }: { sw: any; overdueC
         {sw.status === 'approved' && (
           <SwSubmissionsToggle swId={sw.id} enabled={sw.submissions_enabled ?? true} />
         )}
-        {showActions && <ApprovalActions id={sw.id} />}
+        {showActions && <ApprovalActions id={sw.id} name={sw.name} />}
       </div>
     </div>
   )

@@ -66,6 +66,35 @@ export async function PATCH(request: NextRequest) {
   return NextResponse.json({ ok: true })
 }
 
+// DELETE — hard delete a JWL member (nulls assignments, preserves data)
+export async function DELETE(request: NextRequest) {
+  if (!await requireAdminFromRequest(request)) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
+  }
+
+  const { memberId } = await request.json()
+  if (!memberId) return NextResponse.json({ error: 'Missing memberId' }, { status: 400 })
+
+  const admin = db()
+
+  const { data: member } = await admin
+    .from('jwl_members')
+    .select('auth_id')
+    .eq('id', memberId)
+    .maybeSingle()
+
+  if (!member) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+
+  const { error } = await admin.from('jwl_members').delete().eq('id', memberId)
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+  if (member.auth_id) {
+    await admin.auth.admin.deleteUser(member.auth_id)
+  }
+
+  return NextResponse.json({ ok: true })
+}
+
 // POST — admin creates a JWL member directly (pre-approved, auto-creates login)
 export async function POST(request: NextRequest) {
   if (!await requireAdminFromRequest(request)) {

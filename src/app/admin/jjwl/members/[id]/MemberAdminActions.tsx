@@ -5,11 +5,12 @@ import { useRouter } from 'next/navigation'
 
 type Props = {
   memberId: string
+  memberName: string
   currentStatus: string
   membershipPaid: boolean
 }
 
-export default function MemberAdminActions({ memberId, currentStatus, membershipPaid }: Props) {
+export default function MemberAdminActions({ memberId, memberName, currentStatus, membershipPaid }: Props) {
   const router = useRouter()
   const [loading, setLoading] = useState<string | null>(null)
   const [error, setError] = useState('')
@@ -29,6 +30,24 @@ export default function MemberAdminActions({ memberId, currentStatus, membership
       router.refresh()
     }
     setLoading(null)
+  }
+
+  async function deleteMember() {
+    if (!confirm(`Permanently delete ${memberName}? Their event signups and hour records will be kept but unlinked. This cannot be undone.`)) return
+    setLoading('delete')
+    setError('')
+    const res = await fetch('/api/jjwl/admin/members', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ member_id: memberId, action: 'delete' }),
+    })
+    const json = await res.json()
+    if (!res.ok) {
+      setError(json.error ?? 'Something went wrong.')
+      setLoading(null)
+    } else {
+      router.push('/admin/jjwl/members')
+    }
   }
 
   return (
@@ -63,6 +82,10 @@ export default function MemberAdminActions({ memberId, currentStatus, membership
           {loading === 'reject' ? '…' : 'Reject'}
         </button>
       )}
+      <button onClick={deleteMember} disabled={!!loading}
+        className="text-sm px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50">
+        {loading === 'delete' ? '…' : 'Delete Member'}
+      </button>
       {error && <p className="text-sm text-red-600 w-full">{error}</p>}
     </div>
   )
