@@ -10,3 +10,5 @@ create table if not exists approval_tokens (
 );
 
 create index if not exists approval_tokens_token_idx on approval_tokens (token);
+
+alter table approval_tokens enable row level security;
