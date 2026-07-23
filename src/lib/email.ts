@@ -1,7 +1,7 @@
 import { Resend } from 'resend'
 import { createClient } from '@supabase/supabase-js'
 
-const FROM = 'JWL Huntington <noreply@portal.jwlhuntington.org>'
+const FROM = 'JWL Huntington <noreply@jwlhuntington.org>'
 
 export type EmailPayload = {
   to: string | string[]
