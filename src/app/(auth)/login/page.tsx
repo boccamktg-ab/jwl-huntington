@@ -30,6 +30,7 @@ function NoticeBanner() {
 
 function LoginForm() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
@@ -46,6 +47,13 @@ function LoginForm() {
     if (error) {
       setError(error.message)
       setLoading(false)
+      return
+    }
+
+    // Honor ?next= param (internal paths only — no open redirect)
+    const next = searchParams.get('next')
+    if (next && next.startsWith('/')) {
+      router.push(next)
       return
     }
 
@@ -131,11 +139,9 @@ function LoginForm() {
 
 export default function LoginPage() {
   return (
-    <>
-      <Suspense>
-        <NoticeBanner />
-      </Suspense>
+    <Suspense>
+      <NoticeBanner />
       <LoginForm />
-    </>
+    </Suspense>
   )
 }

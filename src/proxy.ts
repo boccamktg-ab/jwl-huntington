@@ -25,25 +25,40 @@ export async function proxy(request: NextRequest) {
 
   const { data: { user } } = await supabase.auth.getUser()
 
-  const { pathname } = request.nextUrl
+  const { pathname, search } = request.nextUrl
 
   // Public routes — no auth needed
   if (
     pathname.startsWith('/login') ||
     pathname.startsWith('/register') ||
-    pathname.startsWith('/family')
+    pathname.startsWith('/family') ||
+    pathname.startsWith('/api/') ||
+    pathname.startsWith('/_next/')
   ) {
     return supabaseResponse
   }
 
-  // Protected routes — redirect to login if not authenticated
+  // Protected routes — redirect to login with ?next= so they land back after sign-in
   if (!user) {
-    return NextResponse.redirect(new URL('/login', request.url))
+    const loginUrl = request.nextUrl.clone()
+    loginUrl.pathname = '/login'
+    loginUrl.search = `?next=${encodeURIComponent(pathname + search)}`
+    return NextResponse.redirect(loginUrl)
   }
 
   return supabaseResponse
 }
 
 export const config = {
-  matcher: ['/dashboard/:path*', '/admin/:path*', '/members/:path*'],
+  matcher: [
+    '/admin/:path*',
+    '/members/:path*',
+    '/jjwl/dashboard/:path*',
+    '/jjwl/events/:path*',
+    '/jjwl/account/:path*',
+    '/jjwl/pending/:path*',
+    '/grants/reviewer/:path*',
+    '/dashboard/:path*',
+    '/portal/:path*',
+  ],
 }
