@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
+import { sendEmail, getGrantsReviewerEmails, emailAdminNewGrant } from '@/lib/email'
 
 export async function POST(req: NextRequest) {
   try {
@@ -9,7 +10,7 @@ export async function POST(req: NextRequest) {
 
     const { data: sw } = await supabase
       .from('social_workers')
-      .select('id, status')
+      .select('id, name, status')
       .eq('auth_id', user.id)
       .single()
 
@@ -49,9 +50,21 @@ export async function POST(req: NextRequest) {
 
     if (detailError) {
       console.error(detailError)
-      // Clean up orphaned application
       await service.from('grant_applications').delete().eq('id', app.id)
       return NextResponse.json({ error: 'Failed to save application details' }, { status: 500 })
+    }
+
+    if (status === 'submitted') {
+      const reviewerEmails = await getGrantsReviewerEmails()
+      if (reviewerEmails.length > 0) {
+        const { subject, html } = emailAdminNewGrant(
+          sw.name ?? 'Unknown',
+          user.email ?? '',
+          grant_type,
+          requested_amount,
+        )
+        await sendEmail({ to: reviewerEmails, subject, html })
+      }
     }
 
     return NextResponse.json({ id: app.id })

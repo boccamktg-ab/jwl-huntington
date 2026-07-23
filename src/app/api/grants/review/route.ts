@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createClient as adminSupabase } from '@supabase/supabase-js'
+import { sendEmail, emailSocialWorkerGrantStatusUpdate } from '@/lib/email'
 
 function db() {
   return adminSupabase(
@@ -80,6 +81,33 @@ export async function PATCH(request: NextRequest) {
   if (error) {
     console.error(error)
     return NextResponse.json({ error: error.message }, { status: 500 })
+  }
+
+  // Notify social worker of meaningful status changes
+  const notifyStatuses = ['approved', 'denied', 'needs_more_info', 'paid_closed']
+  if (notifyStatuses.includes(updates.status)) {
+    const { data: grantApp } = await db()
+      .from('grant_applications')
+      .select('referrer_id')
+      .eq('id', application_id)
+      .maybeSingle()
+    if (grantApp) {
+      const { data: sw } = await db()
+        .from('social_workers')
+        .select('name, email')
+        .eq('id', grantApp.referrer_id)
+        .maybeSingle()
+      if (sw?.email) {
+        const { subject, html } = emailSocialWorkerGrantStatusUpdate(
+          sw.name,
+          application_id,
+          updates.status,
+          updates.approved_amount,
+          updates.denial_reason,
+        )
+        await sendEmail({ to: sw.email, subject, html })
+      }
+    }
   }
 
   return NextResponse.json({ ok: true })

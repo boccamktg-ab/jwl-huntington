@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createClient as adminSupabase } from '@supabase/supabase-js'
+import { sendEmail, getGrantsReviewerEmails, emailAdminGrantActivity } from '@/lib/email'
 
 function db() {
   return adminSupabase(
@@ -18,7 +19,7 @@ export async function POST(req: NextRequest) {
 
     const { data: sw } = await supabase
       .from('social_workers')
-      .select('id, status')
+      .select('id, name, status')
       .eq('auth_id', user.id)
       .single()
 
@@ -78,6 +79,13 @@ export async function POST(req: NextRequest) {
     if (docError) {
       console.error(docError)
       return NextResponse.json({ error: 'Failed to save document records' }, { status: 500 })
+    }
+
+    const reviewerEmails = await getGrantsReviewerEmails()
+    if (reviewerEmails.length > 0) {
+      const fileNames = uploaded.map(u => u.file_name).join(', ')
+      const { subject, html } = emailAdminGrantActivity(sw.name ?? 'Social worker', applicationId, 'document', fileNames)
+      await sendEmail({ to: reviewerEmails, subject, html })
     }
 
     return NextResponse.json({ uploaded: uploaded.length })

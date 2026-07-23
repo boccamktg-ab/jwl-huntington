@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { sendEmail, getPortalAdminEmails, emailAdminNewSocialWorker } from '@/lib/email'
 
 function adminClient() {
   return createClient(
@@ -47,6 +48,18 @@ export async function POST(request: NextRequest) {
     school_id,
   }))
   await supabase.from('social_worker_schools').insert(schoolLinks)
+
+  // Notify admins
+  const { data: schoolRows } = await supabase
+    .from('schools')
+    .select('name')
+    .in('id', schoolIds)
+  const schoolNames = (schoolRows ?? []).map((s: any) => s.name).join(', ') || 'Unknown'
+  const adminEmails = await getPortalAdminEmails()
+  if (adminEmails.length > 0) {
+    const { subject, html } = emailAdminNewSocialWorker(name, email, schoolNames)
+    await sendEmail({ to: adminEmails, subject, html })
+  }
 
   return NextResponse.json({ ok: true })
 }

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient as adminSupabase } from '@supabase/supabase-js'
 import { createServerClient } from '@supabase/ssr'
+import { sendEmail, getPortalAdminEmails, emailAdminChildrenRequested } from '@/lib/email'
 
 function adminClient() {
   return adminSupabase(
@@ -47,10 +48,18 @@ export async function PATCH(request: NextRequest) {
       : next > prev ? `increased their children requested from ${prev} to ${next}`
       : `decreased their children requested from ${prev} to ${next}`
 
+    const changeMsg = `${member.name} ${direction}.`
+
     await db.from('admin_notifications').insert({
       type: 'children_requested_change',
-      message: `${member.name} ${direction}.`,
+      message: changeMsg,
     })
+
+    const adminEmails = await getPortalAdminEmails()
+    if (adminEmails.length > 0) {
+      const { subject, html } = emailAdminChildrenRequested(member.name, changeMsg)
+      await sendEmail({ to: adminEmails, subject, html })
+    }
   }
 
   return NextResponse.json({ ok: true })

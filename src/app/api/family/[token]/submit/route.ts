@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { sendEmail, emailSocialWorkerSubmissionReceived } from '@/lib/email'
 
 function adminClient() {
   return createClient(
@@ -31,5 +32,30 @@ export async function POST(
     .eq('id', family.id)
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+  // Email the social worker a submission record
+  const { data: fullFamily } = await supabase
+    .from('families')
+    .select('guardian_name, social_worker_id, children(name, age)')
+    .eq('id', family.id)
+    .maybeSingle()
+
+  if (fullFamily) {
+    const { data: sw } = await supabase
+      .from('social_workers')
+      .select('name, email')
+      .eq('id', fullFamily.social_worker_id)
+      .maybeSingle()
+
+    if (sw?.email) {
+      const { subject, html } = emailSocialWorkerSubmissionReceived(
+        sw.name,
+        fullFamily.guardian_name ?? 'Family',
+        (fullFamily.children ?? []) as { name: string; age?: number | null }[],
+      )
+      await sendEmail({ to: sw.email, subject, html })
+    }
+  }
+
   return NextResponse.json({ ok: true })
 }

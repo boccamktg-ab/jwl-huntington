@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createClient as adminSupabase } from '@supabase/supabase-js'
+import { sendEmail, emailSocialWorkerGrantActivity } from '@/lib/email'
 
 function db() {
   return adminSupabase(
@@ -80,6 +81,26 @@ export async function POST(request: NextRequest) {
     if (error) {
       console.error(error)
       return NextResponse.json({ error: 'Failed to send message' }, { status: 500 })
+    }
+
+    // Notify the social worker
+    const { data: grantApp } = await db()
+      .from('grant_applications')
+      .select('referrer_id')
+      .eq('id', application_id)
+      .maybeSingle()
+    if (grantApp) {
+      const { data: sw } = await db()
+        .from('social_workers')
+        .select('name, email')
+        .eq('id', grantApp.referrer_id)
+        .maybeSingle()
+      if (sw?.email) {
+        const activityType = file && file.size > 0 ? 'document' : 'message'
+        const detail = activityType === 'message' ? body.trim().slice(0, 200) : (file?.name ?? '')
+        const { subject, html } = emailSocialWorkerGrantActivity(sw.name, application_id, activityType, detail)
+        await sendEmail({ to: sw.email, subject, html })
+      }
     }
 
     return NextResponse.json({ ok: true })

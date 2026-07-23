@@ -61,11 +61,11 @@ export async function getJjwlAdminEmails(): Promise<string[]> {
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
-function header(title: string) {
+function header() {
   return `
     <div style="background:#1B52C1;padding:20px 32px;border-radius:8px 8px 0 0;">
       <p style="margin:0;color:white;font-size:16px;font-weight:600;font-family:sans-serif;">
-        Junior Junior Welfare League of Huntington
+        Junior Welfare League of Huntington
       </p>
     </div>
   `
@@ -84,7 +84,7 @@ function footer() {
 function wrap(body: string) {
   return `
     <div style="max-width:600px;margin:0 auto;font-family:sans-serif;color:#111827;border:1px solid #e5e7eb;border-radius:8px;overflow:hidden;">
-      ${header('')}
+      ${header()}
       <div style="padding:28px 32px;">
         ${body}
       </div>
@@ -322,4 +322,207 @@ export function emailAdminRoster(
       ${btn('View event in portal →', 'https://portal.jwlhuntington.org/admin/jjwl/events')}
     `),
   }
+}
+
+// ─── Holiday Charities / Portal emails ───────────────────────────────────────
+
+const ADMIN_URL = 'https://portal.jwlhuntington.org/admin'
+
+export function emailAdminNewSocialWorker(name: string, email: string, schools: string) {
+  return {
+    subject: `JWL Portal — New social worker registration: ${name}`,
+    html: wrap(`
+      <h2 style="margin:0 0 16px;font-size:20px;font-weight:700;">New Social Worker Registration</h2>
+      ${p('A new social worker has registered and is awaiting your approval.')}
+      ${infoBox([
+        { label: 'Name', value: name },
+        { label: 'Email', value: email },
+        { label: 'Schools', value: schools },
+      ])}
+      ${btn('Review in portal →', `${ADMIN_URL}/social-workers`)}
+    `),
+  }
+}
+
+export function emailAdminNewMember(name: string, email: string) {
+  return {
+    subject: `JWL Portal — New member registration: ${name}`,
+    html: wrap(`
+      <h2 style="margin:0 0 16px;font-size:20px;font-weight:700;">New JWL Member Registration</h2>
+      ${p('A new JWL member has registered and is awaiting your approval.')}
+      ${infoBox([
+        { label: 'Name', value: name },
+        { label: 'Email', value: email },
+      ])}
+      ${btn('Review in portal →', `${ADMIN_URL}/members`)}
+    `),
+  }
+}
+
+export function emailMemberChildrenAssigned(memberName: string, childCount: number, changeDescription: string) {
+  return {
+    subject: `JWL Portal — Your children assignment has been updated`,
+    html: wrap(`
+      <h2 style="margin:0 0 16px;font-size:20px;font-weight:700;">Hi ${memberName.split(' ')[0]},</h2>
+      ${p(`Your children assignment has been updated. ${changeDescription}`)}
+      ${infoBox([{ label: 'Total assigned', value: `${childCount} child${childCount !== 1 ? 'ren' : ''}` }])}
+      ${btn('View my dashboard →', 'https://portal.jwlhuntington.org/members/dashboard')}
+    `),
+  }
+}
+
+export function emailAdminChildrenRequested(memberName: string, changeDescription: string) {
+  return {
+    subject: `JWL Portal — Children request updated: ${memberName}`,
+    html: wrap(`
+      <h2 style="margin:0 0 16px;font-size:20px;font-weight:700;">Children Request Updated</h2>
+      ${p(`<strong>${memberName}</strong> has updated their children request.`)}
+      ${p(changeDescription)}
+      ${btn('View members →', `${ADMIN_URL}/members`)}
+    `),
+  }
+}
+
+export function emailSocialWorkerSubmissionReceived(
+  swName: string,
+  familyName: string,
+  children: { name: string; age?: number | null }[],
+) {
+  const childRows = children.map(c =>
+    `<tr><td style="padding:6px 12px;font-size:14px;color:#111827;border-bottom:1px solid #f3f4f6;">${c.name}</td>
+     <td style="padding:6px 12px;font-size:14px;color:#6b7280;border-bottom:1px solid #f3f4f6;">${c.age != null ? `${c.age} yrs` : '—'}</td></tr>`
+  ).join('')
+  return {
+    subject: `JWL Portal — Submission confirmed: ${familyName}`,
+    html: wrap(`
+      <h2 style="margin:0 0 16px;font-size:20px;font-weight:700;">Submission Confirmed</h2>
+      ${p(`Hi ${swName.split(' ')[0]}, the family intake for <strong>${familyName}</strong> has been successfully submitted. Here is a record of the children included:`)}
+      <table style="width:100%;border-collapse:collapse;border:1px solid #e5e7eb;border-radius:8px;overflow:hidden;margin:16px 0;" cellpadding="0" cellspacing="0">
+        <thead><tr style="background:#f9fafb;">
+          <th style="padding:8px 12px;font-size:12px;color:#6b7280;text-align:left;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;">Child Name</th>
+          <th style="padding:8px 12px;font-size:12px;color:#6b7280;text-align:left;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;">Age</th>
+        </tr></thead>
+        <tbody>${childRows}</tbody>
+      </table>
+      ${p('Please keep this email as your confirmation. If you have any questions, contact your JWL coordinator.')}
+    `),
+  }
+}
+
+export function emailAdminNewGrant(swName: string, swEmail: string, grantType: string, requestedAmount: number) {
+  const label = grantType === 'charitable_children' ? 'Charitable Children' : 'Lift Fund'
+  return {
+    subject: `JWL Portal — New grant application: ${label} from ${swName}`,
+    html: wrap(`
+      <h2 style="margin:0 0 16px;font-size:20px;font-weight:700;">New Grant Application</h2>
+      ${infoBox([
+        { label: 'Social worker', value: swName },
+        { label: 'Email', value: swEmail },
+        { label: 'Grant type', value: label },
+        { label: 'Amount requested', value: `$${requestedAmount.toLocaleString()}` },
+      ])}
+      ${btn('Review application →', `${ADMIN_URL}/grants`)}
+    `),
+  }
+}
+
+export function emailAdminGrantActivity(swName: string, applicationId: string, activityType: 'message' | 'document', detail: string) {
+  const verb = activityType === 'message' ? 'sent a message' : 'uploaded a document'
+  return {
+    subject: `JWL Portal — Grant update from ${swName}`,
+    html: wrap(`
+      <h2 style="margin:0 0 16px;font-size:20px;font-weight:700;">Grant Application Update</h2>
+      ${p(`<strong>${swName}</strong> has ${verb} on their grant application.`)}
+      ${detail ? infoBox([{ label: activityType === 'message' ? 'Message' : 'File', value: detail }]) : ''}
+      ${btn('View application →', `${ADMIN_URL}/grants/${applicationId}`)}
+    `),
+  }
+}
+
+export function emailSocialWorkerGrantActivity(swName: string, applicationId: string, activityType: 'message' | 'document' | 'status', detail: string) {
+  const verb = activityType === 'message' ? 'sent you a message'
+    : activityType === 'document' ? 'uploaded a document'
+    : 'updated the status of'
+  return {
+    subject: `JWL Portal — Update on your grant application`,
+    html: wrap(`
+      <h2 style="margin:0 0 16px;font-size:20px;font-weight:700;">Hi ${swName.split(' ')[0]},</h2>
+      ${p(`The JWL team has ${verb} your grant application.`)}
+      ${detail ? infoBox([{ label: activityType === 'message' ? 'Message' : activityType === 'document' ? 'File' : 'Status', value: detail }]) : ''}
+      ${btn('View your application →', `https://portal.jwlhuntington.org/grants/${applicationId}`)}
+    `),
+  }
+}
+
+export function emailSocialWorkerGrantStatusUpdate(swName: string, applicationId: string, status: string, approvedAmount?: number, denialReason?: string) {
+  const statusLabel: Record<string, string> = {
+    under_review: 'Under Review',
+    needs_more_info: 'More Information Needed',
+    approved: 'Approved',
+    denied: 'Denied',
+    paid_closed: 'Paid & Closed',
+  }
+  const label = statusLabel[status] ?? status
+  const isApproved = status === 'approved'
+  const isDenied = status === 'denied'
+
+  const detail = isApproved && approvedAmount
+    ? `Your application has been approved for <strong>$${approvedAmount.toLocaleString()}</strong>. The JWL team will be in touch regarding next steps.`
+    : isDenied && denialReason
+    ? `Unfortunately your application has been denied. Reason: <em>${denialReason}</em>`
+    : `Your application status has been updated to <strong>${label}</strong>.`
+
+  return {
+    subject: `JWL Portal — Grant application status: ${label}`,
+    html: wrap(`
+      <h2 style="margin:0 0 16px;font-size:20px;font-weight:700;">Hi ${swName.split(' ')[0]},</h2>
+      ${infoBox([{ label: 'Status', value: label }])}
+      ${p(detail)}
+      ${p('If you have any questions, please log in and send a message through the portal.')}
+      ${btn('View your application →', `https://portal.jwlhuntington.org/grants/${applicationId}`)}
+    `),
+  }
+}
+
+// Returns the super admin email plus any JWL admins/reviewers for portal notifications
+export async function getPortalAdminEmails(): Promise<string[]> {
+  const emails: string[] = []
+  if (process.env.NEXT_PUBLIC_ADMIN_EMAIL) emails.push(process.env.NEXT_PUBLIC_ADMIN_EMAIL)
+
+  const db = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    { auth: { autoRefreshToken: false, persistSession: false } }
+  )
+  const { data } = await db
+    .from('jwl_members')
+    .select('email')
+    .eq('is_admin', true)
+    .eq('status', 'approved')
+
+  for (const m of data ?? []) {
+    if (m.email && !emails.includes(m.email)) emails.push(m.email)
+  }
+  return emails
+}
+
+export async function getGrantsReviewerEmails(): Promise<string[]> {
+  const emails: string[] = []
+  if (process.env.NEXT_PUBLIC_ADMIN_EMAIL) emails.push(process.env.NEXT_PUBLIC_ADMIN_EMAIL)
+
+  const db = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    { auth: { autoRefreshToken: false, persistSession: false } }
+  )
+  const { data } = await db
+    .from('jwl_members')
+    .select('email')
+    .eq('is_grants_reviewer', true)
+    .eq('status', 'approved')
+
+  for (const m of data ?? []) {
+    if (m.email && !emails.includes(m.email)) emails.push(m.email)
+  }
+  return emails
 }
