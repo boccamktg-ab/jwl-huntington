@@ -34,6 +34,14 @@ export async function PATCH(request: NextRequest) {
     return NextResponse.json({ ok: true })
   }
 
+  if (action === 'toggle_programs_admin') {
+    const { data: member } = await db().from('jwl_members').select('is_programs_admin').eq('id', memberId).single()
+    if (!member) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+    const { error } = await db().from('jwl_members').update({ is_programs_admin: !member.is_programs_admin }).eq('id', memberId)
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json({ ok: true })
+  }
+
   if (action === 'toggle_jjwl_admin') {
     const { data: member } = await db().from('jwl_members').select('is_jjwl_admin').eq('id', memberId).single()
     if (!member) return NextResponse.json({ error: 'Not found' }, { status: 404 })

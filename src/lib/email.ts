@@ -531,7 +531,7 @@ export async function getPortalAdminEmails(): Promise<string[]> {
   const { data } = await db
     .from('jwl_members')
     .select('email')
-    .or('is_admin.eq.true,is_super_admin.eq.true')
+    .or('is_admin.eq.true,is_super_admin.eq.true,is_programs_admin.eq.true')
     .eq('status', 'approved')
 
   for (const m of data ?? []) {

@@ -22,11 +22,10 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     )
     const { data } = await db
       .from('jwl_members')
-      .select('is_admin')
+      .select('is_admin, is_super_admin, is_programs_admin')
       .eq('auth_id', user.id)
-      .eq('is_admin', true)
       .maybeSingle()
-    isMemberAdmin = !!data
+    isMemberAdmin = !!(data?.is_admin || data?.is_super_admin || data?.is_programs_admin)
   }
 
   if (!isSuperAdmin && !isMemberAdmin) redirect('/login')
