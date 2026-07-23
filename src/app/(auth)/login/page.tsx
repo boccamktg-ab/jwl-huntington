@@ -58,12 +58,12 @@ function LoginForm() {
     const supabase2 = createClient()
     const { data: member } = await supabase2
       .from('jwl_members')
-      .select('id, is_admin')
+      .select('id')
       .eq('auth_id', data.user.id)
       .maybeSingle()
 
     if (member) {
-      router.push(member.is_admin ? '/admin' : '/members/dashboard')
+      router.push('/members/dashboard')
       return
     }
 
