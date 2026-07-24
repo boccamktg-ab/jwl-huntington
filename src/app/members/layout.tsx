@@ -33,7 +33,8 @@ export default async function MembersLayout({ children }: { children: React.Reac
           <span className="font-semibold text-white text-sm">JWL Huntington</span>
         </div>
         <div className="flex items-center gap-4 text-sm">
-          <Link href="/members/dashboard" className="text-blue-100 hover:text-white">Holiday Charities</Link>
+          <Link href="/members/dashboard" className="text-blue-100 hover:text-white">Dashboard</Link>
+          <Link href="/members/holiday-charities" className="text-blue-100 hover:text-white">Holiday Charities</Link>
           {member.is_grants_reviewer && (
             <Link href="/grants/reviewer" className="text-blue-100 hover:text-white">Grants</Link>
           )}

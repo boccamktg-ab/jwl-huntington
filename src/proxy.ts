@@ -60,5 +60,6 @@ export const config = {
     '/grants/reviewer/:path*',
     '/dashboard/:path*',
     '/portal/:path*',
+    '/members/holiday-charities/:path*',
   ],
 }

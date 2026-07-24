@@ -40,7 +40,7 @@ export default async function GrantsReviewerLayout({ children }: { children: Rea
         </div>
         <div className="flex items-center gap-6 text-sm">
           <Link href="/grants/reviewer" className="text-blue-100 hover:text-white">Applications</Link>
-          <Link href="/members/dashboard" className="text-blue-100 hover:text-white">Holiday Charities</Link>
+          <Link href="/members/dashboard" className="text-blue-100 hover:text-white">My Dashboard</Link>
           <span className="text-blue-200">{member?.name ?? 'Admin'}</span>
           <form action="/api/auth/logout" method="POST">
             <button className="text-blue-200 hover:text-white">Sign out</button>
