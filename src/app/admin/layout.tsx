@@ -45,6 +45,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         </div>
         <div className="flex items-center gap-6 text-sm">
           {isProgramsAdmin && <Link href="/admin" className="text-blue-100 hover:text-white">Dashboard</Link>}
+          {isProgramsAdmin && <Link href="/admin/families" className="text-blue-100 hover:text-white">Families</Link>}
           {isProgramsAdmin && <Link href="/admin/children" className="text-blue-100 hover:text-white">Children</Link>}
           {isProgramsAdmin && <Link href="/admin/assignments" className="text-blue-100 hover:text-white">Assignments</Link>}
           {isProgramsAdmin && <Link href="/admin/social-workers" className="text-blue-100 hover:text-white">Social Workers</Link>}

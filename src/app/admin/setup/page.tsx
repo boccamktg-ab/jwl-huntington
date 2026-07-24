@@ -3,6 +3,7 @@ import AddDistrictForm from './AddDistrictForm'
 import AddSchoolForm from './AddSchoolForm'
 import RemoveSchoolButton from './RemoveSchoolButton'
 import SeasonSettings from './SeasonSettings'
+import SeasonReset from './SeasonReset'
 
 function adminClient() {
   return createClient(
@@ -28,6 +29,8 @@ export default async function SetupPage() {
       <h1 className="text-2xl font-semibold text-gray-900">Setup</h1>
 
       <SeasonSettings submissionsOpen={submissionsOpen} closedMessage={closedMessage} />
+
+      <SeasonReset />
 
       <h2 className="text-lg font-semibold text-gray-800">Districts &amp; Schools</h2>
 
