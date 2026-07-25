@@ -98,9 +98,9 @@ export default async function AdminJJWLEventsPage({
                   <td className="px-4 py-3 text-right text-gray-900">{Number(evt.credit_hours).toFixed(1)}</td>
                   <td className="px-4 py-3 text-right">
                     <span className={`text-xs px-2 py-0.5 rounded-full ${
-                      evt.status === 'active'
-                        ? 'bg-green-100 text-green-700'
-                        : 'bg-gray-100 text-gray-500'
+                      evt.status === 'active' ? 'bg-green-100 text-green-700' :
+                      evt.status === 'draft'  ? 'bg-yellow-100 text-yellow-700' :
+                      'bg-gray-100 text-gray-500'
                     }`}>
                       {evt.status}
                     </span>

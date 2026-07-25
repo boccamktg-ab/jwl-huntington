@@ -2,6 +2,7 @@ import { createClient } from '@supabase/supabase-js'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import AttendanceActions from './AttendanceActions'
+import EventAdminActions from './EventAdminActions'
 
 function db() {
   return createClient(
@@ -32,6 +33,7 @@ export default async function AdminEventDetailPage({ params }: { params: Promise
   const totalSlots = evt.volunteer_slots_total
   const activeSignups = (signups ?? []).filter(s => ['signed_up', 'confirmed_attended', 'admin_added'].includes(s.status))
   const isSunset = evt.status === 'sunset'
+  const isDraft = evt.status === 'draft'
 
   return (
     <div className="space-y-6">
@@ -46,14 +48,19 @@ export default async function AdminEventDetailPage({ params }: { params: Promise
             {' · '}{evt.location}
           </p>
         </div>
-        <div className="flex gap-2 items-center">
-          <span className={`text-xs px-2 py-1 rounded-full ${isSunset ? 'bg-gray-100 text-gray-500' : 'bg-green-100 text-green-700'}`}>
+        <div className="flex gap-2 items-center flex-wrap">
+          <span className={`text-xs px-2 py-1 rounded-full ${
+            isDraft ? 'bg-yellow-100 text-yellow-700' :
+            isSunset ? 'bg-gray-100 text-gray-500' :
+            'bg-green-100 text-green-700'
+          }`}>
             {evt.status}
           </span>
           <Link href={`/admin/jjwl/events/${id}/edit`}
             className="text-sm px-3 py-1.5 border border-gray-200 rounded-lg hover:border-gray-400 text-gray-600">
             Edit
           </Link>
+          <EventAdminActions eventId={id} currentStatus={evt.status} />
         </div>
       </div>
 
