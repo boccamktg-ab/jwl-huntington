@@ -21,8 +21,8 @@ export async function POST(request: NextRequest) {
     .eq('auth_id', user.id)
     .maybeSingle()
 
-  if (!member || member.status !== 'approved') {
-    return NextResponse.json({ error: 'Member not found or not approved' }, { status: 403 })
+  if (!member || member.status !== 'active') {
+    return NextResponse.json({ error: 'Member not found or not active' }, { status: 403 })
   }
 
   const body = await request.json()
