@@ -33,6 +33,7 @@ const nav = [
     children: [
       { label: 'Membership Options', href: 'https://jwlhuntington.org/join/' },
       { label: 'Junior JWL Youth Membership', href: 'https://jwlhuntington.org/join-the-junior-jwl/' },
+      { label: 'Register for JJWL →', href: '/jjwl/register' },
     ],
   },
   { label: 'News', href: 'https://jwlhuntington.org/news/' },
