@@ -131,7 +131,7 @@ export default function JJWLRegisterPage() {
                 </p>
                 <div>
                   <p className="font-semibold text-gray-800 mb-1">Membership Dues</p>
-                  <p>Annual dues are <strong>$40</strong>, applied toward the JWL Youth in Philanthropy Award. If dues present a financial hardship, please contact the chair to discuss options.</p>
+                  <p>Annual dues are <strong>$40</strong>, applied toward the JWL Youth in Philanthropy Award and JJWL Programming. If dues present a financial hardship, please contact the chair to discuss options.</p>
                 </div>
                 <div>
                   <p className="font-semibold text-gray-800 mb-1">Service Requirements</p>
