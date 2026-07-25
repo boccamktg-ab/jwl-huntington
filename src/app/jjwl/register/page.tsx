@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
+import SiteNav from '@/app/(auth)/SiteNav'
 
 type School = { id: string; name: string }
 
@@ -68,10 +69,7 @@ export default function JJWLRegisterPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <nav className="bg-[#1B52C1] px-6 py-3 flex items-center gap-3">
-        <Image src="/jwl-logo.png" alt="JWL" width={32} height={32} className="object-contain bg-white rounded-full p-0.5" />
-        <span className="font-semibold text-white text-sm">Junior Junior Welfare League</span>
-      </nav>
+      <SiteNav />
 
       <div className="max-w-lg mx-auto px-4 py-10">
         <div className="bg-white rounded-2xl border border-gray-200 p-8 space-y-6">
