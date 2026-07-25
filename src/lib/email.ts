@@ -140,9 +140,12 @@ export function emailRegistrationApproved(name: string, cheddarUpUrl: string) {
       <h2 style="margin:0 0 16px;font-size:20px;font-weight:700;">Congratulations, ${name.split(' ')[0]}!</h2>
       ${p("Great news — your JJWL registration has been approved! You're almost ready to start participating in events and earning volunteer hours.")}
       <h3 style="margin:20px 0 8px;font-size:16px;font-weight:600;color:#111827;">Complete your membership</h3>
-      ${p("To activate your account, please pay your membership dues using the button below. Once we confirm your payment, your account will be fully activated.")}
+      ${p("To get fully set up, please complete both steps below:")}
+      ${p("<strong>Step 1 — Pay membership dues</strong>")}
       ${cheddarUpUrl ? btn('Pay Membership Dues →', cheddarUpUrl) : p("<strong>Payment link:</strong> Please contact <a href='mailto:info@jwlhuntington.org' style='color:#1B52C1;'>info@jwlhuntington.org</a> for your payment link.")}
-      ${p("After payment is confirmed, you can log in at <a href='https://portal.jwlhuntington.org' style='color:#1B52C1;'>portal.jwlhuntington.org</a> to browse and sign up for events.")}
+      ${p("<strong>Step 2 — Complete your parent/guardian waiver</strong><br>Once your payment is confirmed and your account is activated, log in to complete the waiver. You'll need to do this before signing up for events.")}
+      ${btn('Complete Waiver →', 'https://portal.jwlhuntington.org/jjwl/waiver')}
+      ${p("After both steps are done, you're all set to browse and sign up for events.")}
     `),
   }
 }
