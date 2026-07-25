@@ -44,6 +44,7 @@ export default function EmbedPage() {
 
   return (
     <div style={{ fontFamily: 'system-ui, sans-serif', background: '#f9fafb', minHeight: '100vh', padding: '24px 20px' }}>
+      <div style={{ maxWidth: 900, margin: '0 auto' }}>
 
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24 }}>
@@ -180,6 +181,7 @@ export default function EmbedPage() {
           </a>
         </div>
       )}
+      </div>
     </div>
   )
 }
