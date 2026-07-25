@@ -151,6 +151,54 @@ export default function ReviewerActions({ applicationId, currentStatus, requeste
       )}
 
       {error && <p className="text-sm text-red-600">{error}</p>}
+
+      <DeleteApplication applicationId={applicationId} />
+    </div>
+  )
+}
+
+function DeleteApplication({ applicationId }: { applicationId: string }) {
+  const router = useRouter()
+  const [confirming, setConfirming] = useState(false)
+  const [loading, setLoading] = useState(false)
+
+  async function handleDelete() {
+    setLoading(true)
+    const res = await fetch('/api/grants/delete', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ applicationId }),
+    })
+    if (res.ok) {
+      router.push('/grants/reviewer')
+    } else {
+      const { error } = await res.json()
+      alert(`Error: ${error}`)
+      setLoading(false)
+      setConfirming(false)
+    }
+  }
+
+  return (
+    <div className="pt-2 border-t border-gray-100">
+      {!confirming ? (
+        <button onClick={() => setConfirming(true)} className="text-xs text-red-500 hover:text-red-700">
+          Delete application…
+        </button>
+      ) : (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-3 space-y-2">
+          <p className="text-xs font-medium text-red-800">Permanently delete this application and all its documents?</p>
+          <div className="flex gap-3">
+            <button onClick={handleDelete} disabled={loading}
+              className="text-xs px-3 py-1.5 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50">
+              {loading ? 'Deleting…' : 'Yes, delete'}
+            </button>
+            <button onClick={() => setConfirming(false)} className="text-xs text-gray-500 hover:text-gray-700">
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
