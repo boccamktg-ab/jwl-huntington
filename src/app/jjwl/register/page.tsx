@@ -18,6 +18,8 @@ export default function JJWLRegisterPage() {
     name: '', email: '', password: '', grade: '', phone: '',
     school_id: '', parent_name: '', parent_phone: '', parent_email: '',
   })
+  const [conductAgreed, setConductAgreed] = useState(false)
+  const [parentConsent, setParentConsent] = useState(false)
 
   useEffect(() => {
     fetch('/api/jjwl/schools').then(r => r.json()).then(d => {
@@ -122,9 +124,70 @@ export default function JJWLRegisterPage() {
               </div>
             </Section>
 
+            <Section title="Program Overview">
+              <div className="bg-blue-50 border border-blue-100 rounded-lg p-4 space-y-3 text-sm text-gray-700 leading-relaxed">
+                <p>
+                  The <strong>Junior Junior Welfare League (JJWL)</strong> is a charitable organization for girls in grades 6–12 based in Huntington, operating since 1933. We are a 501(c)(3) nonprofit with no national affiliation.
+                </p>
+                <div>
+                  <p className="font-semibold text-gray-800 mb-1">Membership Dues</p>
+                  <p>Annual dues are <strong>$40</strong>, applied toward the JWL Youth in Philanthropy Award. If dues present a financial hardship, please contact the chair to discuss options.</p>
+                </div>
+                <div>
+                  <p className="font-semibold text-gray-800 mb-1">Service Requirements</p>
+                  <ul className="list-disc list-inside space-y-1 text-gray-600">
+                    <li>Attend <strong>at least 3 service opportunities</strong> per year to maintain active membership</li>
+                    <li>Complete a minimum of <strong>6 community service hours</strong> annually to receive an end-of-year certificate</li>
+                    <li>Activities are held <strong>at least once per month</strong></li>
+                    <li>Members must be <strong>physically present for the full duration</strong> of each project</li>
+                  </ul>
+                </div>
+                <p className="text-xs text-gray-500">
+                  All communications are sent via email. Member information is kept confidential and never shared externally.
+                  Questions? Contact <a href="mailto:jbrady8116@gmail.com" className="text-[#1B52C1] underline">jbrady8116@gmail.com</a> or 646-314-1564.
+                </p>
+              </div>
+            </Section>
+
+            <Section title="Code of Conduct">
+              <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 space-y-2 text-sm text-gray-700">
+                <p>By joining JJWL, members agree to:</p>
+                <ul className="list-disc list-inside space-y-1 text-gray-600">
+                  <li>Treat peers, leaders, and facilities with <strong>respect</strong></li>
+                  <li>Refrain from foul language, violence, and dishonest, offensive, or illegal behavior</li>
+                  <li>Limit cell phone use during projects (except for transportation coordination)</li>
+                  <li>Represent the league responsibly on social media</li>
+                </ul>
+              </div>
+              <label className="flex items-start gap-3 cursor-pointer mt-2">
+                <input
+                  type="checkbox"
+                  required
+                  checked={conductAgreed}
+                  onChange={e => setConductAgreed(e.target.checked)}
+                  className="mt-0.5 h-4 w-4 rounded border-gray-300 text-[#1B52C1] focus:ring-[#1B52C1]"
+                />
+                <span className="text-sm text-gray-700">
+                  I have read and agree to the JJWL Code of Conduct and understand the membership and service requirements above.<span className="text-red-400 ml-0.5">*</span>
+                </span>
+              </label>
+              <label className="flex items-start gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  required
+                  checked={parentConsent}
+                  onChange={e => setParentConsent(e.target.checked)}
+                  className="mt-0.5 h-4 w-4 rounded border-gray-300 text-[#1B52C1] focus:ring-[#1B52C1]"
+                />
+                <span className="text-sm text-gray-700">
+                  A parent or guardian has reviewed this information and consents to my participation in the JJWL program.<span className="text-red-400 ml-0.5">*</span>
+                </span>
+              </label>
+            </Section>
+
             {error && <p className="text-sm text-red-600">{error}</p>}
 
-            <button type="submit" disabled={loading}
+            <button type="submit" disabled={loading || !conductAgreed || !parentConsent}
               className="w-full bg-[#1B52C1] text-white rounded-lg px-4 py-2.5 text-sm font-medium hover:bg-[#1540A0] disabled:opacity-50">
               {loading ? 'Submitting…' : 'Submit Application'}
             </button>
