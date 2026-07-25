@@ -71,9 +71,11 @@ export default function JJWLRegisterPage() {
     <div className="min-h-screen bg-gray-50">
       <SiteNav />
 
-      <div className="bg-amber-50 border-b border-amber-200 px-4 py-3 text-center text-sm text-amber-800">
-        <strong>Registration opens August 10th.</strong> This portal is currently in beta and cannot accept real submissions until then.
-      </div>
+      {new Date() < new Date('2026-08-10') && (
+        <div className="bg-amber-50 border-b border-amber-200 px-4 py-3 text-center text-sm text-amber-800">
+          <strong>Registration opens August 10th.</strong> This portal is currently in beta and cannot accept real submissions until then.
+        </div>
+      )}
 
       <div className="max-w-lg mx-auto px-4 py-10">
         <div className="bg-white rounded-2xl border border-gray-200 p-8 space-y-6">
