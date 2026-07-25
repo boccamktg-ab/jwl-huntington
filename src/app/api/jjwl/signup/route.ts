@@ -49,6 +49,20 @@ export async function POST(request: NextRequest) {
     .eq('auth_id', user.id)
     .maybeSingle()
 
+  // Require completed waiver before signing up
+  if (action === 'signup') {
+    const SEASON = '2026-2027'
+    const { data: waiver } = await admin
+      .from('jjwl_waivers')
+      .select('id')
+      .eq('member_id', member_id)
+      .eq('season', SEASON)
+      .maybeSingle()
+    if (!waiver) {
+      return NextResponse.json({ error: 'waiver_required' }, { status: 403 })
+    }
+  }
+
   if (!member || member.status !== 'active') {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
   }

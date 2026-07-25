@@ -41,6 +41,14 @@ export default async function AdminJJWLMembersPage() {
     .from('jjwl_hour_adjustments')
     .select('member_id, delta')
 
+  const SEASON = '2026-2027'
+  const { data: waivers } = await admin
+    .from('jjwl_waivers')
+    .select('member_id')
+    .eq('season', SEASON)
+
+  const waiverSet = new Set((waivers ?? []).map(w => w.member_id))
+
   const hoursMap: Record<string, number> = {}
   for (const s of signups ?? []) {
     hoursMap[s.member_id] = (hoursMap[s.member_id] ?? 0) + Number(s.hours_awarded ?? 0)
@@ -67,6 +75,7 @@ export default async function AdminJJWLMembersPage() {
               <th className="text-left px-4 py-3 text-gray-500 font-medium">Name</th>
               <th className="text-left px-4 py-3 text-gray-500 font-medium">Grade / School</th>
               <th className="text-left px-4 py-3 text-gray-500 font-medium">Status</th>
+              <th className="text-center px-4 py-3 text-gray-500 font-medium">Waiver</th>
               <th className="text-right px-4 py-3 text-gray-500 font-medium">Hours</th>
               <th className="text-right px-4 py-3 text-gray-500 font-medium">Registered</th>
             </tr>
@@ -93,6 +102,11 @@ export default async function AdminJJWLMembersPage() {
                     {m.status === 'approved_unpaid' && !m.membership_paid && (
                       <p className="text-xs text-amber-600 mt-0.5">Payment pending</p>
                     )}
+                  </td>
+                  <td className="px-4 py-3 text-center">
+                    {waiverSet.has(m.id)
+                      ? <span className="text-xs text-green-700 font-medium">✓ On file</span>
+                      : <span className="text-xs text-amber-600">Pending</span>}
                   </td>
                   <td className="px-4 py-3 text-right font-medium text-gray-900">
                     {(hoursMap[m.id] ?? 0).toFixed(1)}

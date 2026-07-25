@@ -46,6 +46,16 @@ export default async function JJWLDashboardPage() {
 
   if (!member || member.status !== 'active') redirect('/jjwl/pending')
 
+  const SEASON = '2026-2027'
+  const { data: waiver } = await admin
+    .from('jjwl_waivers')
+    .select('id')
+    .eq('member_id', member.id)
+    .eq('season', SEASON)
+    .maybeSingle()
+
+  const waiverComplete = !!waiver
+
   // All confirmed signups + hour adjustments
   const [{ data: signups }, { data: adjustments }] = await Promise.all([
     admin
@@ -101,6 +111,24 @@ export default async function JJWLDashboardPage() {
           Grade {member.grade}{school ? ` · ${(school as any).name}` : ''}
         </p>
       </div>
+
+      {/* Waiver banner */}
+      {!waiverComplete && (
+        <div className="bg-amber-50 border border-amber-300 rounded-xl px-5 py-4 flex items-start justify-between gap-4">
+          <div>
+            <p className="font-semibold text-amber-800 text-sm">Waiver required</p>
+            <p className="text-sm text-amber-700 mt-0.5">
+              Your parent/guardian waiver for the {SEASON} season must be completed before you can sign up for events.
+            </p>
+          </div>
+          <Link
+            href="/jjwl/waiver"
+            className="shrink-0 text-sm px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 font-medium"
+          >
+            Complete waiver →
+          </Link>
+        </div>
+      )}
 
       {/* Hour totals */}
       <div className="grid grid-cols-2 gap-4">
