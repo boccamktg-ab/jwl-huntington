@@ -19,11 +19,16 @@ export async function PATCH(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const { name, phone } = await request.json()
+  const { name, phone, position_id, position_detail } = await request.json()
 
   const { error } = await db()
     .from('jwl_members')
-    .update({ name: name || undefined, phone: phone || null })
+    .update({
+      name: name || undefined,
+      phone: phone || null,
+      position_id: position_id || null,
+      position_detail: position_detail || null,
+    })
     .eq('auth_id', user.id)
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })

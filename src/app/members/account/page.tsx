@@ -16,11 +16,18 @@ export default async function AccountPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
-  const { data: member } = await db()
-    .from('jwl_members')
-    .select('id, name, email, phone, join_year, dues_paid_through_year, avatar_url, member_positions(label, allows_detail), position_detail')
-    .eq('auth_id', user!.id)
-    .single()
+  const [{ data: member }, { data: positions }] = await Promise.all([
+    db()
+      .from('jwl_members')
+      .select('id, name, email, phone, join_year, dues_paid_through_year, avatar_url, position_id, position_detail, member_positions(id, label, allows_detail)')
+      .eq('auth_id', user!.id)
+      .single(),
+    db()
+      .from('member_positions')
+      .select('id, label, allows_detail')
+      .eq('is_active', true)
+      .order('sort_order'),
+  ])
 
   const currentYear = new Date().getFullYear()
   const paidThrough = (member as any)?.dues_paid_through_year ?? 0
@@ -65,6 +72,9 @@ export default async function AccountPage() {
         initialName={(member as any)?.name ?? ''}
         initialPhone={(member as any)?.phone ?? ''}
         initialAvatarUrl={(member as any)?.avatar_url}
+        initialPositionId={(member as any)?.position_id ?? ''}
+        initialPositionDetail={(member as any)?.position_detail ?? ''}
+        positions={positions ?? []}
         authId={user!.id}
       />
     </div>

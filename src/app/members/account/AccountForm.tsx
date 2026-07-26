@@ -3,23 +3,31 @@
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 
+type Position = { id: string; label: string; allows_detail: boolean }
+
 const inputCls = 'w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#1B52C1]'
 
-export default function AccountForm({ memberId, initialName, initialPhone, authId, initialAvatarUrl }: {
-  memberId: string; initialName: string; initialPhone: string; authId: string; initialAvatarUrl?: string | null
+export default function AccountForm({ memberId, initialName, initialPhone, authId, initialAvatarUrl, initialPositionId, initialPositionDetail, positions }: {
+  memberId: string; initialName: string; initialPhone: string; authId: string
+  initialAvatarUrl?: string | null
+  initialPositionId?: string; initialPositionDetail?: string
+  positions: Position[]
 }) {
   const [name, setName] = useState(initialName)
   const [phone, setPhone] = useState(initialPhone)
+  const [positionId, setPositionId] = useState(initialPositionId ?? '')
+  const [positionDetail, setPositionDetail] = useState(initialPositionDetail ?? '')
   const [avatarUrl, setAvatarUrl] = useState(initialAvatarUrl ?? null)
   const [uploadingAvatar, setUploadingAvatar] = useState(false)
   const [avatarMsg, setAvatarMsg] = useState('')
-  const [currentPassword, setCurrentPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [saving, setSaving] = useState(false)
   const [savingPw, setSavingPw] = useState(false)
   const [msg, setMsg] = useState('')
   const [pwMsg, setPwMsg] = useState('')
+
+  const selectedPosition = positions.find(p => p.id === positionId)
 
   async function uploadAvatar(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
@@ -50,7 +58,7 @@ export default function AccountForm({ memberId, initialName, initialPhone, authI
     const res = await fetch('/api/members/account', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, phone }),
+      body: JSON.stringify({ name, phone, position_id: positionId || null, position_detail: positionDetail || null }),
     })
     setSaving(false)
     setMsg(res.ok ? 'Profile updated.' : 'Failed to save.')
@@ -65,7 +73,7 @@ export default function AccountForm({ memberId, initialName, initialPhone, authI
     const { error } = await supabase.auth.updateUser({ password: newPassword })
     setSavingPw(false)
     if (error) { setPwMsg(error.message); return }
-    setCurrentPassword(''); setNewPassword(''); setConfirmPassword('')
+    setNewPassword(''); setConfirmPassword('')
     setPwMsg('Password updated.')
   }
 
@@ -113,6 +121,22 @@ export default function AccountForm({ memberId, initialName, initialPhone, authI
           <label className="block text-xs font-medium text-gray-600 mb-1">Phone number</label>
           <input type="tel" value={phone} onChange={e => setPhone(e.target.value)} placeholder="(555) 555-5555" className={inputCls} />
         </div>
+        <div>
+          <label className="block text-xs font-medium text-gray-600 mb-1">Position / title</label>
+          <select value={positionId} onChange={e => { setPositionId(e.target.value); setPositionDetail('') }} className={inputCls}>
+            <option value="">— Select a position —</option>
+            {positions.map(p => (
+              <option key={p.id} value={p.id}>{p.label}</option>
+            ))}
+          </select>
+        </div>
+        {selectedPosition?.allows_detail && (
+          <div>
+            <label className="block text-xs font-medium text-gray-600 mb-1">Position detail</label>
+            <input type="text" value={positionDetail} onChange={e => setPositionDetail(e.target.value)}
+              placeholder="e.g. Education Committee" className={inputCls} />
+          </div>
+        )}
         {msg && <p className={`text-sm ${msg.includes('updated') ? 'text-green-600' : 'text-red-600'}`}>{msg}</p>}
         <button onClick={saveProfile} disabled={saving}
           className="bg-[#1B52C1] text-white rounded-lg px-4 py-2 text-sm font-medium hover:bg-[#1540A0] disabled:opacity-50">
