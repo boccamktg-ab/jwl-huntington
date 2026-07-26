@@ -123,12 +123,13 @@ export async function DELETE(request: NextRequest) {
 
   if (!member) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
+  if (member.auth_id) {
+    const { error: authErr } = await admin.auth.admin.deleteUser(member.auth_id)
+    if (authErr) return NextResponse.json({ error: `Auth deletion failed: ${authErr.message}` }, { status: 500 })
+  }
+
   const { error } = await admin.from('jwl_members').delete().eq('id', memberId)
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-
-  if (member.auth_id) {
-    await admin.auth.admin.deleteUser(member.auth_id)
-  }
 
   return NextResponse.json({ ok: true })
 }
