@@ -72,6 +72,24 @@ export default async function MemberDashboardPage() {
             color="indigo"
           />
         )}
+        <ProgramCard
+          href="/members/meetings"
+          title="Meetings"
+          description="View upcoming JWL meetings, RSVP, and read past meeting recaps."
+          color="purple"
+        />
+        <ProgramCard
+          href="/members/directory"
+          title="Member Directory"
+          description="View contact information for all active JWL members."
+          color="amber"
+        />
+        <ProgramCard
+          href="/members/account"
+          title="My Account"
+          description="Edit your profile, phone number, and password. View your dues status."
+          color="gray"
+        />
       </div>
     </div>
   )
@@ -81,13 +99,16 @@ function ProgramCard({ href, title, description, color }: {
   href: string
   title: string
   description: string
-  color: 'blue' | 'green' | 'teal' | 'indigo'
+  color: 'blue' | 'green' | 'teal' | 'indigo' | 'purple' | 'amber' | 'gray'
 }) {
   const accent: Record<string, string> = {
     blue:   'border-blue-200 hover:border-blue-400 bg-blue-50 hover:bg-blue-100 text-blue-700',
     green:  'border-green-200 hover:border-green-400 bg-green-50 hover:bg-green-100 text-green-700',
     teal:   'border-teal-200 hover:border-teal-400 bg-teal-50 hover:bg-teal-100 text-teal-700',
     indigo: 'border-indigo-200 hover:border-indigo-400 bg-indigo-50 hover:bg-indigo-100 text-indigo-700',
+    purple: 'border-purple-200 hover:border-purple-400 bg-purple-50 hover:bg-purple-100 text-purple-700',
+    amber:  'border-amber-200 hover:border-amber-400 bg-amber-50 hover:bg-amber-100 text-amber-700',
+    gray:   'border-gray-200 hover:border-gray-400 bg-gray-50 hover:bg-gray-100 text-gray-700',
   }
   return (
     <Link

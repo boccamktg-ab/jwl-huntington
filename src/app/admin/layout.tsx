@@ -51,6 +51,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           {isProgramsAdmin && <Link href="/admin/assignments" className="text-blue-100 hover:text-white">Assignments</Link>}
           {isProgramsAdmin && <Link href="/admin/social-workers" className="text-blue-100 hover:text-white">Social Workers</Link>}
           {isProgramsAdmin && <Link href="/admin/broadcast" className="text-blue-100 hover:text-white">Broadcast</Link>}
+          {isMemberAdmin && <Link href="/admin/meetings" className="text-blue-100 hover:text-white">Meetings</Link>}
           {isMemberAdmin && <Link href="/admin/members" className="text-blue-100 hover:text-white">Members</Link>}
           {isMemberAdmin && <Link href="/admin/member-positions" className="text-blue-100 hover:text-white">Positions</Link>}
           {isMemberAdmin && <Link href="/admin/setup" className="text-blue-100 hover:text-white">Setup</Link>}

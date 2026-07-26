@@ -842,3 +842,70 @@ export async function getGrantsReviewerEmails(): Promise<string[]> {
   }
   return emails
 }
+
+// ─── JWL Meetings ─────────────────────────────────────────────────────────────
+
+function fmtDate(d: string) {
+  return new Date(d + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })
+}
+
+function fmtTime(t: string) {
+  const [h, m] = t.split(':').map(Number)
+  const ampm = h >= 12 ? 'PM' : 'AM'
+  return `${((h % 12) || 12)}:${m.toString().padStart(2, '0')} ${ampm}`
+}
+
+export function emailMeetingPublished(memberName: string, date: string, time: string, location: string, agenda: string | null, rsvpYesUrl: string, rsvpNoUrl: string) {
+  return {
+    subject: `JWL Meeting — ${fmtDate(date)}`,
+    html: wrap(`
+      <h2 style="margin:0 0 16px;font-size:20px;font-weight:700;">New Meeting Scheduled</h2>
+      ${p(`Hi ${memberName.split(' ')[0]}, a JWL meeting has been scheduled. We'd love to see you there!`)}
+      ${infoBox([
+        { label: 'Date', value: fmtDate(date) },
+        { label: 'Time', value: fmtTime(time) },
+        { label: 'Location', value: location },
+      ])}
+      ${agenda ? `<div style="background:#f0f4ff;border-radius:8px;padding:16px 20px;margin:16px 0;"><p style="margin:0 0 6px;font-size:13px;font-weight:600;color:#1B52C1;">Agenda highlights</p><p style="margin:0;font-size:14px;color:#374151;line-height:1.6;">${agenda.replace(/\n/g, '<br>')}</p></div>` : ''}
+      <p style="margin:16px 0 8px;font-size:15px;font-weight:600;color:#111827;">Will you be attending?</p>
+      ${btn("✓ Yes, I'll be there", rsvpYesUrl)}
+      <a href="${rsvpNoUrl}" style="display:inline-block;background:#f3f4f6;color:#374151;text-decoration:none;padding:12px 24px;border-radius:8px;font-size:15px;font-weight:600;margin:8px 0 16px 12px;">✗ Can't make it</a>
+      ${p('<span style="font-size:13px;color:#9ca3af;">You can change your RSVP at any time by clicking either button above.</span>')}
+    `),
+  }
+}
+
+export function emailMeetingReminder(memberName: string, date: string, time: string, location: string, hasRsvpd: boolean, rsvpYesUrl: string, rsvpNoUrl: string, daysOut: number) {
+  const when = daysOut === 1 ? 'tomorrow' : 'in one week'
+  return {
+    subject: `Reminder: JWL Meeting ${when} — ${fmtDate(date)}`,
+    html: wrap(`
+      <h2 style="margin:0 0 16px;font-size:20px;font-weight:700;">Meeting Reminder</h2>
+      ${p(`Hi ${memberName.split(' ')[0]}, just a reminder that the JWL meeting is coming up ${when}.`)}
+      ${infoBox([
+        { label: 'Date', value: fmtDate(date) },
+        { label: 'Time', value: fmtTime(time) },
+        { label: 'Location', value: location },
+      ])}
+      ${hasRsvpd
+        ? p("You've already RSVP'd yes — we look forward to seeing you! If your plans have changed, you can update below.")
+        : p("We haven't received your RSVP yet. Will you be joining us?")}
+      ${btn("✓ Yes, I'll be there", rsvpYesUrl)}
+      <a href="${rsvpNoUrl}" style="display:inline-block;background:#f3f4f6;color:#374151;text-decoration:none;padding:12px 24px;border-radius:8px;font-size:15px;font-weight:600;margin:8px 0 16px 12px;">✗ Can't make it</a>
+    `),
+  }
+}
+
+export function emailMeetingRecap(memberName: string, date: string, recap: string) {
+  return {
+    subject: `JWL Meeting Recap — ${fmtDate(date)}`,
+    html: wrap(`
+      <h2 style="margin:0 0 16px;font-size:20px;font-weight:700;">Meeting Recap</h2>
+      ${p(`Hi ${memberName.split(' ')[0]}, here are the notes and highlights from our ${fmtDate(date)} meeting.`)}
+      <div style="background:#f9fafb;border-radius:8px;padding:20px 24px;margin:16px 0;">
+        <p style="margin:0;font-size:14px;color:#374151;line-height:1.8;white-space:pre-line;">${recap}</p>
+      </div>
+      ${btn('View in portal', 'https://portal.jwlhuntington.org/members/meetings')}
+    `),
+  }
+}
