@@ -13,7 +13,7 @@ export const dynamic = 'force-dynamic'
 export default async function MemberDirectoryPage() {
   const { data: members } = await db()
     .from('jwl_members')
-    .select('id, name, email, phone, position_id, position_detail, member_positions ( label, allows_detail )')
+    .select('id, name, email, phone, avatar_url, position_id, position_detail, member_positions ( label, allows_detail )')
     .eq('status', 'approved')
     .order('name')
 
@@ -39,7 +39,21 @@ export default async function MemberDirectoryPage() {
           <tbody className="divide-y divide-gray-100">
             {rows.map(m => (
               <tr key={m.id} className="hover:bg-gray-50">
-                <td className="px-5 py-3 font-medium text-gray-900">{m.name}</td>
+                <td className="px-5 py-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-full overflow-hidden bg-gray-100 border border-gray-200 shrink-0">
+                    {m.avatar_url ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={m.avatar_url} alt={m.name} className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-xs font-semibold text-gray-400">
+                        {m.name.charAt(0).toUpperCase()}
+                      </div>
+                    )}
+                  </div>
+                  <span className="font-medium text-gray-900">{m.name}</span>
+                </div>
+              </td>
                 <td className="px-5 py-3 text-gray-600">
                   {m.member_positions ? (
                     <>

@@ -18,7 +18,7 @@ export default async function AccountPage() {
 
   const { data: member } = await db()
     .from('jwl_members')
-    .select('id, name, email, phone, join_year, dues_paid_through_year, member_positions(label, allows_detail), position_detail')
+    .select('id, name, email, phone, join_year, dues_paid_through_year, avatar_url, member_positions(label, allows_detail), position_detail')
     .eq('auth_id', user!.id)
     .single()
 
@@ -64,6 +64,7 @@ export default async function AccountPage() {
         memberId={(member as any)?.id}
         initialName={(member as any)?.name ?? ''}
         initialPhone={(member as any)?.phone ?? ''}
+        initialAvatarUrl={(member as any)?.avatar_url}
         authId={user!.id}
       />
     </div>
