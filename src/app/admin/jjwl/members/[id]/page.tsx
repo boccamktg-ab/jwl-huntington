@@ -2,6 +2,7 @@ import { createClient } from '@supabase/supabase-js'
 import { notFound } from 'next/navigation'
 import MemberAdminActions from './MemberAdminActions'
 import HourAdjustmentForm from './HourAdjustmentForm'
+import CertificateButton from './CertificateButton'
 
 function db() {
   return createClient(
@@ -104,6 +105,13 @@ export default async function AdminJJWLMemberDetailPage({ params }: { params: Pr
       <div className="bg-white border border-gray-200 rounded-xl p-5 space-y-4">
         <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Adjust Hours</h2>
         <HourAdjustmentForm memberId={id} />
+      </div>
+
+      {/* Year-end certificate */}
+      <div className="bg-white border border-gray-200 rounded-xl p-5 space-y-3">
+        <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Year-End Certificate</h2>
+        <p className="text-sm text-gray-500">Sends a season summary email to the member and parent with their total hours and certificate status.</p>
+        <CertificateButton memberId={id} />
       </div>
 
       {/* Event history */}

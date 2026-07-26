@@ -2,7 +2,7 @@ import { isSuperAdminEmail } from '@/lib/admin'
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createClient as adminClient } from '@supabase/supabase-js'
-import { sendEmail, emailRegistrationApproved } from '@/lib/email'
+import { sendEmail, emailRegistrationApproved, emailRegistrationRejected, emailDuesPaid } from '@/lib/email'
 
 function db() {
   return adminClient(
@@ -79,6 +79,11 @@ export async function PATCH(request: NextRequest) {
       membership_paid: true,
       status: 'active',
     }).eq('id', member_id)
+
+    const { subject, html } = emailDuesPaid(member.name)
+    await sendEmail({ to: member.email, subject, html })
+    if (member.parent_email) await sendEmail({ to: member.parent_email, subject, html })
+
     return NextResponse.json({ ok: true })
   }
 
@@ -94,6 +99,11 @@ export async function PATCH(request: NextRequest) {
 
   if (action === 'reject') {
     await admin.from('jjwl_members').update({ status: 'inactive' }).eq('id', member_id)
+
+    const { subject, html } = emailRegistrationRejected(member.name)
+    await sendEmail({ to: member.email, subject, html })
+    if (member.parent_email) await sendEmail({ to: member.parent_email, subject, html })
+
     return NextResponse.json({ ok: true })
   }
 

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createClient as adminClient } from '@supabase/supabase-js'
+import { sendEmail, emailWaiverConfirmed } from '@/lib/email'
 
 function db() {
   return adminClient(
@@ -51,6 +52,14 @@ export async function POST(request: NextRequest) {
   }, { onConflict: 'member_id,season' })
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+  // Confirmation email to member (fetch full record for email + parent_email)
+  const { data: fullMember } = await db().from('jjwl_members').select('name, email, parent_email').eq('id', member.id).maybeSingle()
+  if (fullMember) {
+    const { subject, html } = emailWaiverConfirmed(fullMember.name, season)
+    await sendEmail({ to: fullMember.email, subject, html })
+    if (fullMember.parent_email) await sendEmail({ to: fullMember.parent_email, subject, html })
+  }
 
   return NextResponse.json({ ok: true })
 }

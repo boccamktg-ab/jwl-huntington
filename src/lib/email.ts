@@ -221,6 +221,111 @@ export function emailHoursConfirmed(name: string, eventTitle: string, hours: num
   }
 }
 
+export function emailRegistrationRejected(name: string) {
+  return {
+    subject: 'JJWL — Update on your registration',
+    html: wrap(`
+      <h2 style="margin:0 0 16px;font-size:20px;font-weight:700;">Hi ${name.split(' ')[0]},</h2>
+      ${p("Thank you for your interest in the Junior Junior Welfare League of Huntington. After reviewing your application, we are unable to approve your registration at this time.")}
+      ${p("If you have questions or would like more information, please contact us at <a href='mailto:jbrady8116@gmail.com' style='color:#1B52C1;'>jbrady8116@gmail.com</a> or 646-314-1564.")}
+    `),
+  }
+}
+
+export function emailDuesPaid(name: string) {
+  return {
+    subject: 'JJWL — Payment received, account activated!',
+    html: wrap(`
+      <h2 style="margin:0 0 16px;font-size:20px;font-weight:700;">You're all set, ${name.split(' ')[0]}!</h2>
+      ${p("Your membership payment has been received and your JJWL account is now active.")}
+      ${p("Before signing up for events, make sure you've completed your parent/guardian waiver — it's required and only takes a few minutes.")}
+      ${btn('Complete waiver →', 'https://portal.jwlhuntington.org/jjwl/waiver')}
+      ${p("Once your waiver is on file, you can browse and sign up for upcoming events.")}
+      ${btn('View upcoming events →', 'https://portal.jwlhuntington.org/jjwl/dashboard')}
+    `),
+  }
+}
+
+export function emailWaiverConfirmed(name: string, season: string) {
+  return {
+    subject: `JJWL — Waiver on file for ${season}`,
+    html: wrap(`
+      <h2 style="margin:0 0 16px;font-size:20px;font-weight:700;">Waiver received, ${name.split(' ')[0]}!</h2>
+      ${p(`Your parent/guardian waiver for the <strong>${season}</strong> season has been submitted and is on file.`)}
+      ${p("You're now able to sign up for events. We look forward to seeing you out there!")}
+      ${btn('Browse upcoming events →', 'https://portal.jwlhuntington.org/jjwl/dashboard')}
+    `),
+  }
+}
+
+export function emailEventPublished(
+  memberName: string,
+  eventTitle: string,
+  eventDate: string,
+  startTime: string | null,
+  endTime: string | null,
+  location: string,
+  creditHours: number,
+  description: string | null,
+  slotsTotal: number,
+) {
+  const rows = [
+    { label: 'Date', value: eventDate },
+    ...(startTime ? [{ label: 'Time', value: startTime + (endTime ? ` – ${endTime}` : '') }] : []),
+    { label: 'Location', value: location },
+    { label: 'Credit hours', value: `${creditHours} hr${creditHours !== 1 ? 's' : ''}` },
+    ...(slotsTotal > 0 ? [{ label: 'Open spots', value: `${slotsTotal}` }] : []),
+  ]
+  return {
+    subject: `JJWL — New event: ${eventTitle}`,
+    html: wrap(`
+      <h2 style="margin:0 0 16px;font-size:20px;font-weight:700;">New event posted, ${memberName.split(' ')[0]}!</h2>
+      ${p(`A new service opportunity has been added — <strong>${eventTitle}</strong>. Sign up while spots are available!`)}
+      ${infoBox(rows)}
+      ${description ? `<p style="margin:0 0 16px;font-size:14px;color:#374151;font-style:italic;">${description}</p>` : ''}
+      ${btn('Sign up now →', 'https://portal.jwlhuntington.org/jjwl/dashboard')}
+    `),
+  }
+}
+
+export function emailEventCancelledToSignup(
+  memberName: string,
+  eventTitle: string,
+  eventDate: string,
+) {
+  return {
+    subject: `JJWL — Event update: ${eventTitle}`,
+    html: wrap(`
+      <h2 style="margin:0 0 16px;font-size:20px;font-weight:700;">Hi ${memberName.split(' ')[0]},</h2>
+      ${p(`We wanted to let you know that <strong>${eventTitle}</strong> (${eventDate}) has been updated and your signup has been removed.`)}
+      ${p("We apologize for any inconvenience. Check back soon for other upcoming service opportunities.")}
+      ${btn('View upcoming events →', 'https://portal.jwlhuntington.org/jjwl/dashboard')}
+    `),
+  }
+}
+
+export function emailYearEndCertificate(name: string, totalHours: number, season: string) {
+  const qualifies = totalHours >= 6
+  return {
+    subject: qualifies
+      ? `JJWL — Congratulations! You've earned your ${season} certificate`
+      : `JJWL — Your ${season} season summary`,
+    html: wrap(`
+      <h2 style="margin:0 0 16px;font-size:20px;font-weight:700;">${qualifies ? `Congratulations, ${name.split(' ')[0]}!` : `Hi ${name.split(' ')[0]},`}</h2>
+      ${infoBox([
+        { label: 'Season', value: season },
+        { label: 'Total hours completed', value: `${totalHours.toFixed(1)} hrs` },
+        { label: 'Certificate', value: qualifies ? '✓ Earned (6+ hours)' : 'Not yet earned (minimum 6 hours required)' },
+      ])}
+      ${qualifies
+        ? p("You've completed the minimum 6 service hours required for the JWL Youth in Philanthropy end-of-year certificate. We're so proud of your dedication to our community!")
+        : p("Thank you for your participation in JJWL this season. To earn the end-of-year certificate, members need to complete a minimum of 6 service hours. We hope to see you back next season!")
+      }
+      ${btn('View my dashboard →', 'https://portal.jwlhuntington.org/jjwl/dashboard')}
+    `),
+  }
+}
+
 // ─── Admin emails ─────────────────────────────────────────────────────────────
 
 export function emailAdminNewRegistration(memberName: string, memberEmail: string, grade: string, school: string) {
