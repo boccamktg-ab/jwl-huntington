@@ -31,10 +31,11 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   const hasAccess = isSuperAdmin || member?.is_admin || member?.is_super_admin || member?.is_programs_admin || member?.is_jjwl_admin || member?.is_grants_reviewer
   if (!hasAccess) redirect('/login')
 
-  const isFullAdmin = isSuperAdmin || !!(member?.is_admin || member?.is_super_admin)
-  const isProgramsAdmin = isFullAdmin || !!member?.is_programs_admin
-  const isJjwlAdmin = isFullAdmin || !!member?.is_jjwl_admin
-  const isGrantsReviewer = isFullAdmin || !!member?.is_grants_reviewer
+  const dbSuperAdmin = isSuperAdmin || !!member?.is_super_admin
+  const isMemberAdmin = dbSuperAdmin || !!member?.is_admin
+  const isProgramsAdmin = dbSuperAdmin || !!member?.is_programs_admin
+  const isJjwlAdmin = dbSuperAdmin || !!member?.is_jjwl_admin
+  const isGrantsReviewer = dbSuperAdmin || !!member?.is_grants_reviewer
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -50,9 +51,9 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           {isProgramsAdmin && <Link href="/admin/assignments" className="text-blue-100 hover:text-white">Assignments</Link>}
           {isProgramsAdmin && <Link href="/admin/social-workers" className="text-blue-100 hover:text-white">Social Workers</Link>}
           {isProgramsAdmin && <Link href="/admin/broadcast" className="text-blue-100 hover:text-white">Broadcast</Link>}
-          {isFullAdmin && <Link href="/admin/members" className="text-blue-100 hover:text-white">Members</Link>}
-          {isFullAdmin && <Link href="/admin/member-positions" className="text-blue-100 hover:text-white">Positions</Link>}
-          {isFullAdmin && <Link href="/admin/setup" className="text-blue-100 hover:text-white">Setup</Link>}
+          {isMemberAdmin && <Link href="/admin/members" className="text-blue-100 hover:text-white">Members</Link>}
+          {isMemberAdmin && <Link href="/admin/member-positions" className="text-blue-100 hover:text-white">Positions</Link>}
+          {isMemberAdmin && <Link href="/admin/setup" className="text-blue-100 hover:text-white">Setup</Link>}
           {isGrantsReviewer && <Link href="/grants/reviewer" className="text-blue-100 hover:text-white">Grants</Link>}
           {isJjwlAdmin && <Link href="/admin/jjwl" className="text-blue-100 hover:text-white">JJWL</Link>}
           <Link href="/members/dashboard" className="text-blue-100 hover:text-white">My Dashboard</Link>
