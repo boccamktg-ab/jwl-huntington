@@ -149,7 +149,6 @@ function MembersTable({ rows, currentYear }: { rows: any[]; currentYear: number 
                     initialPositionId={m.position_id}
                     initialPositionDetail={m.position_detail}
                     initialPhone={m.phone}
-                    onSaved={() => { if (typeof window !== 'undefined') window.location.reload() }}
                   />
                 </div>
               </td>

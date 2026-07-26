@@ -11,14 +11,13 @@ type Props = {
   initialPositionId: string | null
   initialPositionDetail: string | null
   initialPhone: string | null
-  onSaved: () => void
 }
 
 const inputCls = 'border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#1B52C1]'
 
 export default function MembershipPanel({
   memberId, initialJoinYear, initialDuesPaidThrough,
-  initialPositionId, initialPositionDetail, initialPhone, onSaved,
+  initialPositionId, initialPositionDetail, initialPhone,
 }: Props) {
   const [open, setOpen] = useState(false)
   const [positions, setPositions] = useState<Position[]>([])
@@ -58,7 +57,7 @@ export default function MembershipPanel({
     if (!res.ok) { setError(json.error); setSaving(false); return }
     setSaving(false)
     setOpen(false)
-    onSaved()
+    window.location.reload()
   }
 
   const years = Array.from({ length: 30 }, (_, i) => currentYear - i)
