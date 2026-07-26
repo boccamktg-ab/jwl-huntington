@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient as createServiceClient } from '@supabase/supabase-js'
 import { requireAdminFromRequest } from '@/lib/admin'
-import { sendEmail } from '@/lib/email'
+import { sendEmail, emailSWRegistrationApproved, emailSWRegistrationRejected } from '@/lib/email'
 
 function adminClient() {
   return createServiceClient(
@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
   }
 
-  const { id, status } = await request.json()
+  const { id, status, rejection_reason } = await request.json()
   if (!id || !['approved', 'disabled'].includes(status)) {
     return NextResponse.json({ error: 'Invalid input' }, { status: 400 })
   }
@@ -64,26 +64,14 @@ export async function POST(request: NextRequest) {
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
-  if (status === 'approved' && sw?.email) {
-    await sendEmail({
-      to: sw.email,
-      subject: 'JWL Portal — Your account has been approved!',
-      html: `
-        <div style="max-width:600px;margin:0 auto;font-family:sans-serif;color:#111827;border:1px solid #e5e7eb;border-radius:8px;overflow:hidden;">
-          <div style="background:#1B52C1;padding:20px 32px;border-radius:8px 8px 0 0;">
-            <p style="margin:0;color:white;font-size:16px;font-weight:600;">Junior Welfare League of Huntington</p>
-          </div>
-          <div style="padding:28px 32px;">
-            <h2 style="margin:0 0 16px;font-size:20px;font-weight:700;">Hi ${sw.name.split(' ')[0]},</h2>
-            <p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#374151;">Your JWL Portal account has been approved. You can now log in to submit family intake forms and manage your cases.</p>
-            <a href="https://portal.jwlhuntington.org/login" style="display:inline-block;background:#1B52C1;color:white;text-decoration:none;padding:12px 24px;border-radius:8px;font-size:15px;font-weight:600;margin:8px 0 16px;">Log in to the portal →</a>
-          </div>
-          <div style="padding:20px 32px;border-top:1px solid #e5e7eb;">
-            <p style="margin:0;font-size:12px;color:#9ca3af;">Junior Welfare League of Huntington · <a href="https://portal.jwlhuntington.org" style="color:#1B52C1;">portal.jwlhuntington.org</a></p>
-          </div>
-        </div>
-      `,
-    })
+  if (sw?.email) {
+    if (status === 'approved') {
+      const { subject, html } = emailSWRegistrationApproved(sw.name)
+      await sendEmail({ to: sw.email, subject, html })
+    } else if (status === 'disabled') {
+      const { subject, html } = emailSWRegistrationRejected(sw.name, rejection_reason ?? undefined)
+      await sendEmail({ to: sw.email, subject, html })
+    }
   }
 
   return NextResponse.json({ ok: true })

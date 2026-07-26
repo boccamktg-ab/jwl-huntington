@@ -522,6 +522,167 @@ export function emailSocialWorkerGrantStatusUpdate(swName: string, applicationId
 }
 
 // Returns the super admin email plus any JWL admins/reviewers for portal notifications
+// ─── Holiday Charities — Social Worker transactional emails ──────────────────
+
+export function emailSWRegistrationReceived(swName: string) {
+  return {
+    subject: 'JWL Portal — Registration received',
+    html: wrap(`
+      <h2 style="margin:0 0 16px;font-size:20px;font-weight:700;">Hi ${swName.split(' ')[0]},</h2>
+      ${p('Thank you for registering with the JWL Huntington Holiday Charities program. Your registration has been received and a program administrator will review it shortly.')}
+      ${p('You will receive a follow-up email once your account has been approved. No action is needed from you at this time.')}
+      ${p('If you have questions in the meantime, please contact your JWL coordinator.')}
+    `),
+  }
+}
+
+export function emailSWRegistrationApproved(swName: string) {
+  return {
+    subject: 'JWL Portal — Your account has been approved',
+    html: wrap(`
+      <h2 style="margin:0 0 16px;font-size:20px;font-weight:700;">Hi ${swName.split(' ')[0]},</h2>
+      ${p('Your JWL Portal account has been approved. You can now log in to submit family intake forms and manage your cases.')}
+      ${btn('Log in to the portal →', 'https://portal.jwlhuntington.org/login')}
+      ${p('If you have any questions, please contact your JWL coordinator.')}
+    `),
+  }
+}
+
+export function emailSWRegistrationRejected(swName: string, reason?: string) {
+  return {
+    subject: 'JWL Portal — Registration update',
+    html: wrap(`
+      <h2 style="margin:0 0 16px;font-size:20px;font-weight:700;">Hi ${swName.split(' ')[0]},</h2>
+      ${p('Thank you for your interest in the JWL Huntington Holiday Charities program. After review, we were unable to approve your registration at this time.')}
+      ${reason ? infoBox([{ label: 'Reason', value: reason }]) : ''}
+      ${p('If you believe this is an error or have questions, please reach out to your JWL coordinator directly.')}
+    `),
+  }
+}
+
+export function emailSWFamilyRejected(swName: string, familyName: string, reason?: string) {
+  return {
+    subject: `JWL Portal — Family submission update: ${familyName}`,
+    html: wrap(`
+      <h2 style="margin:0 0 16px;font-size:20px;font-weight:700;">Hi ${swName.split(' ')[0]},</h2>
+      ${p(`The family submission for <strong>${familyName}</strong> was reviewed and could not be approved at this time.`)}
+      ${reason ? infoBox([{ label: 'Reason', value: reason }]) : ''}
+      ${p('If you have questions or believe this decision should be reconsidered, please contact your JWL coordinator.')}
+    `),
+  }
+}
+
+export function emailSWFamilyAdjusted(
+  swName: string,
+  familyName: string,
+  changes: string[],
+  changedByName: string,
+  changedByRole: string,
+  familyRef: string,
+) {
+  const changeList = changes.map(c =>
+    `<li style="margin:4px 0;font-size:14px;color:#374151;">${c}</li>`
+  ).join('')
+  return {
+    subject: `JWL Portal — Family record updated: ${familyName}`,
+    html: wrap(`
+      <h2 style="margin:0 0 16px;font-size:20px;font-weight:700;">Family Record Updated</h2>
+      ${p(`Hi ${swName.split(' ')[0]}, a change was made to the <strong>${familyName}</strong> record.`)}
+      ${infoBox([
+        { label: 'Changed by', value: `${changedByName} (${changedByRole})` },
+        { label: 'Family ref', value: familyRef },
+        { label: 'Date', value: new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) },
+      ])}
+      <p style="margin:0 0 8px;font-size:14px;font-weight:600;color:#111827;">What changed:</p>
+      <ul style="margin:0 0 16px;padding-left:20px;">${changeList}</ul>
+      ${btn('View your portal →', 'https://portal.jwlhuntington.org/login')}
+    `),
+  }
+}
+
+export function emailAdminFamilyAdjusted(
+  familyName: string,
+  swName: string,
+  swEmail: string,
+  changes: string[],
+  changedByName: string,
+  changedByRole: string,
+  familyRef: string,
+) {
+  const changeList = changes.map(c =>
+    `<li style="margin:4px 0;font-size:14px;color:#374151;">${c}</li>`
+  ).join('')
+  return {
+    subject: `JWL Portal — Audit: ${familyName} record updated by ${changedByName}`,
+    html: wrap(`
+      <h2 style="margin:0 0 16px;font-size:20px;font-weight:700;">Family Record Audit Copy</h2>
+      ${p(`A change was made to the <strong>${familyName}</strong> record. This is an automatic audit copy.`)}
+      ${infoBox([
+        { label: 'Social worker', value: `${swName} (${swEmail})` },
+        { label: 'Changed by', value: `${changedByName} (${changedByRole})` },
+        { label: 'Family ref', value: familyRef },
+        { label: 'Date', value: new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) },
+      ])}
+      <p style="margin:0 0 8px;font-size:14px;font-weight:600;color:#111827;">What changed:</p>
+      <ul style="margin:0 0 16px;padding-left:20px;">${changeList}</ul>
+      ${btn('View in admin portal →', `${ADMIN_URL}/families`)}
+    `),
+  }
+}
+
+export function emailBroadcastSeasonOpen(swName: string) {
+  return {
+    subject: 'JWL Holiday Charities — We\'re now accepting family submissions',
+    html: wrap(`
+      <h2 style="margin:0 0 16px;font-size:20px;font-weight:700;">Hi ${swName.split(' ')[0]},</h2>
+      ${p('The JWL Huntington Holiday Charities program is now open for the season. You can log in to the portal to begin submitting family intake forms.')}
+      ${btn('Log in and submit families →', 'https://portal.jwlhuntington.org/login')}
+      ${p('If you have any questions about eligibility or the intake process, please contact your JWL coordinator.')}
+    `),
+  }
+}
+
+export function emailBroadcastDeadlineReminder(swName: string, deadline: string, hasSubmissions: boolean) {
+  return {
+    subject: 'JWL Holiday Charities — Submission deadline reminder',
+    html: wrap(`
+      <h2 style="margin:0 0 16px;font-size:20px;font-weight:700;">Hi ${swName.split(' ')[0]},</h2>
+      ${p(`This is a reminder that the deadline to submit family intake forms for the Holiday Charities program is <strong>${deadline}</strong>.`)}
+      ${!hasSubmissions ? p('<strong>We have not yet received any submissions from you.</strong> If you have families to submit, please log in as soon as possible.') : ''}
+      ${p('Families submitted after the deadline may not be able to be accommodated this season.')}
+      ${btn('Log in and submit families →', 'https://portal.jwlhuntington.org/login')}
+    `),
+  }
+}
+
+export function emailSWSeasonReset(swName: string) {
+  return {
+    subject: 'JWL Holiday Charities — Season has concluded',
+    html: wrap(`
+      <h2 style="margin:0 0 16px;font-size:20px;font-weight:700;">Hi ${swName.split(' ')[0]},</h2>
+      ${p('The Holiday Charities program season has concluded. Your portal has been reset and is ready for the next season.')}
+      ${p('You can log in to review your previous entries, make any updates, or remove records that are no longer needed. When the new season opens, you will receive a notification with instructions to begin submitting.')}
+      ${btn('Log in to the portal →', 'https://portal.jwlhuntington.org/login')}
+    `),
+  }
+}
+
+export function emailAdminSeasonReset(swCount: number) {
+  return {
+    subject: 'JWL Portal — Season reset completed',
+    html: wrap(`
+      <h2 style="margin:0 0 16px;font-size:20px;font-weight:700;">Season Reset Complete</h2>
+      ${p('The Holiday Charities season reset has been completed successfully.')}
+      ${infoBox([
+        { label: 'Social workers notified', value: `${swCount}` },
+        { label: 'Reset at', value: new Date().toLocaleString('en-US', { timeZone: 'America/New_York', dateStyle: 'long', timeStyle: 'short' }) },
+      ])}
+      ${p('All family records have been returned to draft status. Social workers have been notified that the season has concluded.')}
+      ${btn('View admin portal →', `${ADMIN_URL}/families`)}
+    `),
+  }
+}
+
 export async function getPortalAdminEmails(): Promise<string[]> {
   const emails: string[] = []
   if (process.env.NEXT_PUBLIC_ADMIN_EMAIL) emails.push(process.env.NEXT_PUBLIC_ADMIN_EMAIL)

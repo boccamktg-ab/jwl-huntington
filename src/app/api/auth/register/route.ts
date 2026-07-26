@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { sendEmail, getPortalAdminEmails, emailAdminNewSocialWorker, createApprovalToken } from '@/lib/email'
+import { sendEmail, getPortalAdminEmails, emailAdminNewSocialWorker, emailSWRegistrationReceived, createApprovalToken } from '@/lib/email'
 
 function adminClient() {
   return createClient(
@@ -48,6 +48,10 @@ export async function POST(request: NextRequest) {
     school_id,
   }))
   await supabase.from('social_worker_schools').insert(schoolLinks)
+
+  // Confirm receipt to social worker
+  const { subject: swSubject, html: swHtml } = emailSWRegistrationReceived(name)
+  await sendEmail({ to: email, subject: swSubject, html: swHtml })
 
   // Notify admins
   const { data: schoolRows } = await supabase

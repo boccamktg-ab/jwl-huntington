@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
 import DeleteFamilyButton from './DeleteFamilyButton'
+import RejectFamilyButton from './RejectFamilyButton'
 
 function db() {
   return createClient(
@@ -13,12 +14,14 @@ const STATUS_LABELS: Record<string, string> = {
   draft: 'Draft',
   submitted: 'Submitted',
   approved: 'Approved',
+  rejected: 'Rejected',
 }
 
 const STATUS_COLORS: Record<string, string> = {
   draft: 'bg-gray-100 text-gray-600',
   submitted: 'bg-amber-100 text-amber-700',
   approved: 'bg-green-100 text-green-700',
+  rejected: 'bg-red-100 text-red-600',
 }
 
 export default async function AdminFamiliesPage() {
@@ -36,6 +39,7 @@ export default async function AdminFamiliesPage() {
   const draft     = (families ?? []).filter(f => f.status === 'draft')
   const submitted = (families ?? []).filter(f => f.status === 'submitted')
   const approved  = (families ?? []).filter(f => f.status === 'approved')
+  const rejected  = (families ?? []).filter(f => f.status === 'rejected')
 
   return (
     <div className="space-y-8">
@@ -48,11 +52,12 @@ export default async function AdminFamiliesPage() {
         { label: 'Submitted', rows: submitted, color: 'amber' },
         { label: 'Draft', rows: draft, color: 'gray' },
         { label: 'Approved', rows: approved, color: 'green' },
+        { label: 'Rejected', rows: rejected, color: 'red' },
       ].map(({ label, rows, color }) =>
         rows.length > 0 ? (
           <div key={label}>
             <h2 className={`text-sm font-semibold uppercase tracking-wide mb-3 ${
-              color === 'amber' ? 'text-amber-700' : color === 'green' ? 'text-green-700' : 'text-gray-500'
+              color === 'amber' ? 'text-amber-700' : color === 'green' ? 'text-green-700' : color === 'red' ? 'text-red-600' : 'text-gray-500'
             }`}>
               {label} ({rows.length})
             </h2>
@@ -84,7 +89,12 @@ export default async function AdminFamiliesPage() {
                         </span>
                       </td>
                       <td className="px-4 py-3 text-right">
-                        <DeleteFamilyButton familyId={f.id} familyNumber={f.family_number} />
+                        <div className="flex gap-2 items-center justify-end">
+                          {f.status === 'submitted' && (
+                            <RejectFamilyButton familyId={f.id} familyName={f.family_number?.toString() ?? 'Family'} />
+                          )}
+                          <DeleteFamilyButton familyId={f.id} familyNumber={f.family_number} />
+                        </div>
                       </td>
                     </tr>
                   ))}

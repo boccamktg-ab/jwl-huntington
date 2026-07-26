@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { requireAdminFromRequest } from '@/lib/admin'
+import { sendEmail, emailSWSeasonReset, emailAdminSeasonReset, getPortalAdminEmails } from '@/lib/email'
 
 function db() {
   return createClient(
@@ -43,5 +44,26 @@ export async function POST(request: NextRequest) {
     .neq('id', '00000000-0000-0000-0000-000000000000')
   if (memberErr) return NextResponse.json({ error: memberErr.message }, { status: 500 })
 
-  return NextResponse.json({ ok: true })
+  // Notify all approved social workers
+  const { data: workers } = await admin
+    .from('social_workers')
+    .select('name, email')
+    .eq('status', 'approved')
+
+  let notified = 0
+  for (const sw of workers ?? []) {
+    if (!sw.email) continue
+    const { subject, html } = emailSWSeasonReset(sw.name)
+    await sendEmail({ to: sw.email, subject, html })
+    notified++
+  }
+
+  // Notify portal admins
+  const adminEmails = await getPortalAdminEmails()
+  if (adminEmails.length > 0) {
+    const { subject, html } = emailAdminSeasonReset(notified)
+    await sendEmail({ to: adminEmails, subject, html })
+  }
+
+  return NextResponse.json({ ok: true, notified })
 }
