@@ -31,6 +31,9 @@ export default function RegisterPage() {
   // Community SW fields
   const [organization, setOrganization] = useState('')
   const [orgType, setOrgType] = useState('')
+  // JWL Member fields
+  const [phone, setPhone] = useState('')
+  const [joinYear, setJoinYear] = useState('')
 
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
@@ -80,7 +83,7 @@ export default function RegisterPage() {
           organization: swType === 'community' ? organization.trim() : undefined,
           orgType: swType === 'community' ? orgType : undefined,
         }
-      : { name, email, password }
+      : { name, email, password, phone: phone || undefined, joinYear: joinYear ? Number(joinYear) : undefined }
 
     const res = await fetch(endpoint, {
       method: 'POST',
@@ -220,6 +223,25 @@ export default function RegisterPage() {
                   </div>
                 </>
               )}
+            </>
+          )}
+
+          {role === 'jwl_member' && (
+            <>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Phone number</label>
+                <input type="tel" value={phone} onChange={e => setPhone(e.target.value)} placeholder="(555) 555-5555" className={inputCls} />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Year you joined JWL</label>
+                <select value={joinYear} onChange={e => setJoinYear(e.target.value)} className={inputCls}>
+                  <option value="">Select year…</option>
+                  {Array.from({ length: 30 }, (_, i) => new Date().getFullYear() - i).map(y => (
+                    <option key={y} value={y}>{y}</option>
+                  ))}
+                </select>
+                <p className="text-xs text-gray-400 mt-1">New members who join and pay in {new Date().getFullYear()} are paid through end of {new Date().getFullYear() + 1}.</p>
+              </div>
             </>
           )}
 

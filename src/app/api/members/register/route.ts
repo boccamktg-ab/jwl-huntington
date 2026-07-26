@@ -11,7 +11,7 @@ function adminClient() {
 }
 
 export async function POST(request: NextRequest) {
-  const { name, email, password, childrenRequested } = await request.json()
+  const { name, email, password, childrenRequested, phone, joinYear } = await request.json()
   if (!name || !email || !password) {
     return NextResponse.json({ error: 'Missing required fields.' }, { status: 400 })
   }
@@ -31,6 +31,8 @@ export async function POST(request: NextRequest) {
       auth_id: authData.user.id,
       status: 'pending',
       children_requested: childrenRequested ?? null,
+      phone: phone || null,
+      join_year: joinYear || null,
     })
     .select('id')
     .single()

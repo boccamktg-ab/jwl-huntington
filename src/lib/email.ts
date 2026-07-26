@@ -788,6 +788,19 @@ export function emailAdminSeasonReset(swCount: number) {
   }
 }
 
+export function emailMemberDuesReminder(memberName: string, currentYear: number) {
+  return {
+    subject: `JWL Huntington — ${currentYear} membership dues reminder`,
+    html: wrap(`
+      <h2 style="margin:0 0 16px;font-size:20px;font-weight:700;">Hi ${memberName.split(' ')[0]},</h2>
+      ${p(`This is a friendly reminder that JWL Huntington membership dues for <strong>${currentYear}</strong> have not yet been recorded for your account.`)}
+      ${p('Dues are renewed each January. If you have already paid, please disregard this message — your account will be updated once payment is confirmed.')}
+      ${p('If you have any questions about your membership status or how to pay, please contact the JWL Membership team.')}
+      ${btn('Log in to your account →', 'https://portal.jwlhuntington.org/members/dashboard')}
+    `),
+  }
+}
+
 export async function getPortalAdminEmails(): Promise<string[]> {
   const emails: string[] = []
   if (process.env.NEXT_PUBLIC_ADMIN_EMAIL) emails.push(process.env.NEXT_PUBLIC_ADMIN_EMAIL)
