@@ -10,12 +10,14 @@ export default async function PortalPage() {
 
   const { data: sw } = await supabase
     .from('social_workers')
-    .select('name, status')
+    .select('name, status, sw_type')
     .eq('auth_id', user.id)
     .single()
 
   if (!sw) redirect('/login')
   if (sw.status === 'pending') redirect('/dashboard')
+  // Community SWs go straight to grants — no HC intake
+  if (sw.sw_type === 'community') redirect('/grants')
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">

@@ -17,7 +17,7 @@ export default async function SocialWorkersPage() {
     supabase
       .from('social_workers')
       .select(`
-        id, name, email, status, intake_complete, submissions_enabled, created_at,
+        id, name, email, status, intake_complete, submissions_enabled, created_at, sw_type, organization,
         social_worker_schools ( schools ( name, districts ( name ) ) )
       `)
       .order('created_at', { ascending: false }),
@@ -79,9 +79,13 @@ export default async function SocialWorkersPage() {
 }
 
 function SocialWorkerCard({ sw, overdueCount, showActions }: { sw: any; overdueCount: number; showActions: boolean }) {
-  const schools = sw.social_worker_schools
-    ?.map((sws: any) => `${sws.schools?.name} (${sws.schools?.districts?.name})`)
-    .join(', ')
+  const affiliation = sw.sw_type === 'community'
+    ? sw.organization ?? 'Community / Organization'
+    : sw.social_worker_schools
+        ?.map((sws: any) => `${sws.schools?.name} (${sws.schools?.districts?.name})`)
+        .join(', ')
+  // keep legacy variable name for template below
+  const schools = affiliation
 
   const statusColors: Record<string, string> = {
     pending: 'bg-amber-100 text-amber-800',
@@ -97,6 +101,11 @@ function SocialWorkerCard({ sw, overdueCount, showActions }: { sw: any; overdueC
           <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${statusColors[sw.status]}`}>
             {sw.status}
           </span>
+          {sw.sw_type === 'community' && (
+            <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-purple-100 text-purple-700">
+              community
+            </span>
+          )}
           {sw.intake_complete && (
             <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-blue-100 text-blue-700">
               intake complete

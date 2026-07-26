@@ -20,11 +20,12 @@ export default async function DashboardPage() {
 
   const { data: sw } = await supabase
     .from('social_workers')
-    .select('id, name, status, intake_complete')
+    .select('id, name, status, intake_complete, sw_type')
     .eq('auth_id', user.id)
     .single()
 
   if (!sw) redirect('/login')
+  if (sw.sw_type === 'community') redirect('/grants')
 
   if (sw.status === 'pending') {
     return (
