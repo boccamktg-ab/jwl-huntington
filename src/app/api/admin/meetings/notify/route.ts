@@ -75,6 +75,7 @@ export async function POST(request: NextRequest) {
         rsvpUrl(rsvp.token, 'yes'), rsvpUrl(rsvp.token, 'no'),
       )
     } else if (type === 'reminder_7' || type === 'reminder_1') {
+      if (rsvp.response === 'no') continue
       const daysOut = type === 'reminder_1' ? 1 : 7
       payload = emailMeetingReminder(
         member.name, meeting.meeting_date, meeting.meeting_time,
