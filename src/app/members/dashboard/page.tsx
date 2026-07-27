@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { createClient as adminClient } from '@supabase/supabase-js'
+import { isSuperAdminEmail } from '@/lib/admin'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 
@@ -16,24 +17,26 @@ export default async function MemberDashboardPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
+  const superAdmin = isSuperAdminEmail(user.email)
+
   const { data: member } = await db()
     .from('jwl_members')
     .select('id, name, is_admin, is_super_admin, is_programs_admin, is_grants_reviewer, is_jjwl_admin')
     .eq('auth_id', user.id)
-    .single()
+    .maybeSingle()
 
-  if (!member) redirect('/login')
+  if (!member && !superAdmin) redirect('/login')
 
-  const isFullAdmin = member.is_admin || member.is_super_admin
+  const isFullAdmin = superAdmin || !!(member?.is_admin || member?.is_super_admin)
   const showHolidayCharities = true
-  const showGrants = isFullAdmin || member.is_grants_reviewer
-  const showJjwl = isFullAdmin || member.is_jjwl_admin
-  const showAdmin = isFullAdmin || member.is_programs_admin
+  const showGrants = isFullAdmin || !!member?.is_grants_reviewer
+  const showJjwl = isFullAdmin || !!member?.is_jjwl_admin
+  const showAdmin = isFullAdmin || !!member?.is_programs_admin
 
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-2xl font-semibold text-gray-900">Welcome, {member.name.split(' ')[0]}</h1>
+        <h1 className="text-2xl font-semibold text-gray-900">Welcome, {(member?.name ?? 'Admin').split(' ')[0]}</h1>
         <p className="text-sm text-gray-500 mt-1">Select a program to get started.</p>
       </div>
 
