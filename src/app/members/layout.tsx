@@ -1,8 +1,7 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { createClient as adminClient } from '@supabase/supabase-js'
-import Image from 'next/image'
-import Link from 'next/link'
+import MembersNav from '@/components/MembersNav'
 
 export default async function MembersLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient()
@@ -27,36 +26,15 @@ export default async function MembersLayout({ children }: { children: React.Reac
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <nav className="bg-[#1B52C1] px-6 py-3 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <Image src="/jwl-logo.png" alt="JWL" width={36} height={36} className="object-contain bg-white rounded-full p-0.5" />
-          <span className="font-semibold text-white text-sm">JWL Huntington</span>
-        </div>
-        <div className="flex items-center gap-4 text-sm">
-          <Link href="/members/dashboard" className="text-blue-100 hover:text-white">Dashboard</Link>
-          <Link href="/members/holiday-charities" className="text-blue-100 hover:text-white">Holiday Charities</Link>
-          <Link href="/members/meetings" className="text-blue-100 hover:text-white">Meetings</Link>
-          <Link href="/members/directory" className="text-blue-100 hover:text-white">Directory</Link>
-          <Link href="/members/account" className="text-blue-100 hover:text-white">Account</Link>
-          {member.is_grants_reviewer && (
-            <Link href="/grants/reviewer" className="text-blue-100 hover:text-white">Grants</Link>
-          )}
-          {member.is_programs_admin && (
-            <Link href="/admin" className="text-blue-100 hover:text-white">Programs Admin</Link>
-          )}
-          {member.is_jjwl_admin && (
-            <Link href="/admin/jjwl" className="text-blue-100 hover:text-white">JJWL Admin</Link>
-          )}
-          {(member.is_admin || member.is_super_admin) && (
-            <Link href="/admin" className="text-blue-100 hover:text-white">Admin</Link>
-          )}
-          <span className="text-blue-200 border-l border-blue-400 pl-4">{member.name}</span>
-          <form action="/api/auth/logout" method="POST">
-            <button className="text-blue-200 hover:text-white">Sign out</button>
-          </form>
-        </div>
-      </nav>
-      <main className="max-w-4xl mx-auto px-6 py-8">{children}</main>
+      <MembersNav
+        memberName={member.name}
+        isGrantsReviewer={!!member.is_grants_reviewer}
+        isProgramsAdmin={!!member.is_programs_admin}
+        isJjwlAdmin={!!member.is_jjwl_admin}
+        isAdmin={!!member.is_admin}
+        isSuperAdmin={!!member.is_super_admin}
+      />
+      <main className="max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-8">{children}</main>
     </div>
   )
 }
