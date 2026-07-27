@@ -5,6 +5,7 @@ import FamilyActions from './FamilyActions'
 import AddChildForm from './AddChildForm'
 import ChildCard from './ChildCard'
 import EditFamilyForm from './EditFamilyForm'
+import TranslationReviewCard from './TranslationReviewCard'
 
 export default async function FamilyDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -19,7 +20,7 @@ export default async function FamilyDetailPage({ params }: { params: Promise<{ i
         id, family_number, num_children, status, language_pref, link_token,
         school_id, social_worker_id,
         schools ( id, name, districts ( name ) ),
-        children ( id, first_name, age, gender, gift_requests, top_size, bottom_size, shoe_size, created_at )
+        children ( id, first_name, age, gender, gift_requests, gift_requests_en, translation_status, top_size, bottom_size, shoe_size, created_at )
       `)
       .eq('id', id)
       .single(),
@@ -106,7 +107,18 @@ export default async function FamilyDetailPage({ params }: { params: Promise<{ i
           {children
             .sort((a: any, b: any) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
             .map((child: any) => (
-              <ChildCard key={child.id} child={child} canEdit={canEdit} />
+              <div key={child.id} className="space-y-2">
+                {child.translation_status === 'pending_review' && child.gift_requests && child.gift_requests_en && (
+                  <TranslationReviewCard
+                    familyId={family.id}
+                    childId={child.id}
+                    childName={child.first_name}
+                    originalSpanish={child.gift_requests}
+                    translatedEnglish={child.gift_requests_en}
+                  />
+                )}
+                <ChildCard child={child} canEdit={canEdit} />
+              </div>
             ))}
         </div>
 

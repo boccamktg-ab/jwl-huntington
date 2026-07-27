@@ -23,7 +23,7 @@ export default async function AssignmentDetailPage({ params }: { params: Promise
       jwl_members ( name, email ),
       assignment_children (
         children (
-          id, first_name, age, gender, gift_requests, top_size, bottom_size, shoe_size,
+          id, first_name, age, gender, gift_requests, gift_requests_en, top_size, bottom_size, shoe_size,
           families ( family_number, schools ( name, districts ( name ) ) )
         )
       )
@@ -86,7 +86,7 @@ export default async function AssignmentDetailPage({ params }: { params: Promise
                   <span className="text-gray-400">{child.families?.schools?.districts?.name}</span>
                 </td>
                 <td className="px-4 py-3 text-gray-600 max-w-xs">
-                  <span className="line-clamp-2">{child.gift_requests || '—'}</span>
+                  <span className="line-clamp-2">{child.gift_requests_en || child.gift_requests || '—'}</span>
                 </td>
                 <td className="px-4 py-3 text-xs text-gray-500">
                   {[

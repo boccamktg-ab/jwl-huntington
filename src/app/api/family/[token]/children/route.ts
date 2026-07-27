@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { sendEmail, emailSWFamilyAdjusted, emailAdminFamilyAdjusted, getPortalAdminEmails } from '@/lib/email'
+import { translateGiftRequests } from '@/lib/translate'
 
 function adminClient() {
   return createClient(
@@ -13,7 +14,7 @@ function adminClient() {
 async function getFamilyByToken(token: string) {
   const { data } = await adminClient()
     .from('families')
-    .select('id, status, guardian_name, family_number, social_worker_id, social_workers(name, email)')
+    .select('id, status, guardian_name, family_number, language_pref, social_worker_id, social_workers(name, email)')
     .eq('link_token', token)
     .single()
   return data
@@ -59,6 +60,18 @@ export async function POST(
   const { firstName, age, gender, giftRequests, topSize, bottomSize, shoeSize } = await request.json()
   if (!firstName?.trim()) return NextResponse.json({ error: 'First name required' }, { status: 400 })
 
+  // Auto-translate gift requests for Spanish-speaking families
+  let giftRequestsEn: string | null = null
+  let translationStatus: string | null = null
+  if (giftRequests && family.language_pref === 'es') {
+    try {
+      giftRequestsEn = await translateGiftRequests(giftRequests)
+      translationStatus = 'pending_review'
+    } catch {
+      // Translation failure is non-fatal; SW can translate manually
+    }
+  }
+
   const { data, error } = await adminClient()
     .from('children')
     .insert({
@@ -67,6 +80,8 @@ export async function POST(
       age: age ? Number(age) : null,
       gender: gender || null,
       gift_requests: giftRequests || null,
+      gift_requests_en: giftRequestsEn,
+      translation_status: translationStatus,
       top_size: topSize || null,
       bottom_size: bottomSize || null,
       shoe_size: shoeSize || null,

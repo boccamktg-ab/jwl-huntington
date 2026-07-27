@@ -31,7 +31,7 @@ export default async function HolidayCharitiesPage() {
       id, created_at, exported,
       assignment_children (
         children (
-          id, first_name, age, gender, gift_requests, top_size, bottom_size, shoe_size,
+          id, first_name, age, gender, gift_requests, gift_requests_en, top_size, bottom_size, shoe_size,
           families ( family_number, schools ( name, districts ( name ) ) )
         )
       )
@@ -99,7 +99,7 @@ export default async function HolidayCharitiesPage() {
                     <span className="text-gray-400">{child.families?.schools?.districts?.name}</span>
                   </td>
                   <td className="px-4 py-3 text-gray-600 max-w-xs">
-                    <span className="line-clamp-2">{child.gift_requests || '—'}</span>
+                    <span className="line-clamp-2">{(child as any).gift_requests_en || child.gift_requests || '—'}</span>
                   </td>
                   <td className="px-4 py-3 text-xs text-gray-500">
                     {[

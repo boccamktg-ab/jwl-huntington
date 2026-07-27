@@ -12,6 +12,7 @@ type Child = {
   age: number | null
   gender: string | null
   gift_requests: string | null
+  gift_requests_en: string | null
   top_size: string | null
   bottom_size: string | null
   shoe_size: string | null
@@ -248,7 +249,7 @@ export default function NewAssignmentForm({ members, districts, schools, childre
                       <td className="px-3 py-2 text-gray-600">{fam?.family_number}</td>
                       <td className="px-3 py-2 text-xs text-gray-500">{fam?.schools?.name}</td>
                       <td className="px-3 py-2 text-gray-500 max-w-xs">
-                        <span className="line-clamp-1">{child.gift_requests || '—'}</span>
+                        <span className="line-clamp-1">{child.gift_requests_en || child.gift_requests || '—'}</span>
                       </td>
                     </tr>
                   )

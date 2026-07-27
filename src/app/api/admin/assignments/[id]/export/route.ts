@@ -39,7 +39,7 @@ export async function GET(
       jwl_members ( id, name, email, auth_id ),
       assignment_children (
         children (
-          first_name, age, gender, gift_requests, top_size, bottom_size, shoe_size,
+          first_name, age, gender, gift_requests, gift_requests_en, top_size, bottom_size, shoe_size,
           families (
             family_number, num_children,
             social_workers ( name, email, phone ),
@@ -85,7 +85,7 @@ export async function GET(
       gender:         child.gender ?? '',
       school:         fam?.schools?.name ?? '',
       district:       fam?.schools?.districts?.name ?? '',
-      gift_requests:  child.gift_requests ?? '',
+      gift_requests:  child.gift_requests_en ?? child.gift_requests ?? '',
       top_size:       child.top_size ?? '',
       bottom_size:    child.bottom_size ?? '',
       shoe_size:      child.shoe_size ?? '',

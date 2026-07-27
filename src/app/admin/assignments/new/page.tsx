@@ -23,7 +23,7 @@ export default async function NewAssignmentPage() {
     supabase.from('districts').select('id, name').order('name'),
     supabase.from('schools').select('id, name, district_id').order('name'),
     supabase.from('children').select(`
-      id, first_name, age, gender, gift_requests, top_size, bottom_size, shoe_size,
+      id, first_name, age, gender, gift_requests, gift_requests_en, top_size, bottom_size, shoe_size,
       families ( id, family_number, status, schools ( id, name, district_id, districts ( id, name ) ) )
     `),
     supabase.from('assignment_children').select('child_id'),

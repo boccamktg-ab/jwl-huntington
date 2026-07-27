@@ -27,7 +27,7 @@ export default async function AdminChildrenPage({
   let query = supabase
     .from('children')
     .select(`
-      id, first_name, age, gender, gift_requests, top_size, bottom_size, shoe_size,
+      id, first_name, age, gender, gift_requests, gift_requests_en, translation_status, top_size, bottom_size, shoe_size,
       families (
         id, family_number, status, social_worker_id,
         schools ( id, name, district_id, districts ( id, name ) ),
@@ -92,7 +92,7 @@ export default async function AdminChildrenPage({
                       <span className="text-gray-400">{fam?.schools?.districts?.name}</span>
                     </td>
                     <td className="px-4 py-3 text-gray-600 max-w-xs">
-                      <span className="line-clamp-2">{child.gift_requests || '—'}</span>
+                      <span className="line-clamp-2">{(child as any).gift_requests_en || child.gift_requests || '—'}</span>
                     </td>
                     <td className="px-4 py-3 text-gray-500 text-xs">
                       {[
