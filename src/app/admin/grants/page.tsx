@@ -89,7 +89,13 @@ export default async function AdminGrantsPage() {
           <h1 className="text-2xl font-semibold text-gray-900">Grants — Admin Intake</h1>
           <p className="text-sm text-gray-500 mt-1">Add applications on behalf of referrers who contacted JWL outside the portal, or create a placeholder for scan-first transcription.</p>
         </div>
-        <Link href="/grants/reviewer" className="text-sm text-[#1B52C1] hover:underline">View reviewer queue →</Link>
+        <div className="flex items-center gap-4">
+          <Link href="/admin/grants/new"
+            className="inline-flex items-center gap-1.5 bg-[#1B52C1] text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-[#1540A0]">
+            + Full Entry
+          </Link>
+          <Link href="/grants/reviewer" className="text-sm text-[#1B52C1] hover:underline">View reviewer queue →</Link>
+        </div>
       </div>
 
       {/* Quick Add & Scan First forms */}
