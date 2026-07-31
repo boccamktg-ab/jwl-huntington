@@ -84,8 +84,7 @@ export default function AdminGrantIntake() {
         }
       }
 
-      router.refresh()
-      reset()
+      router.push(`/grants/reviewer/${json.id}`)
     } catch (err: any) {
       setError(err.message)
     } finally {
