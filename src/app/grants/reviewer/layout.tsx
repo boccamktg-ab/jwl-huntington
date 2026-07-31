@@ -37,6 +37,7 @@ export default async function GrantsReviewerLayout({ children }: { children: Rea
         userName={member?.name ?? 'Admin'}
         links={[
           { href: '/grants/reviewer', label: 'Applications' },
+          ...(isAdmin ? [{ href: '/admin/grants', label: 'Intake' }] : []),
           { href: '/members/dashboard', label: 'My Dashboard' },
         ]}
       />
