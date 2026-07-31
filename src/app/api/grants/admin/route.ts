@@ -88,6 +88,7 @@ export async function POST(request: NextRequest) {
     await supabase.from('grant_application_details').insert({
       application_id: app.id,
       beneficiary_name: beneficiary_name ?? '',
+      address: '',
       justification: contact_info ?? null,
     })
   }
