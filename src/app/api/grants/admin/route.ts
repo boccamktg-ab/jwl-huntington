@@ -87,7 +87,7 @@ export async function POST(request: NextRequest) {
     // quick_add and scan_first both need a details row so joins don't drop the record
     await supabase.from('grant_application_details').insert({
       application_id: app.id,
-      beneficiary_name: beneficiary_name ?? null,
+      beneficiary_name: beneficiary_name ?? '',
       justification: contact_info ?? null,
     })
   }
