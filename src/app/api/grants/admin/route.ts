@@ -89,7 +89,7 @@ export async function POST(request: NextRequest) {
       application_id: app.id,
       beneficiary_name: beneficiary_name ?? '',
       address: '',
-      justification: contact_info ?? null,
+      justification: contact_info ?? '',
     })
   }
 
