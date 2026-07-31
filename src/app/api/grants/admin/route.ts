@@ -83,7 +83,8 @@ export async function POST(request: NextRequest) {
         }))
       if (rows.length > 0) await supabase.from('grant_household_members').insert(rows)
     }
-  } else if (intake_type === 'quick_add') {
+  } else {
+    // quick_add and scan_first both need a details row so joins don't drop the record
     await supabase.from('grant_application_details').insert({
       application_id: app.id,
       beneficiary_name: beneficiary_name ?? null,
