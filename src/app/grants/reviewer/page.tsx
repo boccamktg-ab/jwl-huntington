@@ -1,4 +1,6 @@
 import { createClient as adminSupabase } from '@supabase/supabase-js'
+import { createClient } from '@/lib/supabase/server'
+import { isSuperAdminEmail } from '@/lib/admin'
 import Link from 'next/link'
 
 function db() {
@@ -41,6 +43,14 @@ const GRANT_LABELS: Record<string, string> = {
 const ACTIVE_STATUSES = ['submitted', 'needs_more_info', 'under_review', 'pending_transcription', 'incomplete']
 
 export default async function ReviewerDashboardPage() {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  const isAdmin = isSuperAdminEmail(user?.email) || await (async () => {
+    if (!user) return false
+    const { data } = await db().from('jwl_members').select('is_admin, is_super_admin').eq('auth_id', user.id).maybeSingle()
+    return !!(data?.is_admin || data?.is_super_admin)
+  })()
+
   const { data: applications } = await db()
     .from('grant_applications')
     .select(`
@@ -57,7 +67,21 @@ export default async function ReviewerDashboardPage() {
 
   return (
     <div className="space-y-8">
-      <h1 className="text-2xl font-semibold text-gray-900">Grant Applications</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-semibold text-gray-900">Grant Applications</h1>
+        {isAdmin && (
+          <div className="flex items-center gap-3">
+            <Link href="/admin/grants/new"
+              className="inline-flex items-center gap-1.5 bg-[#1B52C1] text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-[#1540A0]">
+              + New Application
+            </Link>
+            <Link href="/admin/grants"
+              className="text-sm text-[#1B52C1] hover:underline">
+              Intake queue →
+            </Link>
+          </div>
+        )}
+      </div>
 
       <section className="space-y-3">
         <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide">
