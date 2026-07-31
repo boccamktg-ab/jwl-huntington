@@ -3,6 +3,8 @@ import { createClient } from '@/lib/supabase/server'
 import { isSuperAdminEmail } from '@/lib/admin'
 import Link from 'next/link'
 
+export const dynamic = 'force-dynamic'
+
 function db() {
   return adminSupabase(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
