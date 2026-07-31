@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createClient as adminSupabase } from '@supabase/supabase-js'
+import { isSuperAdminEmail } from '@/lib/admin'
 import { sendEmail, getGrantsReviewerEmails, emailAdminGrantActivity } from '@/lib/email'
 
 function db() {
@@ -17,14 +18,37 @@ export async function POST(req: NextRequest) {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-    const { data: sw } = await supabase
-      .from('social_workers')
-      .select('id, name, status')
-      .eq('auth_id', user.id)
-      .single()
+    const adminDb = db()
 
-    if (!sw || sw.status !== 'approved') {
-      return NextResponse.json({ error: 'Account not approved' }, { status: 403 })
+    // Check if user is an admin/reviewer (they can upload to any application)
+    const isSuperAdmin = isSuperAdminEmail(user.email)
+    let isAdminUser = isSuperAdmin
+    let uploaderName = 'Admin'
+    let swId: string | null = null
+
+    if (!isSuperAdmin) {
+      const { data: member } = await adminDb
+        .from('jwl_members')
+        .select('is_admin, is_grants_reviewer, is_super_admin, name, status')
+        .eq('auth_id', user.id)
+        .maybeSingle()
+      isAdminUser = !!(member?.is_admin || member?.is_grants_reviewer || member?.is_super_admin)
+      if (isAdminUser) uploaderName = member?.name ?? 'Admin'
+    }
+
+    // Check if SW
+    let sw: { id: string; name: string; status: string } | null = null
+    if (!isAdminUser) {
+      const { data } = await supabase
+        .from('social_workers')
+        .select('id, name, status')
+        .eq('auth_id', user.id)
+        .single()
+      sw = data
+      if (!sw || sw.status !== 'approved') {
+        return NextResponse.json({ error: 'Account not approved' }, { status: 403 })
+      }
+      swId = sw.id
     }
 
     const formData = await req.formData()
@@ -35,18 +59,25 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Missing application_id or files' }, { status: 400 })
     }
 
-    const { data: app } = await supabase
-      .from('grant_applications')
-      .select('id')
-      .eq('id', applicationId)
-      .eq('referrer_id', sw.id)
-      .single()
-
-    if (!app) {
-      return NextResponse.json({ error: 'Application not found' }, { status: 404 })
+    // If SW, verify they own the application
+    if (swId) {
+      const { data: app } = await supabase
+        .from('grant_applications')
+        .select('id')
+        .eq('id', applicationId)
+        .eq('referrer_id', swId)
+        .single()
+      if (!app) return NextResponse.json({ error: 'Application not found' }, { status: 404 })
+    } else {
+      // Admin: just verify the application exists
+      const { data: app } = await adminDb
+        .from('grant_applications')
+        .select('id')
+        .eq('id', applicationId)
+        .single()
+      if (!app) return NextResponse.json({ error: 'Application not found' }, { status: 404 })
     }
 
-    const admin = db()
     const uploaded: { file_name: string; file_url: string }[] = []
 
     for (const file of files) {
@@ -55,7 +86,7 @@ export async function POST(req: NextRequest) {
       const arrayBuffer = await file.arrayBuffer()
       const buffer = Buffer.from(arrayBuffer)
 
-      const { error: uploadError } = await admin.storage
+      const { error: uploadError } = await adminDb.storage
         .from('grant-documents')
         .upload(path, buffer, { contentType: file.type || 'application/octet-stream' })
 
@@ -67,13 +98,14 @@ export async function POST(req: NextRequest) {
       uploaded.push({ file_name: file.name, file_url: path })
     }
 
-    const { error: docError } = await admin
+    // uploaded_by is nullable for admin uploads
+    const { error: docError } = await adminDb
       .from('grant_documents')
       .insert(uploaded.map(u => ({
         application_id: applicationId,
         file_name: u.file_name,
         file_url: u.file_url,
-        uploaded_by: sw.id,
+        uploaded_by: swId ?? null,
       })))
 
     if (docError) {
@@ -81,11 +113,13 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Failed to save document records' }, { status: 500 })
     }
 
-    const reviewerEmails = await getGrantsReviewerEmails()
-    if (reviewerEmails.length > 0) {
-      const fileNames = uploaded.map(u => u.file_name).join(', ')
-      const { subject, html } = emailAdminGrantActivity(sw.name ?? 'Social worker', applicationId, 'document', fileNames)
-      await sendEmail({ to: reviewerEmails, subject, html })
+    if (!isAdminUser) {
+      const reviewerEmails = await getGrantsReviewerEmails()
+      if (reviewerEmails.length > 0) {
+        const fileNames = uploaded.map(u => u.file_name).join(', ')
+        const { subject, html } = emailAdminGrantActivity(sw?.name ?? 'Social worker', applicationId, 'document', fileNames)
+        await sendEmail({ to: reviewerEmails, subject, html })
+      }
     }
 
     return NextResponse.json({ uploaded: uploaded.length })

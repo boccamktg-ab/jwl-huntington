@@ -1,7 +1,10 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
+
+type VoteTally = { yes: number; no: number; more_info: number; pending: number }
+type VoteDetail = { name: string; vote: string | null; notes: string | null; voted_at: string | null }
 
 type Props = {
   applicationId: string
@@ -9,9 +12,11 @@ type Props = {
   requestedAmount: number
   maxAmount: number
   reviewerId: string | null
+  voteStatus: string | null
+  voteSummary: string | null
 }
 
-export default function ReviewerActions({ applicationId, currentStatus, requestedAmount, maxAmount, reviewerId }: Props) {
+export default function ReviewerActions({ applicationId, currentStatus, requestedAmount, maxAmount, reviewerId, voteStatus, voteSummary }: Props) {
   const router = useRouter()
   const [loading, setLoading] = useState<string | null>(null)
   const [error, setError] = useState('')
@@ -20,6 +25,50 @@ export default function ReviewerActions({ applicationId, currentStatus, requeste
   const [denialReason, setDenialReason] = useState('')
   const [showApprove, setShowApprove] = useState(false)
   const [showDeny, setShowDeny] = useState(false)
+
+  const [voteSummaryDraft, setVoteSummaryDraft] = useState(voteSummary ?? '')
+  const [showVoteOpen, setShowVoteOpen] = useState(false)
+  const [voteLoading, setVoteLoading] = useState<string | null>(null)
+  const [voteError, setVoteError] = useState('')
+  const [tally, setTally] = useState<VoteTally | null>(null)
+  const [voteDetails, setVoteDetails] = useState<VoteDetail[]>([])
+  const [showVoteDetails, setShowVoteDetails] = useState(false)
+
+  const fetchTally = useCallback(async () => {
+    const res = await fetch(`/api/grants/vote/status?application_id=${applicationId}`)
+    if (res.ok) {
+      const data = await res.json()
+      setTally(data.tally)
+      setVoteDetails(data.details)
+    }
+  }, [applicationId])
+
+  useEffect(() => {
+    if (voteStatus) fetchTally()
+  }, [voteStatus, fetchTally])
+
+  async function actVote(action: string, body?: object) {
+    setVoteLoading(action)
+    setVoteError('')
+    try {
+      const res = await fetch('/api/grants/vote/' + (action === 'open' ? 'open' : 'status'), {
+        method: action === 'open' ? 'POST' : 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(action === 'open'
+          ? { application_id: applicationId, vote_summary: voteSummaryDraft }
+          : { application_id: applicationId, action, ...body }
+        ),
+      })
+      const json = await res.json()
+      if (!res.ok) throw new Error(json.error ?? 'Something went wrong.')
+      router.refresh()
+      if (action !== 'open') await fetchTally()
+    } catch (err: any) {
+      setVoteError(err.message)
+    } finally {
+      setVoteLoading(null)
+    }
+  }
 
   async function act(action: string, extra?: object) {
     setLoading(action)
@@ -151,6 +200,153 @@ export default function ReviewerActions({ applicationId, currentStatus, requeste
       )}
 
       {error && <p className="text-sm text-red-600">{error}</p>}
+
+      {/* Member Vote Section */}
+      <div className="border-t border-gray-100 pt-4 space-y-3">
+        <div className="flex items-center justify-between">
+          <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Member Vote</h3>
+          {voteStatus && (
+            <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+              voteStatus === 'open' ? 'bg-green-100 text-green-700' :
+              voteStatus === 'paused' ? 'bg-amber-100 text-amber-700' :
+              'bg-gray-100 text-gray-500'
+            }`}>
+              {voteStatus === 'open' ? 'Voting open' : voteStatus === 'paused' ? 'Paused — more info requested' : 'Vote closed'}
+            </span>
+          )}
+        </div>
+
+        {/* No vote yet — show open form */}
+        {!voteStatus && (
+          <>
+            {!showVoteOpen ? (
+              <button onClick={() => setShowVoteOpen(true)}
+                className="text-sm px-4 py-2 bg-[#1B52C1] text-white rounded-lg hover:bg-[#1641a0]">
+                Open member vote…
+              </button>
+            ) : (
+              <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 space-y-3">
+                <p className="text-sm font-medium text-blue-800">Write a sanitized summary to send to all members</p>
+                <p className="text-xs text-blue-600">Do not include identifying information. Members will vote based on this summary only.</p>
+                <textarea
+                  value={voteSummaryDraft}
+                  onChange={e => setVoteSummaryDraft(e.target.value)}
+                  rows={6}
+                  placeholder="Describe the application: program type, requested amount, household situation, presenting need, reviewer recommendation. Remove names, addresses, or other identifying details."
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 resize-none"
+                />
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => actVote('open')}
+                    disabled={!voteSummaryDraft.trim() || !!voteLoading}
+                    className="text-sm px-4 py-2 bg-[#1B52C1] text-white rounded-lg hover:bg-[#1641a0] disabled:opacity-50">
+                    {voteLoading === 'open' ? 'Sending…' : 'Send to all members'}
+                  </button>
+                  <button onClick={() => setShowVoteOpen(false)} className="text-sm text-gray-500 hover:text-gray-700">Cancel</button>
+                </div>
+              </div>
+            )}
+          </>
+        )}
+
+        {/* Vote is active — show tally + controls */}
+        {voteStatus && voteStatus !== 'closed' && tally && (
+          <div className="space-y-3">
+            <div className="grid grid-cols-4 gap-2 text-center">
+              {([
+                { label: 'Approve', count: tally.yes, color: 'bg-green-100 text-green-700' },
+                { label: 'Deny', count: tally.no, color: 'bg-red-100 text-red-700' },
+                { label: 'More info', count: tally.more_info, color: 'bg-amber-100 text-amber-700' },
+                { label: 'Pending', count: tally.pending, color: 'bg-gray-100 text-gray-500' },
+              ]).map(t => (
+                <div key={t.label} className={`rounded-lg px-2 py-2 ${t.color}`}>
+                  <div className="text-xl font-bold">{t.count}</div>
+                  <div className="text-xs">{t.label}</div>
+                </div>
+              ))}
+            </div>
+
+            <button onClick={() => setShowVoteDetails(v => !v)} className="text-xs text-[#1B52C1] hover:underline">
+              {showVoteDetails ? 'Hide' : 'Show'} individual votes
+            </button>
+
+            {showVoteDetails && (
+              <div className="border border-gray-200 rounded-lg overflow-hidden text-xs">
+                {voteDetails.map((d, i) => (
+                  <div key={i} className={`flex items-start gap-3 px-3 py-2 ${i % 2 === 0 ? 'bg-white' : 'bg-gray-50'}`}>
+                    <span className="font-medium text-gray-800 w-32 shrink-0">{d.name}</span>
+                    <span className={`shrink-0 px-2 py-0.5 rounded-full text-xs font-medium ${
+                      d.vote === 'yes' ? 'bg-green-100 text-green-700' :
+                      d.vote === 'no' ? 'bg-red-100 text-red-700' :
+                      d.vote === 'more_info' ? 'bg-amber-100 text-amber-700' :
+                      'bg-gray-100 text-gray-400'
+                    }`}>
+                      {d.vote === 'yes' ? 'Approve' : d.vote === 'no' ? 'Deny' : d.vote === 'more_info' ? 'More info' : 'Pending'}
+                    </span>
+                    {d.notes && <span className="text-gray-500 italic">{d.notes}</span>}
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <div className="flex gap-2">
+              {voteStatus === 'paused' && (
+                <button onClick={() => actVote('resume')} disabled={!!voteLoading}
+                  className="text-sm px-3 py-1.5 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 disabled:opacity-50">
+                  {voteLoading === 'resume' ? '…' : 'Resume voting'}
+                </button>
+              )}
+              <button onClick={() => actVote('close')} disabled={!!voteLoading}
+                className="text-sm px-3 py-1.5 bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 disabled:opacity-50">
+                {voteLoading === 'close' ? '…' : 'Close vote'}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Closed vote — show final tally */}
+        {voteStatus === 'closed' && tally && (
+          <div className="space-y-2">
+            <p className="text-xs text-gray-500">Final vote results:</p>
+            <div className="grid grid-cols-4 gap-2 text-center">
+              {([
+                { label: 'Approve', count: tally.yes, color: 'bg-green-100 text-green-700' },
+                { label: 'Deny', count: tally.no, color: 'bg-red-100 text-red-700' },
+                { label: 'More info', count: tally.more_info, color: 'bg-amber-100 text-amber-700' },
+                { label: 'No vote', count: tally.pending, color: 'bg-gray-100 text-gray-400' },
+              ]).map(t => (
+                <div key={t.label} className={`rounded-lg px-2 py-2 ${t.color}`}>
+                  <div className="text-xl font-bold">{t.count}</div>
+                  <div className="text-xs">{t.label}</div>
+                </div>
+              ))}
+            </div>
+            <button onClick={() => setShowVoteDetails(v => !v)} className="text-xs text-[#1B52C1] hover:underline">
+              {showVoteDetails ? 'Hide' : 'Show'} individual votes
+            </button>
+            {showVoteDetails && (
+              <div className="border border-gray-200 rounded-lg overflow-hidden text-xs">
+                {voteDetails.map((d, i) => (
+                  <div key={i} className={`flex items-start gap-3 px-3 py-2 ${i % 2 === 0 ? 'bg-white' : 'bg-gray-50'}`}>
+                    <span className="font-medium text-gray-800 w-32 shrink-0">{d.name}</span>
+                    <span className={`shrink-0 px-2 py-0.5 rounded-full text-xs font-medium ${
+                      d.vote === 'yes' ? 'bg-green-100 text-green-700' :
+                      d.vote === 'no' ? 'bg-red-100 text-red-700' :
+                      d.vote === 'more_info' ? 'bg-amber-100 text-amber-700' :
+                      'bg-gray-100 text-gray-400'
+                    }`}>
+                      {d.vote === 'yes' ? 'Approve' : d.vote === 'no' ? 'Deny' : d.vote === 'more_info' ? 'More info' : 'No vote'}
+                    </span>
+                    {d.notes && <span className="text-gray-500 italic">{d.notes}</span>}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {voteError && <p className="text-sm text-red-600">{voteError}</p>}
+      </div>
 
       <DeleteApplication applicationId={applicationId} />
     </div>

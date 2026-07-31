@@ -17,6 +17,8 @@ const STATUS_LABELS: Record<string, string> = {
   approved: 'Approved',
   denied: 'Denied',
   paid_closed: 'Paid / Closed',
+  pending_transcription: 'Pending Transcription',
+  incomplete: 'Incomplete',
 }
 
 const STATUS_COLORS: Record<string, string> = {
@@ -27,6 +29,8 @@ const STATUS_COLORS: Record<string, string> = {
   approved: 'bg-green-100 text-green-700',
   denied: 'bg-red-100 text-red-700',
   paid_closed: 'bg-gray-100 text-gray-500',
+  pending_transcription: 'bg-orange-100 text-orange-700',
+  incomplete: 'bg-yellow-100 text-yellow-700',
 }
 
 const GRANT_LABELS: Record<string, string> = {
@@ -34,7 +38,7 @@ const GRANT_LABELS: Record<string, string> = {
   lift_fund: 'Lift Fund',
 }
 
-const ACTIVE_STATUSES = ['submitted', 'needs_more_info', 'under_review']
+const ACTIVE_STATUSES = ['submitted', 'needs_more_info', 'under_review', 'pending_transcription', 'incomplete']
 
 export default async function ReviewerDashboardPage() {
   const { data: applications } = await db()

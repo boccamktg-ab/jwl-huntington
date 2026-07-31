@@ -44,6 +44,15 @@ export async function checkIsSuperAdmin(userId: string, email: string | undefine
   return memberIsSuperAdmin(userId)
 }
 
+async function memberIsGrantsReviewer(userId: string): Promise<boolean> {
+  const { data } = await db()
+    .from('jwl_members')
+    .select('is_grants_reviewer, is_admin, is_super_admin, status')
+    .eq('auth_id', userId)
+    .maybeSingle()
+  return !!(data?.status === 'approved' && (data?.is_grants_reviewer || data?.is_admin || data?.is_super_admin))
+}
+
 // For use in API route handlers (uses request cookies)
 export async function requireAdminFromRequest(request: NextRequest): Promise<{ id: string; email: string | undefined } | null> {
   const supabase = createServerClient(
@@ -54,5 +63,18 @@ export async function requireAdminFromRequest(request: NextRequest): Promise<{ i
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return null
   const ok = await checkIsAdmin(user.id, user.email)
+  return ok ? { id: user.id, email: user.email } : null
+}
+
+export async function requireGrantsReviewerFromRequest(request: NextRequest): Promise<{ id: string; email: string | undefined } | null> {
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    { cookies: { getAll: () => request.cookies.getAll(), setAll: () => {} } }
+  )
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return null
+  if (isSuperAdminEmail(user.email)) return { id: user.id, email: user.email }
+  const ok = await memberIsGrantsReviewer(user.id)
   return ok ? { id: user.id, email: user.email } : null
 }

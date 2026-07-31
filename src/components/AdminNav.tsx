@@ -29,7 +29,10 @@ export default function AdminNav({ isMemberAdmin, isProgramsAdmin, isJjwlAdmin, 
       { href: '/admin/member-positions', label: 'Positions' },
       { href: '/admin/setup', label: 'Setup' },
     ] : []),
-    ...(isGrantsReviewer ? [{ href: '/grants/reviewer', label: 'Grants' }] : []),
+    ...(isGrantsReviewer ? [
+      { href: '/grants/reviewer', label: 'Grants' },
+      { href: '/admin/grants', label: 'Grant Intake' },
+    ] : []),
     ...(isJjwlAdmin ? [{ href: '/admin/jjwl', label: 'JJWL' }] : []),
     { href: '/members/dashboard', label: 'My Dashboard' },
   ]

@@ -21,6 +21,8 @@ const STATUS_LABELS: Record<string, string> = {
   approved: 'Approved',
   denied: 'Denied',
   paid_closed: 'Paid / Closed',
+  pending_transcription: 'Pending Transcription',
+  incomplete: 'Incomplete',
 }
 
 const STATUS_COLORS: Record<string, string> = {
@@ -31,6 +33,8 @@ const STATUS_COLORS: Record<string, string> = {
   approved: 'bg-green-100 text-green-700',
   denied: 'bg-red-100 text-red-700',
   paid_closed: 'bg-gray-100 text-gray-500',
+  pending_transcription: 'bg-orange-100 text-orange-700',
+  incomplete: 'bg-yellow-100 text-yellow-700',
 }
 
 export default async function ReviewerApplicationPage({ params }: { params: Promise<{ id: string }> }) {
@@ -57,11 +61,26 @@ export default async function ReviewerApplicationPage({ params }: { params: Prom
     .select(`
       id, grant_type, status, requested_amount, approved_amount, denial_reason,
       created_at, submitted_at, referrer_id, reviewer_id,
+      vote_status, vote_summary,
       grant_application_details (
         beneficiary_name, dob, address, attends_huntington_school,
         justification, financial_narrative,
         household_composition, crisis_description, sustainability_statement,
-        confidential, confidentiality_notes
+        confidential, confidentiality_notes,
+        applicant_phone, applicant_email,
+        housing_status, residence_length, occupation,
+        employment_type, employer, employer_address,
+        annual_salary, weekly_salary, hours_per_week,
+        assistance_medicaid, assistance_medicaid_amt,
+        assistance_adc, assistance_adc_amt,
+        assistance_snap, assistance_snap_amt,
+        assistance_wic, assistance_wic_amt,
+        assistance_ssi, assistance_ssi_amt,
+        assistance_unemployment, assistance_unemployment_amt,
+        assistance_section8, assistance_section8_amt,
+        assistance_heap, assistance_heap_amt,
+        other_assistance, income_expenses_narrative,
+        presenting_problem, first_request, prior_request_explanation
       ),
       social_workers ( name, email, phone )
     `)
@@ -69,6 +88,8 @@ export default async function ReviewerApplicationPage({ params }: { params: Prom
     .single()
 
   if (!app || app.status === 'draft') notFound()
+
+  const needsTranscription = ['pending_transcription', 'incomplete'].includes(app.status)
 
   const detail = Array.isArray(app.grant_application_details)
     ? app.grant_application_details[0]
@@ -78,7 +99,7 @@ export default async function ReviewerApplicationPage({ params }: { params: Prom
     : app.social_workers
 
   const isCharitable = app.grant_type === 'charitable_children'
-  const isOpen = !['denied', 'paid_closed'].includes(app.status)
+  const isOpen = !['denied', 'paid_closed', 'pending_transcription', 'incomplete'].includes(app.status)
 
   // Lifetime cap lookup for Charitable Children
   let lifetimeHistory: any[] = []
@@ -109,6 +130,12 @@ export default async function ReviewerApplicationPage({ params }: { params: Prom
     .reduce((sum, h) => sum + Number(h.approved_amount ?? 0), 0)
   const lifetimeRemaining = Math.max(0, 1000 - lifetimeApproved)
 
+  const { data: householdMembers } = await db()
+    .from('grant_household_members')
+    .select('id, full_name, age, married, sort_order')
+    .eq('application_id', id)
+    .order('sort_order', { ascending: true })
+
   const { data: documents } = await db()
     .from('grant_documents')
     .select('id, file_name, file_url, uploaded_at')
@@ -138,6 +165,39 @@ export default async function ReviewerApplicationPage({ params }: { params: Prom
           {STATUS_LABELS[app.status]}
         </span>
       </div>
+
+      {/* Transcription / incomplete banner */}
+      {needsTranscription && (
+        <div className={`rounded-xl px-4 py-3 text-sm border ${
+          app.status === 'pending_transcription'
+            ? 'bg-orange-50 border-orange-200 text-orange-800'
+            : 'bg-yellow-50 border-yellow-200 text-yellow-800'
+        }`}>
+          {app.status === 'pending_transcription' ? (
+            <><strong>Needs Transcription.</strong> A scanned paper application was uploaded. Please open the documents below, enter all information from the paper form into a new complete application record, then update the status to Submitted when ready.</>
+          ) : (
+            <><strong>Incomplete Record.</strong> This placeholder was created by an admin. Complete the full application details before it can be reviewed.</>
+          )}
+        </div>
+      )}
+
+      {/* Admin referrer info */}
+      {(app as any).admin_referrer_name && (
+        <div className="bg-white border border-gray-200 rounded-xl p-4 space-y-2">
+          <h2 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Contact (Admin-Entered)</h2>
+          <div className="grid grid-cols-2 gap-2 text-sm">
+            <div><span className="text-gray-500">Name</span><p className="text-gray-900 mt-0.5">{(app as any).admin_referrer_name}</p></div>
+            {(app as any).admin_referrer_org && <div><span className="text-gray-500">Organization</span><p className="text-gray-900 mt-0.5">{(app as any).admin_referrer_org}</p></div>}
+            {(app as any).admin_referrer_phone && <div><span className="text-gray-500">Phone</span><p className="text-gray-900 mt-0.5">{(app as any).admin_referrer_phone}</p></div>}
+            {(app as any).admin_referrer_email && <div><span className="text-gray-500">Email</span><p className="text-gray-900 mt-0.5">{(app as any).admin_referrer_email}</p></div>}
+          </div>
+          {(app as any).admin_notes && (
+            <div className="bg-gray-50 border border-gray-100 rounded-lg px-3 py-2 text-xs text-gray-600 mt-1">
+              {(app as any).admin_notes}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Lifetime cap warning */}
       {isCharitable && (
@@ -186,9 +246,76 @@ export default async function ReviewerApplicationPage({ params }: { params: Prom
           </>
         ) : (
           <>
-            {detail?.household_composition && <Row label="Household" value={detail.household_composition} />}
-            <Row label="Financial Crisis" value={detail?.crisis_description} multiline />
+            {/* Household Members */}
+            {householdMembers && householdMembers.length > 0 && (
+              <div className="space-y-1">
+                <span className="text-sm text-gray-500">Household Members</span>
+                <div className="border border-gray-100 rounded-lg overflow-hidden text-sm">
+                  <div className="grid grid-cols-3 bg-gray-50 px-3 py-1.5 text-xs font-semibold text-gray-500">
+                    <span>Name</span><span>Age</span><span>Married</span>
+                  </div>
+                  {householdMembers.map((m: any) => (
+                    <div key={m.id} className="grid grid-cols-3 px-3 py-1.5 border-t border-gray-100 text-xs">
+                      <span>{m.full_name}</span>
+                      <span>{m.age ?? '—'}</span>
+                      <span>{m.married ? 'Yes' : 'No'}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            {detail?.household_composition && !householdMembers?.length && (
+              <Row label="Household" value={detail.household_composition} />
+            )}
+
+            {/* Contact */}
+            {detail?.applicant_phone && <Row label="Phone" value={detail.applicant_phone} />}
+            {detail?.applicant_email && <Row label="Email" value={detail.applicant_email} />}
+
+            {/* Employment */}
+            {detail?.housing_status && <Row label="Housing" value={detail.housing_status === 'rented' ? 'Rented' : 'Owned'} />}
+            {detail?.residence_length && <Row label="Time at Residence" value={detail.residence_length} />}
+            {detail?.occupation && <Row label="Occupation" value={detail.occupation} />}
+            {detail?.employment_type && <Row label="Employment Type" value={
+              ({ full_time: 'Full-time', part_time: 'Part-time', not_employed: 'Not employed', other: 'Other' } as Record<string, string>)[detail.employment_type] ?? detail.employment_type
+            } />}
+            {detail?.employer && <Row label="Employer" value={detail.employer} />}
+            {detail?.annual_salary && <Row label="Annual Salary" value={detail.annual_salary} />}
+            {detail?.weekly_salary && <Row label="Weekly Salary" value={detail.weekly_salary} />}
+
+            {/* Public Assistance */}
+            {(['medicaid','adc','snap','wic','ssi','unemployment','section8','heap'] as const).some(k => (detail as any)?.[`assistance_${k}`]) && (
+              <div className="space-y-1">
+                <span className="text-sm text-gray-500">Public Assistance</span>
+                <div className="flex flex-wrap gap-2">
+                  {(['medicaid','adc','snap','wic','ssi','unemployment','section8','heap'] as const).map(k => {
+                    if (!(detail as any)?.[`assistance_${k}`]) return null
+                    const amt = (detail as any)?.[`assistance_${k}_amt`]
+                    return (
+                      <span key={k} className="text-xs bg-gray-100 text-gray-700 px-2 py-0.5 rounded-full">
+                        {k.toUpperCase()}{amt ? ` — $${amt}/mo` : ''}
+                      </span>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
+            {detail?.other_assistance && <Row label="Other Assistance" value={detail.other_assistance} multiline />}
+            {detail?.income_expenses_narrative && <Row label="Income / Expenses" value={detail.income_expenses_narrative} multiline />}
+
+            {/* Need */}
+            <Row label="Financial Need" value={detail?.crisis_description} multiline />
+            {detail?.presenting_problem && <Row label="Presenting Problem" value={detail.presenting_problem} multiline />}
             <Row label="Financial Sustainability" value={detail?.sustainability_statement} multiline />
+
+            {/* First request */}
+            {detail?.first_request !== null && detail?.first_request !== undefined && (
+              <Row label="First JWL Request?" value={detail.first_request ? 'Yes' : 'No'} />
+            )}
+            {detail?.prior_request_explanation && (
+              <Row label="Prior Request Explanation" value={detail.prior_request_explanation} multiline />
+            )}
+
             {detail?.confidential && (
               <div className="bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 text-xs text-amber-800">
                 <strong>Confidential.</strong>{detail.confidentiality_notes ? ` ${detail.confidentiality_notes}` : ''}
@@ -224,6 +351,8 @@ export default async function ReviewerApplicationPage({ params }: { params: Prom
           requestedAmount={Number(app.requested_amount)}
           maxAmount={isCharitable ? lifetimeRemaining : 3000}
           reviewerId={reviewer?.id ?? null}
+          voteStatus={app.vote_status ?? null}
+          voteSummary={app.vote_summary ?? null}
         />
       )}
 

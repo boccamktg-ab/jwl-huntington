@@ -909,3 +909,54 @@ export function emailMeetingRecap(memberName: string, date: string, recap: strin
     `),
   }
 }
+
+// ─── Grant Member Vote ─────────────────────────────────────────────────────────
+
+export function emailGrantMemberVote(memberName: string, summary: string, voteYesUrl: string, voteNoUrl: string, voteMoreInfoUrl: string) {
+  return {
+    subject: 'JWL Grants — Member Vote Requested',
+    html: wrap(`
+      <h2 style="margin:0 0 16px;font-size:20px;font-weight:700;">Grant Vote Requested</h2>
+      ${p(`Hi ${memberName.split(' ')[0]}, the JWL Grants team is requesting your vote on a grant application.`)}
+      <div style="background:#f0f4ff;border-radius:8px;padding:16px 20px;margin:16px 0;">
+        <p style="margin:0 0 6px;font-size:13px;font-weight:600;color:#1B52C1;">Application Summary</p>
+        <p style="margin:0;font-size:14px;color:#374151;line-height:1.6;white-space:pre-line;">${summary}</p>
+      </div>
+      <p style="margin:16px 0 8px;font-size:15px;font-weight:600;color:#111827;">Your vote:</p>
+      ${btn('✓ Approve', voteYesUrl)}
+      <a href="${voteNoUrl}" style="display:inline-block;background:#dc2626;color:white;text-decoration:none;padding:12px 24px;border-radius:8px;font-size:15px;font-weight:600;margin:8px 0 8px 8px;">✗ Deny</a>
+      <br>
+      <a href="${voteMoreInfoUrl}" style="display:inline-block;background:#f3f4f6;color:#374151;text-decoration:none;padding:12px 24px;border-radius:8px;font-size:15px;font-weight:600;margin:8px 0 16px;">? Request More Information</a>
+      ${p('<span style="font-size:13px;color:#9ca3af;">You can also vote from the member portal. Voting closes when the grants admin closes the vote.</span>')}
+    `),
+  }
+}
+
+export function emailGrantMoreInfoReceived(adminName: string, memberName: string, question: string, applicationId: string) {
+  return {
+    subject: 'JWL Grants — Member Requested More Information',
+    html: wrap(`
+      <h2 style="margin:0 0 16px;font-size:20px;font-weight:700;">More Information Requested</h2>
+      ${p(`Hi ${adminName.split(' ')[0]}, a member has requested more information before voting on a grant application. The vote has been paused.`)}
+      <div style="background:#fff8e1;border:1px solid #fcd34d;border-radius:8px;padding:16px 20px;margin:16px 0;">
+        <p style="margin:0 0 6px;font-size:13px;font-weight:600;color:#92400e;">From: ${memberName}</p>
+        <p style="margin:0;font-size:14px;color:#374151;line-height:1.6;white-space:pre-line;">${question}</p>
+      </div>
+      ${btn('View application', `https://portal.jwlhuntington.org/grants/reviewer/${applicationId}`)}
+      ${p('<span style="font-size:13px;color:#9ca3af;">Resume the vote from the application page after addressing the question.</span>')}
+    `),
+  }
+}
+
+export function emailGrantVoteConfirmation(memberName: string, vote: 'yes' | 'no' | 'more_info') {
+  const labels = { yes: 'Approve', no: 'Deny', more_info: 'Request More Information' }
+  const icons = { yes: '✅', no: '❌', more_info: '❓' }
+  return {
+    subject: 'JWL Grants — Vote Recorded',
+    html: wrap(`
+      <h2 style="margin:0 0 16px;font-size:20px;font-weight:700;">Vote Recorded</h2>
+      ${p(`Hi ${memberName.split(' ')[0]}, your vote of <strong>${icons[vote]} ${labels[vote]}</strong> has been recorded.`)}
+      ${p('<span style="font-size:13px;color:#9ca3af;">The grants admin will review all votes before making a final decision.</span>')}
+    `),
+  }
+}

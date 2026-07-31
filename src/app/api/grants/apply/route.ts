@@ -19,7 +19,7 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json()
-    const { grant_type, status, requested_amount, details } = body
+    const { grant_type, status, requested_amount, details, household_members } = body
 
     if (!['charitable_children', 'lift_fund'].includes(grant_type)) {
       return NextResponse.json({ error: 'Invalid grant type' }, { status: 400 })
@@ -52,6 +52,22 @@ export async function POST(req: NextRequest) {
       console.error(detailError)
       await service.from('grant_applications').delete().eq('id', app.id)
       return NextResponse.json({ error: 'Failed to save application details' }, { status: 500 })
+    }
+
+    // Save household members for Lift Fund
+    if (grant_type === 'lift_fund' && Array.isArray(household_members) && household_members.length > 0) {
+      const rows = household_members
+        .filter((m: any) => m.full_name?.trim())
+        .map((m: any, i: number) => ({
+          application_id: app.id,
+          full_name: m.full_name.trim(),
+          age: m.age || null,
+          married: m.married ?? false,
+          sort_order: i,
+        }))
+      if (rows.length > 0) {
+        await service.from('grant_household_members').insert(rows)
+      }
     }
 
     if (status === 'submitted') {
