@@ -163,7 +163,10 @@ export default async function ReviewerApplicationPage({ params }: { params: Prom
       <div className="flex items-start justify-between">
         <div>
           <h1 className="text-2xl font-semibold text-gray-900">
-            {detail?.confidential ? '[ Confidential ]' : (detail?.beneficiary_name ?? '—')}
+            {detail?.beneficiary_name || '—'}
+            {detail?.confidential && (
+              <span className="ml-2 text-xs font-normal text-amber-700 bg-amber-50 border border-amber-200 rounded-full px-2 py-0.5 align-middle">Confidential</span>
+            )}
           </h1>
           <p className="text-sm text-gray-500 mt-0.5">
             {isCharitable ? 'Charitable Children Grant' : 'The Lift Fund'}
@@ -251,7 +254,7 @@ export default async function ReviewerApplicationPage({ params }: { params: Prom
       <div className="bg-white border border-gray-200 rounded-xl p-6 space-y-4">
         <h2 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Application Details</h2>
 
-        {!detail?.confidential && <Row label="Beneficiary" value={detail?.beneficiary_name} />}
+        <Row label="Beneficiary" value={detail?.beneficiary_name} />
         <Row label="Address" value={detail?.address} />
         {detail?.attends_huntington_school && (
           <Row label="Residency exception" value="Attends a Huntington school district school" />
