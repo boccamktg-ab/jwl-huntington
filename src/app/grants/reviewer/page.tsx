@@ -57,8 +57,9 @@ export default async function ReviewerDashboardPage() {
     .from('grant_applications')
     .select(`
       id, grant_type, status, requested_amount, approved_amount, submitted_at,
+      admin_referrer_name,
       grant_application_details ( beneficiary_name ),
-      social_workers ( name, email )
+      social_workers!grant_applications_referrer_id_fkey ( name )
     `)
     .neq('status', 'draft')
     .order('submitted_at', { ascending: false })
@@ -127,9 +128,8 @@ function ApplicationTable({ rows }: { rows: any[] }) {
             const detail = Array.isArray(app.grant_application_details)
               ? app.grant_application_details[0]
               : app.grant_application_details
-            const referrer = Array.isArray(app.social_workers)
-              ? app.social_workers[0]
-              : app.social_workers
+            const sw = Array.isArray(app.social_workers) ? app.social_workers[0] : app.social_workers
+            const referrerName = sw?.name ?? app.admin_referrer_name ?? '—'
 
             return (
               <tr key={app.id} className="hover:bg-gray-50">
@@ -139,7 +139,7 @@ function ApplicationTable({ rows }: { rows: any[] }) {
                   </Link>
                 </td>
                 <td className="px-4 py-3 text-gray-600">{GRANT_LABELS[app.grant_type]}</td>
-                <td className="px-4 py-3 text-gray-500">{referrer?.name ?? '—'}</td>
+                <td className="px-4 py-3 text-gray-500">{referrerName}</td>
                 <td className="px-4 py-3 text-center">
                   <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${STATUS_COLORS[app.status]}`}>
                     {STATUS_LABELS[app.status]}
