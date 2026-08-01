@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 
 const GROUPS = [
   {
@@ -76,55 +76,180 @@ const GROUPS = [
       { type: 'jjwl_dues_paid', label: 'Dues paid' },
       { type: 'jjwl_waiver_confirmed', label: 'Waiver confirmed' },
       { type: 'jjwl_year_end_certificate', label: 'Year-end certificate' },
+      { type: 'member_children_assigned', label: 'Children assigned' },
     ],
   },
 ]
 
-function SendButton({ type, label }: { type: string; label: string }) {
-  const [state, setState] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle')
+type EditPanelState = {
+  type: string
+  subject: string
+  html: string
+  loading: boolean
+  tab: 'preview' | 'code'
+  sendState: 'idle' | 'sending' | 'sent' | 'error'
+}
 
-  async function send() {
-    setState('sending')
+function TemplateRow({ type, label }: { type: string; label: string }) {
+  const [sendState, setSendState] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle')
+  const [panel, setPanel] = useState<EditPanelState | null>(null)
+  const iframeRef = useRef<HTMLIFrameElement>(null)
+
+  // Sync iframe srcdoc whenever html changes
+  useEffect(() => {
+    if (!iframeRef.current || !panel) return
+    const doc = iframeRef.current.contentDocument
+    if (doc) {
+      doc.open()
+      doc.write(panel.html)
+      doc.close()
+    }
+  }, [panel?.html, panel?.tab])
+
+  async function quickSend() {
+    setSendState('sending')
     const res = await fetch('/api/admin/email-preview', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ type }),
     })
-    setState(res.ok ? 'sent' : 'error')
-    if (res.ok) setTimeout(() => setState('idle'), 3000)
+    setSendState(res.ok ? 'sent' : 'error')
+    if (res.ok) setTimeout(() => setSendState('idle'), 3000)
+  }
+
+  async function openEdit() {
+    if (panel) { setPanel(null); return }
+    setPanel({ type, subject: '', html: '', loading: true, tab: 'preview', sendState: 'idle' })
+    const res = await fetch('/api/admin/email-preview', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type, action: 'preview' }),
+    })
+    const data = await res.json()
+    setPanel(p => p ? { ...p, subject: data.subject ?? '', html: data.html ?? '', loading: false } : null)
+  }
+
+  async function sendEdited() {
+    if (!panel) return
+    setPanel(p => p ? { ...p, sendState: 'sending' } : null)
+    const res = await fetch('/api/admin/email-preview', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type, subject: panel.subject, html: panel.html }),
+    })
+    const next = res.ok ? 'sent' : 'error'
+    setPanel(p => p ? { ...p, sendState: next } : null)
+    if (res.ok) setTimeout(() => setPanel(p => p ? { ...p, sendState: 'idle' } : null), 3000)
+  }
+
+  const btnBase: React.CSSProperties = {
+    fontSize: 13, padding: '5px 14px', borderRadius: 6, border: 'none',
+    cursor: 'pointer', color: 'white', fontWeight: 600, transition: 'background 0.15s',
   }
 
   return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid #f1f5f9' }}>
-      <span style={{ fontSize: 14, color: '#374151' }}>{label}</span>
-      <button
-        onClick={send}
-        disabled={state === 'sending'}
-        style={{
-          fontSize: 13,
-          padding: '5px 14px',
-          borderRadius: 6,
-          border: 'none',
-          cursor: state === 'sending' ? 'default' : 'pointer',
-          background: state === 'sent' ? '#16a34a' : state === 'error' ? '#dc2626' : '#1B52C1',
-          color: 'white',
-          fontWeight: 600,
-          minWidth: 100,
-          transition: 'background 0.2s',
-        }}
-      >
-        {state === 'sending' ? 'Sending…' : state === 'sent' ? '✓ Sent' : state === 'error' ? 'Error' : 'Send to me'}
-      </button>
-    </div>
+    <>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 0', borderBottom: panel ? 'none' : '1px solid #f1f5f9' }}>
+        <span style={{ fontSize: 14, color: '#374151' }}>{label}</span>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button onClick={openEdit} style={{ ...btnBase, background: panel ? '#374151' : '#6b7280', minWidth: 90 }}>
+            {panel ? 'Close' : 'Edit & Send'}
+          </button>
+          <button
+            onClick={quickSend}
+            disabled={sendState === 'sending'}
+            style={{
+              ...btnBase,
+              background: sendState === 'sent' ? '#16a34a' : sendState === 'error' ? '#dc2626' : '#1B52C1',
+              minWidth: 100,
+            }}
+          >
+            {sendState === 'sending' ? 'Sending…' : sendState === 'sent' ? '✓ Sent' : sendState === 'error' ? 'Error' : 'Send to me'}
+          </button>
+        </div>
+      </div>
+
+      {panel && (
+        <div style={{ borderBottom: '1px solid #f1f5f9', paddingBottom: 16, marginBottom: 4 }}>
+          {panel.loading ? (
+            <div style={{ padding: '24px 0', textAlign: 'center', color: '#9ca3af', fontSize: 13 }}>Loading template…</div>
+          ) : (
+            <>
+              {/* Subject line */}
+              <div style={{ marginBottom: 10 }}>
+                <label style={{ fontSize: 11, fontWeight: 700, color: '#9ca3af', letterSpacing: '0.06em', textTransform: 'uppercase', display: 'block', marginBottom: 4 }}>Subject</label>
+                <input
+                  value={panel.subject}
+                  onChange={e => setPanel(p => p ? { ...p, subject: e.target.value } : null)}
+                  style={{ width: '100%', padding: '7px 10px', border: '1px solid #e5e7eb', borderRadius: 6, fontSize: 14, boxSizing: 'border-box' }}
+                />
+              </div>
+
+              {/* Tab bar */}
+              <div style={{ display: 'flex', gap: 2, marginBottom: 8 }}>
+                {(['preview', 'code'] as const).map(tab => (
+                  <button
+                    key={tab}
+                    onClick={() => setPanel(p => p ? { ...p, tab } : null)}
+                    style={{
+                      fontSize: 12, fontWeight: 600, padding: '4px 12px', borderRadius: 5, border: 'none',
+                      cursor: 'pointer', background: panel.tab === tab ? '#1B52C1' : '#f1f5f9',
+                      color: panel.tab === tab ? 'white' : '#6b7280',
+                    }}
+                  >
+                    {tab === 'preview' ? 'Preview' : 'HTML'}
+                  </button>
+                ))}
+              </div>
+
+              {/* Preview / Code pane */}
+              {panel.tab === 'preview' ? (
+                <iframe
+                  ref={iframeRef}
+                  style={{ width: '100%', height: 480, border: '1px solid #e5e7eb', borderRadius: 8, background: 'white' }}
+                  title="email preview"
+                />
+              ) : (
+                <textarea
+                  value={panel.html}
+                  onChange={e => setPanel(p => p ? { ...p, html: e.target.value } : null)}
+                  spellCheck={false}
+                  style={{
+                    width: '100%', height: 480, padding: '10px 12px', border: '1px solid #e5e7eb',
+                    borderRadius: 8, fontSize: 12, fontFamily: 'monospace', lineHeight: 1.6,
+                    resize: 'vertical', boxSizing: 'border-box',
+                  }}
+                />
+              )}
+
+              {/* Send edited */}
+              <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 10 }}>
+                <button
+                  onClick={sendEdited}
+                  disabled={panel.sendState === 'sending'}
+                  style={{
+                    ...btnBase,
+                    background: panel.sendState === 'sent' ? '#16a34a' : panel.sendState === 'error' ? '#dc2626' : '#1B52C1',
+                    padding: '8px 20px',
+                  }}
+                >
+                  {panel.sendState === 'sending' ? 'Sending…' : panel.sendState === 'sent' ? '✓ Sent' : panel.sendState === 'error' ? 'Error' : 'Send edited version to me'}
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+      )}
+    </>
   )
 }
 
 export default function EmailPreviewPage() {
   return (
-    <div style={{ maxWidth: 720, margin: '0 auto', padding: '40px 24px' }}>
+    <div style={{ maxWidth: 800, margin: '0 auto', padding: '40px 24px' }}>
       <h1 style={{ fontSize: 24, fontWeight: 700, color: '#111827', marginBottom: 8 }}>Email Preview</h1>
       <p style={{ fontSize: 14, color: '#6b7280', marginBottom: 36 }}>
-        Send any template to your email with sample data. Emails arrive with a <strong>[PREVIEW]</strong> subject prefix.
+        Send any template to your email with sample data. Use <strong>Edit &amp; Send</strong> to tweak content before sending. All emails arrive with a <strong>[PREVIEW]</strong> subject prefix.
       </p>
 
       {GROUPS.map(group => (
@@ -134,7 +259,7 @@ export default function EmailPreviewPage() {
           </div>
           <div style={{ background: 'white', border: '1px solid #e5e7eb', borderRadius: 10, padding: '0 16px' }}>
             {group.templates.map(t => (
-              <SendButton key={t.type} type={t.type} label={t.label} />
+              <TemplateRow key={t.type} type={t.type} label={t.label} />
             ))}
           </div>
         </div>

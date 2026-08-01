@@ -176,20 +176,37 @@ export async function POST(request: NextRequest) {
   const actor = await requireAdminFromRequest(request)
   if (!actor) return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
 
-  const { type } = await request.json()
+  const body = await request.json()
+  const { type, action, subject: customSubject, html: customHtml } = body
+
   if (!type) return NextResponse.json({ error: 'Missing type' }, { status: 400 })
+
+  // action=preview: return the payload without sending
+  if (action === 'preview') {
+    const payload = buildPayload(type)
+    if (!payload) return NextResponse.json({ error: `Unknown type: ${type}` }, { status: 400 })
+    return NextResponse.json({ subject: payload.subject, html: payload.html })
+  }
 
   const srv = await serverClient()
   const { data: { user } } = await srv.auth.getUser()
   if (!user?.email) return NextResponse.json({ error: 'No user email' }, { status: 400 })
 
-  const payload = buildPayload(type)
-  if (!payload) return NextResponse.json({ error: `Unknown type: ${type}` }, { status: 400 })
+  // Use custom html/subject if provided (edited version), else generate from type
+  let subject = customSubject as string | undefined
+  let html = customHtml as string | undefined
+
+  if (!html || !subject) {
+    const payload = buildPayload(type)
+    if (!payload) return NextResponse.json({ error: `Unknown type: ${type}` }, { status: 400 })
+    subject = subject ?? payload.subject
+    html = html ?? payload.html
+  }
 
   const result = await sendEmail({
     to: user.email,
-    subject: `[PREVIEW] ${payload.subject}`,
-    html: payload.html,
+    subject: `[PREVIEW] ${subject}`,
+    html,
   })
 
   return NextResponse.json({ ok: result.success, sent_to: user.email, error: result.error })
