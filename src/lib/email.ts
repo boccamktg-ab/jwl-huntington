@@ -858,23 +858,61 @@ function fmtTime(t: string) {
   return `${((h % 12) || 12)}:${m.toString().padStart(2, '0')} ${ampm}`
 }
 
-export function emailMeetingPublished(memberName: string, date: string, time: string, location: string, agenda: string | null, rsvpYesUrl: string, rsvpNoUrl: string) {
+export function emailMeetingPublished(
+  memberName: string, date: string, time: string, location: string,
+  agenda: string | null, rsvpYesUrl: string, rsvpNoUrl: string,
+  opts?: { title?: string; description?: string | null; meetingType?: string; shifts?: { label: string; start_time: string; end_time: string }[]; portalUrl?: string }
+) {
+  const isEvent = opts?.meetingType === 'event'
+  const title = opts?.title ?? (isEvent ? 'New Event' : 'New Meeting Scheduled')
+  const description = opts?.description
+
+  // Build shifts block for events
+  const shiftsBlock = isEvent && opts?.shifts?.length
+    ? `<div style="background:#f0f4ff;border-radius:8px;padding:16px 20px;margin:16px 0;">
+        <p style="margin:0 0 10px;font-size:13px;font-weight:600;color:#1B52C1;">Available shifts — sign up in the portal</p>
+        ${opts.shifts.map(s => `<p style="margin:0 0 6px;font-size:14px;color:#374151;">· <strong>${s.label}</strong>: ${fmtTime(s.start_time)} – ${fmtTime(s.end_time)}</p>`).join('')}
+      </div>`
+    : ''
+
+  const portalLink = opts?.portalUrl
+    ? `${btn('View & sign up in portal', opts.portalUrl)}`
+    : ''
+
   return {
-    subject: `JWL Meeting — ${fmtDate(date)}`,
-    html: wrap(`
-      <h2 style="margin:0 0 16px;font-size:20px;font-weight:700;">New Meeting Scheduled</h2>
-      ${p(`Hi ${memberName.split(' ')[0]}, a JWL meeting has been scheduled. We'd love to see you there!`)}
-      ${infoBox([
-        { label: 'Date', value: fmtDate(date) },
-        { label: 'Time', value: fmtTime(time) },
-        { label: 'Location', value: location },
-      ])}
-      ${agenda ? `<div style="background:#f0f4ff;border-radius:8px;padding:16px 20px;margin:16px 0;"><p style="margin:0 0 6px;font-size:13px;font-weight:600;color:#1B52C1;">Agenda highlights</p><p style="margin:0;font-size:14px;color:#374151;line-height:1.6;">${agenda.replace(/\n/g, '<br>')}</p></div>` : ''}
-      <p style="margin:16px 0 8px;font-size:15px;font-weight:600;color:#111827;">Will you be attending?</p>
-      ${btn("✓ Yes, I'll be there", rsvpYesUrl)}
-      <a href="${rsvpNoUrl}" style="display:inline-block;background:#f3f4f6;color:#374151;text-decoration:none;padding:12px 24px;border-radius:8px;font-size:15px;font-weight:600;margin:8px 0 16px 12px;">✗ Can't make it</a>
-      ${p('<span style="font-size:13px;color:#9ca3af;">You can change your RSVP at any time by clicking either button above.</span>')}
-    `),
+    subject: `JWL ${isEvent ? 'Event' : 'Meeting'} — ${fmtDate(date)}`,
+    html: wrap(description
+      ? `
+        <h2 style="margin:0 0 16px;font-size:20px;font-weight:700;">${title}</h2>
+        <div style="font-size:15px;line-height:1.8;color:#374151;white-space:pre-line;margin-bottom:16px;">${description}</div>
+        ${shiftsBlock}
+        ${isEvent
+          ? `${portalLink || btn('View in portal', 'https://portal.jwlhuntington.org/members/meetings')}`
+          : `<p style="margin:16px 0 8px;font-size:15px;font-weight:600;color:#111827;">Will you be attending?</p>
+             ${btn("✓ Yes, I'll be there", rsvpYesUrl)}
+             <a href="${rsvpNoUrl}" style="display:inline-block;background:#f3f4f6;color:#374151;text-decoration:none;padding:12px 24px;border-radius:8px;font-size:15px;font-weight:600;margin:8px 0 16px 12px;">✗ Can't make it</a>
+             ${p('<span style="font-size:13px;color:#9ca3af;">You can change your RSVP at any time by clicking either button above.</span>')}`
+        }
+      `
+      : `
+        <h2 style="margin:0 0 16px;font-size:20px;font-weight:700;">${title}</h2>
+        ${p(`Hi ${memberName.split(' ')[0]}, a JWL ${isEvent ? 'event' : 'meeting'} has been scheduled. We'd love to see you there!`)}
+        ${infoBox([
+          { label: 'Date', value: fmtDate(date) },
+          { label: 'Time', value: fmtTime(time) },
+          { label: 'Location', value: location },
+        ])}
+        ${agenda ? `<div style="background:#f0f4ff;border-radius:8px;padding:16px 20px;margin:16px 0;"><p style="margin:0 0 6px;font-size:13px;font-weight:600;color:#1B52C1;">Agenda highlights</p><p style="margin:0;font-size:14px;color:#374151;line-height:1.6;">${agenda.replace(/\n/g, '<br>')}</p></div>` : ''}
+        ${shiftsBlock}
+        ${isEvent
+          ? `${portalLink || btn('View in portal', 'https://portal.jwlhuntington.org/members/meetings')}`
+          : `<p style="margin:16px 0 8px;font-size:15px;font-weight:600;color:#111827;">Will you be attending?</p>
+             ${btn("✓ Yes, I'll be there", rsvpYesUrl)}
+             <a href="${rsvpNoUrl}" style="display:inline-block;background:#f3f4f6;color:#374151;text-decoration:none;padding:12px 24px;border-radius:8px;font-size:15px;font-weight:600;margin:8px 0 16px 12px;">✗ Can't make it</a>
+             ${p('<span style="font-size:13px;color:#9ca3af;">You can change your RSVP at any time by clicking either button above.</span>')}`
+        }
+      `
+    ),
   }
 }
 

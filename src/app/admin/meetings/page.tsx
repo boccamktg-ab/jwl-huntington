@@ -2,19 +2,26 @@
 
 import { useState, useEffect } from 'react'
 
+type Shift = { id?: string; label: string; start_time: string; end_time: string; signupCount?: number }
+
 type Meeting = {
   id: string
   title: string
   meeting_date: string
   meeting_time: string
+  end_time: string | null
   location: string
   agenda_notes: string | null
+  description: string | null
+  meeting_type: 'meeting' | 'event'
   post_meeting_notes: string | null
   status: 'draft' | 'published' | 'completed'
   jwl_meeting_rsvps: { id: string; response: string }[]
+  jwl_meeting_shifts: (Shift & { jwl_meeting_shift_signups: { id: string }[] })[]
 }
 
 const inputCls = 'w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#1B52C1]'
+const labelCls = 'block text-xs font-medium text-gray-600 mb-1'
 
 function fmtDate(d: string) {
   return new Date(d + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })
@@ -25,6 +32,8 @@ function fmtTime(t: string) {
   return `${((h % 12) || 12)}:${m.toString().padStart(2, '0')} ${ampm}`
 }
 
+const BLANK_SHIFT: Shift = { label: '', start_time: '', end_time: '' }
+
 export default function AdminMeetingsPage() {
   const [meetings, setMeetings] = useState<Meeting[]>([])
   const [showForm, setShowForm] = useState(false)
@@ -33,11 +42,15 @@ export default function AdminMeetingsPage() {
 
   // Form state
   const [title, setTitle] = useState('')
+  const [meetingType, setMeetingType] = useState<'meeting' | 'event'>('meeting')
   const [date, setDate] = useState('')
   const [time, setTime] = useState('')
+  const [endTime, setEndTime] = useState('')
   const [location, setLocation] = useState('')
+  const [description, setDescription] = useState('')
   const [agenda, setAgenda] = useState('')
   const [recap, setRecap] = useState('')
+  const [shifts, setShifts] = useState<Shift[]>([{ ...BLANK_SHIFT }])
   const [saving, setSaving] = useState(false)
 
   async function load() {
@@ -50,30 +63,49 @@ export default function AdminMeetingsPage() {
 
   function openNew() {
     setEditing(null)
-    setTitle(''); setDate(''); setTime(''); setLocation(''); setAgenda(''); setRecap('')
+    setTitle(''); setMeetingType('meeting'); setDate(''); setTime(''); setEndTime('')
+    setLocation(''); setDescription(''); setAgenda(''); setRecap('')
+    setShifts([{ ...BLANK_SHIFT }])
     setShowForm(true)
   }
 
   function openEdit(m: Meeting) {
     setEditing(m)
-    setTitle(m.title); setDate(m.meeting_date); setTime(m.meeting_time)
-    setLocation(m.location); setAgenda(m.agenda_notes ?? ''); setRecap(m.post_meeting_notes ?? '')
+    setTitle(m.title)
+    setMeetingType(m.meeting_type ?? 'meeting')
+    setDate(m.meeting_date)
+    setTime(m.meeting_time)
+    setEndTime(m.end_time ?? '')
+    setLocation(m.location)
+    setDescription(m.description ?? '')
+    setAgenda(m.agenda_notes ?? '')
+    setRecap(m.post_meeting_notes ?? '')
+    setShifts(m.jwl_meeting_shifts?.length
+      ? m.jwl_meeting_shifts.map(s => ({ id: s.id, label: s.label, start_time: s.start_time, end_time: s.end_time }))
+      : [{ ...BLANK_SHIFT }])
     setShowForm(true)
   }
 
   async function save() {
     setSaving(true)
+    const body = {
+      title, meeting_date: date, meeting_time: time, end_time: endTime || null,
+      location, agenda_notes: agenda || null, description: description || null,
+      meeting_type: meetingType,
+      post_meeting_notes: recap || null,
+      shifts: meetingType === 'event' ? shifts : [],
+    }
     if (editing) {
       await fetch('/api/admin/meetings', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: editing.id, title, meeting_date: date, meeting_time: time, location, agenda_notes: agenda, post_meeting_notes: recap }),
+        body: JSON.stringify({ id: editing.id, ...body }),
       })
     } else {
       await fetch('/api/admin/meetings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title, meeting_date: date, meeting_time: time, location, agenda_notes: agenda }),
+        body: JSON.stringify(body),
       })
     }
     setSaving(false)
@@ -100,6 +132,12 @@ export default function AdminMeetingsPage() {
     load()
   }
 
+  function addShift() { setShifts(s => [...s, { ...BLANK_SHIFT }]) }
+  function removeShift(i: number) { setShifts(s => s.filter((_, idx) => idx !== i)) }
+  function setShift(i: number, f: keyof Shift, v: string) {
+    setShifts(s => s.map((sh, idx) => idx === i ? { ...sh, [f]: v } : sh))
+  }
+
   const statusColors: Record<string, string> = {
     draft: 'bg-gray-100 text-gray-600',
     published: 'bg-blue-100 text-blue-700',
@@ -109,10 +147,10 @@ export default function AdminMeetingsPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold text-gray-900">JWL Meetings</h1>
+        <h1 className="text-2xl font-semibold text-gray-900">JWL Meetings &amp; Events</h1>
         <button onClick={openNew}
           className="bg-[#1B52C1] text-white rounded-lg px-4 py-2 text-sm font-medium hover:bg-[#1540A0]">
-          + New meeting
+          + New meeting / event
         </button>
       </div>
 
@@ -120,8 +158,11 @@ export default function AdminMeetingsPage() {
 
       <div className="space-y-4">
         {meetings.map(m => {
+          const isEvent = m.meeting_type === 'event'
           const yesCount = m.jwl_meeting_rsvps?.filter(r => r.response === 'yes').length ?? 0
           const noCount = m.jwl_meeting_rsvps?.filter(r => r.response === 'no').length ?? 0
+          const shifts = (m.jwl_meeting_shifts ?? []).sort((a, b) => (a as any).sort_order - (b as any).sort_order)
+
           return (
             <div key={m.id} className="bg-white border border-gray-200 rounded-xl p-5 space-y-4">
               <div className="flex items-start justify-between gap-4">
@@ -130,23 +171,45 @@ export default function AdminMeetingsPage() {
                     <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${statusColors[m.status]}`}>
                       {m.status.charAt(0).toUpperCase() + m.status.slice(1)}
                     </span>
+                    <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-purple-100 text-purple-700">
+                      {isEvent ? 'Event' : 'Meeting'}
+                    </span>
                   </div>
                   <h2 className="text-base font-semibold text-gray-900">{m.title}</h2>
-                  <p className="text-sm text-gray-500">{fmtDate(m.meeting_date)} at {fmtTime(m.meeting_time)} · {m.location}</p>
-                  {m.agenda_notes && <p className="text-xs text-gray-400 mt-1 line-clamp-2">{m.agenda_notes}</p>}
+                  <p className="text-sm text-gray-500">
+                    {fmtDate(m.meeting_date)} · {fmtTime(m.meeting_time)}{m.end_time ? ` – ${fmtTime(m.end_time)}` : ''} · {m.location}
+                  </p>
                 </div>
                 <div className="text-right shrink-0">
-                  <p className="text-sm font-medium text-gray-700">{yesCount} attending</p>
-                  <p className="text-xs text-gray-400">{noCount} declined</p>
+                  {isEvent ? (
+                    <div className="space-y-1">
+                      {shifts.map(s => (
+                        <p key={s.id} className="text-xs text-gray-500">
+                          {s.label}: <span className="font-medium text-gray-700">{s.jwl_meeting_shift_signups?.length ?? 0}</span> signed up
+                        </p>
+                      ))}
+                    </div>
+                  ) : (
+                    <>
+                      <p className="text-sm font-medium text-gray-700">{yesCount} attending</p>
+                      <p className="text-xs text-gray-400">{noCount} declined</p>
+                    </>
+                  )}
                 </div>
               </div>
+
+              {m.description && (
+                <div className="bg-gray-50 rounded-lg p-3">
+                  <p className="text-sm text-gray-700 whitespace-pre-line line-clamp-3">{m.description}</p>
+                </div>
+              )}
 
               {/* Notification actions */}
               <div className="flex flex-wrap gap-2 pt-2 border-t border-gray-100">
                 {m.status === 'draft' && (
                   <NotifyBtn label="Publish & notify all" meetingId={m.id} type="published" sending={sending} onSend={notify} color="blue" />
                 )}
-                {m.status === 'published' && (
+                {m.status === 'published' && !isEvent && (
                   <>
                     <NotifyBtn label="Send 1-week reminder" meetingId={m.id} type="reminder_7" sending={sending} onSend={notify} color="amber" />
                     <NotifyBtn label="Send 1-day reminder" meetingId={m.id} type="reminder_1" sending={sending} onSend={notify} color="amber" />
@@ -179,42 +242,126 @@ export default function AdminMeetingsPage() {
       {/* Create/Edit modal */}
       {showForm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <div className="bg-white rounded-xl shadow-lg w-full max-w-lg p-6 space-y-4 max-h-[90vh] overflow-y-auto">
-            <h2 className="text-base font-semibold text-gray-900">{editing ? 'Edit meeting' : 'New meeting'}</h2>
+          <div className="bg-white rounded-xl shadow-lg w-full max-w-2xl p-6 space-y-4 max-h-[90vh] overflow-y-auto">
+            <h2 className="text-base font-semibold text-gray-900">{editing ? 'Edit' : 'New'} meeting / event</h2>
+
+            {/* Type toggle */}
+            <div>
+              <label className={labelCls}>Type</label>
+              <div className="flex rounded-lg border border-gray-200 overflow-hidden w-fit">
+                {(['meeting', 'event'] as const).map(t => (
+                  <button key={t} onClick={() => setMeetingType(t)}
+                    className={`px-5 py-2 text-sm font-medium transition-colors ${meetingType === t ? 'bg-[#1B52C1] text-white' : 'bg-white text-gray-600 hover:bg-gray-50'}`}>
+                    {t.charAt(0).toUpperCase() + t.slice(1)}
+                  </button>
+                ))}
+              </div>
+              {meetingType === 'event' && (
+                <p className="text-xs text-gray-400 mt-1">Events have multiple shifts — members sign up for the specific times they can help.</p>
+              )}
+            </div>
 
             <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">Meeting title</label>
-              <input type="text" value={title} onChange={e => setTitle(e.target.value)} placeholder="e.g. Monthly Membership Meeting" className={inputCls} />
+              <label className={labelCls}>Title</label>
+              <input type="text" value={title} onChange={e => setTitle(e.target.value)}
+                placeholder={meetingType === 'event' ? 'e.g. Backpacks for Success' : 'e.g. Monthly Membership Meeting'}
+                className={inputCls} />
             </div>
+
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">Date</label>
+                <label className={labelCls}>Date</label>
                 <input type="date" value={date} onChange={e => setDate(e.target.value)} className={inputCls} />
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">Time</label>
-                <input type="time" value={time} onChange={e => setTime(e.target.value)} className={inputCls} />
+                {meetingType === 'event' ? (
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className={labelCls}>Start time</label>
+                      <input type="time" value={time} onChange={e => setTime(e.target.value)} className={inputCls} />
+                    </div>
+                    <div>
+                      <label className={labelCls}>End time</label>
+                      <input type="time" value={endTime} onChange={e => setEndTime(e.target.value)} className={inputCls} />
+                    </div>
+                  </div>
+                ) : (
+                  <div>
+                    <label className={labelCls}>Time</label>
+                    <input type="time" value={time} onChange={e => setTime(e.target.value)} className={inputCls} />
+                  </div>
+                )}
               </div>
             </div>
+
             <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">Location</label>
-              <input type="text" value={location} onChange={e => setLocation(e.target.value)} placeholder="e.g. Huntington Town Hall" className={inputCls} />
+              <label className={labelCls}>Location</label>
+              <input type="text" value={location} onChange={e => setLocation(e.target.value)}
+                placeholder="e.g. 62 Hollywood Place, Huntington, NY 11743" className={inputCls} />
             </div>
+
+            {/* Description — drives the email body */}
             <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">Agenda highlights <span className="text-gray-400">(optional)</span></label>
-              <textarea rows={3} value={agenda} onChange={e => setAgenda(e.target.value)} placeholder="Key topics or items for the meeting…" className={inputCls} />
+              <label className={labelCls}>
+                Description / email body
+                <span className="ml-1 text-gray-400 font-normal">(this text appears verbatim in the notification email)</span>
+              </label>
+              <textarea rows={10} value={description} onChange={e => setDescription(e.target.value)}
+                placeholder="Write the full message that members will receive — greeting, details, what you need, sign-off…"
+                className={inputCls + ' resize-y'} />
             </div>
+
+            {/* Shifts — event only */}
+            {meetingType === 'event' && (
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <label className={labelCls + ' mb-0'}>Shifts</label>
+                  <button onClick={addShift} className="text-xs text-[#1B52C1] hover:underline">+ Add shift</button>
+                </div>
+                {shifts.map((s, i) => (
+                  <div key={i} className="grid grid-cols-[1fr_auto_auto_auto] gap-2 items-end">
+                    <div>
+                      <label className="block text-xs text-gray-400 mb-1">Label</label>
+                      <input type="text" value={s.label} onChange={e => setShift(i, 'label', e.target.value)}
+                        placeholder="e.g. Assembly" className={inputCls} />
+                    </div>
+                    <div>
+                      <label className="block text-xs text-gray-400 mb-1">Start</label>
+                      <input type="time" value={s.start_time} onChange={e => setShift(i, 'start_time', e.target.value)} className={inputCls} />
+                    </div>
+                    <div>
+                      <label className="block text-xs text-gray-400 mb-1">End</label>
+                      <input type="time" value={s.end_time} onChange={e => setShift(i, 'end_time', e.target.value)} className={inputCls} />
+                    </div>
+                    {shifts.length > 1 && (
+                      <button onClick={() => removeShift(i)} className="text-gray-300 hover:text-red-500 pb-2">✕</button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Agenda notes (secondary, optional) */}
+            <div>
+              <label className={labelCls}>
+                Agenda highlights <span className="text-gray-400 font-normal">(optional — shown in portal card)</span>
+              </label>
+              <textarea rows={2} value={agenda} onChange={e => setAgenda(e.target.value)}
+                placeholder="Key topics or items…" className={inputCls} />
+            </div>
+
             {editing && (
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">Post-meeting recap notes <span className="text-gray-400">(after the meeting)</span></label>
-                <textarea rows={4} value={recap} onChange={e => setRecap(e.target.value)} placeholder="Meeting notes, decisions made, follow-up items…" className={inputCls} />
+                <label className={labelCls}>Post-meeting recap notes <span className="text-gray-400 font-normal">(after the meeting)</span></label>
+                <textarea rows={4} value={recap} onChange={e => setRecap(e.target.value)}
+                  placeholder="Meeting notes, decisions made, follow-up items…" className={inputCls} />
               </div>
             )}
 
             <div className="flex gap-3 pt-1">
               <button onClick={save} disabled={saving || !title || !date || !time || !location}
                 className="flex-1 bg-[#1B52C1] text-white rounded-lg px-4 py-2 text-sm font-medium hover:bg-[#1540A0] disabled:opacity-50">
-                {saving ? 'Saving…' : 'Save'}
+                {saving ? 'Saving…' : 'Save draft'}
               </button>
               <button onClick={() => setShowForm(false)}
                 className="flex-1 border border-gray-300 text-gray-700 rounded-lg px-4 py-2 text-sm hover:bg-gray-50">

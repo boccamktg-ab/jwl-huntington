@@ -20,7 +20,7 @@ export default function MembersNav({ memberName, isGrantsReviewer, isProgramsAdm
   const links = [
     { href: '/members/dashboard', label: 'Dashboard' },
     { href: '/members/holiday-charities', label: 'Holiday Charities' },
-    { href: '/members/meetings', label: 'Meetings' },
+    { href: isFullAdmin ? '/admin/meetings' : '/members/meetings', label: 'Meetings' },
     { href: '/members/directory', label: 'Directory' },
     { href: '/members/account', label: 'Account' },
     ...(isGrantsReviewer ? [{ href: '/grants/reviewer', label: 'Grants' }] : []),

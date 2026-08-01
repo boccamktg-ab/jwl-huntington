@@ -44,11 +44,14 @@ export async function POST(request: NextRequest) {
 
   const { data: meeting } = await supabase
     .from('jwl_meetings')
-    .select('*')
+    .select('*, jwl_meeting_shifts(id, label, start_time, end_time, sort_order)')
     .eq('id', meeting_id)
     .single()
 
   if (!meeting) return NextResponse.json({ error: 'Meeting not found' }, { status: 404 })
+
+  const shifts = ((meeting as any).jwl_meeting_shifts ?? [])
+    .sort((a: any, b: any) => a.sort_order - b.sort_order)
 
   // Ensure every member has an RSVP token row
   await ensureRsvpTokens(meeting_id)
@@ -73,6 +76,13 @@ export async function POST(request: NextRequest) {
         member.name, meeting.meeting_date, meeting.meeting_time,
         meeting.location, meeting.agenda_notes,
         rsvpUrl(rsvp.token, 'yes'), rsvpUrl(rsvp.token, 'no'),
+        {
+          title: meeting.title,
+          description: (meeting as any).description,
+          meetingType: (meeting as any).meeting_type ?? 'meeting',
+          shifts,
+          portalUrl: `${BASE}/members/meetings`,
+        }
       )
     } else if (type === 'reminder_7' || type === 'reminder_1') {
       if (rsvp.response === 'no') continue
