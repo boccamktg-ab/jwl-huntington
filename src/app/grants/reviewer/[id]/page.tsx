@@ -382,7 +382,7 @@ export default async function ReviewerApplicationPage({ params }: { params: Prom
         applicationId={id}
         messages={(messages ?? []) as any}
         currentUserId={user.id}
-        canMessage={isOpen}
+        canMessage={!['denied', 'paid_closed'].includes(app.status)}
       />
     </div>
   )
