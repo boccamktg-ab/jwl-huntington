@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
+import Link from 'next/link'
 import AddDistrictForm from './AddDistrictForm'
 import AddSchoolForm from './AddSchoolForm'
 import RemoveSchoolButton from './RemoveSchoolButton'
@@ -27,6 +28,16 @@ export default async function SetupPage() {
   return (
     <div className="space-y-8 max-w-2xl">
       <h1 className="text-2xl font-semibold text-gray-900">Setup</h1>
+
+      <div className="bg-white rounded-xl border border-gray-200 p-5 flex items-center justify-between">
+        <div>
+          <h2 className="font-semibold text-gray-900">Email Templates</h2>
+          <p className="text-sm text-gray-500 mt-0.5">Preview and test every system email</p>
+        </div>
+        <Link href="/admin/email-preview" className="text-sm font-semibold text-white bg-[#1B52C1] hover:bg-blue-700 px-4 py-2 rounded-lg transition-colors">
+          Open →
+        </Link>
+      </div>
 
       <SeasonSettings submissionsOpen={submissionsOpen} closedMessage={closedMessage} />
 
