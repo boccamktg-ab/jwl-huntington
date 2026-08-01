@@ -63,8 +63,6 @@ export default function TranscribeForm({ applicationId, grantType, initialDetail
     d?.first_request === true ? 'none' : d?.first_request === false ? 'prior_approved' : ''
   )
   const [prior_request_explanation, setPriorExplanation] = useState(d?.prior_request_explanation ?? '')
-  const [confidential, setConfidential] = useState(d?.confidential ?? false)
-  const [confidentiality_notes, setConfidentialityNotes] = useState(d?.confidentiality_notes ?? '')
   const [consent_disclosure, setConsentDisclosure] = useState(d?.consent_disclosure ?? false)
 
   const [assistance, setAssistance] = useState<Record<AssistanceKey, { checked: boolean; amount: string }>>(
@@ -115,7 +113,7 @@ export default function TranscribeForm({ applicationId, grantType, initialDetail
         sustainability_statement,
         first_request: first_request === '' ? null : first_request === 'none',
         prior_request_explanation: (first_request === 'prior_approved' || first_request === 'prior_denied') ? prior_request_explanation : null,
-        confidential, confidentiality_notes, consent_disclosure,
+        confidential: true, consent_disclosure,
         ...assistanceFields,
       } : {
         beneficiary_name, address, dob: dob || null, attends_huntington_school,
@@ -349,16 +347,9 @@ export default function TranscribeForm({ applicationId, grantType, initialDetail
 
           <hr className="border-gray-100" />
 
-          {/* Confidentiality */}
+          {/* Consent */}
           <section className="space-y-3">
-            <h3 className="text-sm font-semibold text-gray-600 uppercase tracking-wide">Confidentiality &amp; Consent</h3>
-            <label className="flex items-start gap-3 cursor-pointer">
-              <input type="checkbox" checked={confidential} onChange={e => setConfidential(e.target.checked)} className="mt-0.5 h-4 w-4 rounded border-gray-300 text-[#1B52C1]" />
-              <span className="text-sm text-gray-600">This application requires strict confidentiality.</span>
-            </label>
-            {confidential && (
-              <textarea value={confidentiality_notes} onChange={e => setConfidentialityNotes(e.target.value)} rows={2} placeholder="Confidentiality notes…" className={inputCls + ' resize-none'} />
-            )}
+            <h3 className="text-sm font-semibold text-gray-600 uppercase tracking-wide">Consent</h3>
             <label className="flex items-start gap-3 cursor-pointer">
               <input type="checkbox" checked={consent_disclosure} onChange={e => setConsentDisclosure(e.target.checked)} className="mt-0.5 h-4 w-4 rounded border-gray-300 text-[#1B52C1]" />
               <span className="text-sm text-gray-600">Applicant consents to JWL communicating with agencies as needed to process this application.</span>

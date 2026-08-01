@@ -135,7 +135,9 @@ function ApplicationTable({ rows }: { rows: any[] }) {
               <tr key={app.id} className="hover:bg-gray-50">
                 <td className="px-4 py-3">
                   <Link href={`/grants/reviewer/${app.id}`} className="font-medium text-[#1B52C1] hover:underline">
-                    {detail?.beneficiary_name || <span className="italic text-gray-400">Unnamed — open to transcribe</span>}
+                    {isAdmin
+                      ? (detail?.beneficiary_name || <span className="italic text-gray-400">Unnamed — open to transcribe</span>)
+                      : (detail?.beneficiary_name ? '[Confidential]' : <span className="italic text-gray-400">Unnamed — open to transcribe</span>)}
                   </Link>
                 </td>
                 <td className="px-4 py-3 text-gray-600">{GRANT_LABELS[app.grant_type]}</td>

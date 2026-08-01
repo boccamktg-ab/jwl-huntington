@@ -163,10 +163,7 @@ export default async function ReviewerApplicationPage({ params }: { params: Prom
       <div className="flex items-start justify-between">
         <div>
           <h1 className="text-2xl font-semibold text-gray-900">
-            {detail?.beneficiary_name || '—'}
-            {detail?.confidential && (
-              <span className="ml-2 text-xs font-normal text-amber-700 bg-amber-50 border border-amber-200 rounded-full px-2 py-0.5 align-middle">Confidential</span>
-            )}
+            {isAdmin ? (detail?.beneficiary_name || '—') : '[Confidential]'}
           </h1>
           <p className="text-sm text-gray-500 mt-0.5">
             {isCharitable ? 'Charitable Children Grant' : 'The Lift Fund'}
@@ -254,21 +251,25 @@ export default async function ReviewerApplicationPage({ params }: { params: Prom
       <div className="bg-white border border-gray-200 rounded-xl p-6 space-y-4">
         <h2 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Application Details</h2>
 
-        <Row label="Beneficiary" value={detail?.beneficiary_name} />
-        <Row label="Address" value={detail?.address} />
+        {isAdmin
+          ? <Row label="Beneficiary" value={detail?.beneficiary_name} />
+          : <Row label="Beneficiary" value="[Confidential]" />}
+        {isAdmin
+          ? <Row label="Address" value={detail?.address} />
+          : <Row label="Address" value="[Confidential]" />}
         {detail?.attends_huntington_school && (
           <Row label="Residency exception" value="Attends a Huntington school district school" />
         )}
 
         {isCharitable ? (
           <>
-            {detail?.dob && <Row label="Date of Birth" value={new Date(detail.dob).toLocaleDateString('en-US', { timeZone: 'UTC' })} />}
+            {isAdmin && detail?.dob && <Row label="Date of Birth" value={new Date(detail.dob).toLocaleDateString('en-US', { timeZone: 'UTC' })} />}
             <Row label="Justification" value={detail?.justification} multiline />
             {detail?.financial_narrative && <Row label="Financial Narrative" value={detail.financial_narrative} multiline />}
           </>
         ) : (
           <>
-            {/* Household Members */}
+            {/* Household Members — names redacted for non-admins */}
             {householdMembers && householdMembers.length > 0 && (
               <div className="space-y-1">
                 <span className="text-sm text-gray-500">Household Members</span>
@@ -278,7 +279,7 @@ export default async function ReviewerApplicationPage({ params }: { params: Prom
                   </div>
                   {householdMembers.map((m: any) => (
                     <div key={m.id} className="grid grid-cols-3 px-3 py-1.5 border-t border-gray-100 text-xs">
-                      <span>{m.full_name}</span>
+                      <span>{isAdmin ? m.full_name : '[Confidential]'}</span>
                       <span>{m.age ?? '—'}</span>
                       <span>{m.married ? 'Yes' : 'No'}</span>
                     </div>
@@ -286,13 +287,10 @@ export default async function ReviewerApplicationPage({ params }: { params: Prom
                 </div>
               </div>
             )}
-            {detail?.household_composition && !householdMembers?.length && (
-              <Row label="Household" value={detail.household_composition} />
-            )}
 
-            {/* Contact */}
-            {detail?.applicant_phone && <Row label="Phone" value={detail.applicant_phone} />}
-            {detail?.applicant_email && <Row label="Email" value={detail.applicant_email} />}
+            {/* Contact — admin only */}
+            {isAdmin && detail?.applicant_phone && <Row label="Phone" value={detail.applicant_phone} />}
+            {isAdmin && detail?.applicant_email && <Row label="Email" value={detail.applicant_email} />}
 
             {/* Employment */}
             {detail?.housing_status && <Row label="Housing" value={detail.housing_status === 'rented' ? 'Rented' : 'Owned'} />}
@@ -301,7 +299,7 @@ export default async function ReviewerApplicationPage({ params }: { params: Prom
             {detail?.employment_type && <Row label="Employment Type" value={
               ({ full_time: 'Full-time', part_time: 'Part-time', not_employed: 'Not employed', other: 'Other' } as Record<string, string>)[detail.employment_type] ?? detail.employment_type
             } />}
-            {detail?.employer && <Row label="Employer" value={detail.employer} />}
+            {isAdmin && detail?.employer && <Row label="Employer" value={detail.employer} />}
             {detail?.annual_salary && <Row label="Annual Salary" value={detail.annual_salary} />}
             {detail?.weekly_salary && <Row label="Weekly Salary" value={detail.weekly_salary} />}
 
@@ -336,12 +334,6 @@ export default async function ReviewerApplicationPage({ params }: { params: Prom
             )}
             {detail?.prior_request_explanation && (
               <Row label="Prior Request Explanation" value={detail.prior_request_explanation} multiline />
-            )}
-
-            {detail?.confidential && (
-              <div className="bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 text-xs text-amber-800">
-                <strong>Confidential.</strong>{detail.confidentiality_notes ? ` ${detail.confidentiality_notes}` : ''}
-              </div>
             )}
           </>
         )}

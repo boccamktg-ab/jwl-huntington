@@ -57,8 +57,6 @@ export default function LiftFundForm({ referrerId, referrerName, referrerEmail }
     sustainability_statement: '',
     first_request: '' as '' | 'prior_approved' | 'prior_denied' | 'none',
     prior_request_explanation: '',
-    confidential: true,
-    confidentiality_notes: '',
     consent_disclosure: false,
   })
 
@@ -141,8 +139,7 @@ export default function LiftFundForm({ referrerId, referrerName, referrerEmail }
             sustainability_statement: form.sustainability_statement,
             first_request: form.first_request === '' ? null : form.first_request === 'none',
             prior_request_explanation: (form.first_request === 'prior_approved' || form.first_request === 'prior_denied') ? form.prior_request_explanation : null,
-            confidential: form.confidential,
-            confidentiality_notes: form.confidentiality_notes,
+            confidential: true,
             consent_disclosure: form.consent_disclosure,
             ...assistanceDetails,
           },
@@ -483,27 +480,6 @@ export default function LiftFundForm({ referrerId, referrerName, referrerEmail }
       </section>
 
       <hr className="border-gray-100" />
-
-      {/* Confidentiality */}
-      <section className="space-y-3">
-        <h2 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Confidentiality</h2>
-        <label className="flex items-start gap-3 cursor-pointer">
-          <input type="checkbox" checked={form.confidential}
-            onChange={e => setF('confidential', e.target.checked)}
-            className="mt-0.5 h-4 w-4 rounded border-gray-300 text-[#1B52C1]" />
-          <span className="text-sm text-gray-600">
-            This application requires strict confidentiality. The applicant's identity should not be disclosed beyond JWL reviewers.
-          </span>
-        </label>
-        {form.confidential && (
-          <div>
-            <label className={labelCls}>Confidentiality Notes (optional)</label>
-            <textarea value={form.confidentiality_notes} onChange={e => setF('confidentiality_notes', e.target.value)}
-              rows={2} placeholder="Any specific handling instructions…"
-              className={inputCls + ' resize-none'} />
-          </div>
-        )}
-      </section>
 
       <hr className="border-gray-100" />
 

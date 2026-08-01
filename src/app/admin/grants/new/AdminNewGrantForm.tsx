@@ -54,7 +54,6 @@ export default function AdminNewGrantForm({ socialWorkers }: { socialWorkers: SW
     sustainability_statement: '',
     first_request: '' as '' | 'prior_approved' | 'prior_denied' | 'none',
     prior_request_explanation: '',
-    confidential: true, confidentiality_notes: '',
     consent_disclosure: false,
   })
   const [household, setHousehold] = useState<HouseholdMember[]>([{ full_name: '', age: '', married: false }])
@@ -143,8 +142,7 @@ export default function AdminNewGrantForm({ socialWorkers }: { socialWorkers: SW
           sustainability_statement: lf.sustainability_statement,
           first_request: lf.first_request === '' ? null : lf.first_request === 'none',
           prior_request_explanation: (lf.first_request === 'prior_approved' || lf.first_request === 'prior_denied') ? lf.prior_request_explanation : null,
-          confidential: lf.confidential,
-          confidentiality_notes: lf.confidentiality_notes,
+          confidential: true,
           consent_disclosure: lf.consent_disclosure,
           ...assistanceDetails,
         }
@@ -543,21 +541,9 @@ export default function AdminNewGrantForm({ socialWorkers }: { socialWorkers: SW
 
               <hr className="border-gray-100" />
 
-              {/* Confidentiality + consent */}
+              {/* Consent */}
               <section className="space-y-3">
-                <h2 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Confidentiality &amp; Consent</h2>
-                <label className="flex items-start gap-3 cursor-pointer">
-                  <input type="checkbox" checked={lf.confidential} onChange={e => setLF('confidential', e.target.checked)}
-                    className="mt-0.5 h-4 w-4 rounded border-gray-300 text-[#1B52C1]" />
-                  <span className="text-sm text-gray-600">This application requires strict confidentiality.</span>
-                </label>
-                {lf.confidential && (
-                  <div>
-                    <label className={labelCls}>Confidentiality Notes</label>
-                    <textarea value={lf.confidentiality_notes} onChange={e => setLF('confidentiality_notes', e.target.value)}
-                      rows={2} className={inputCls + ' resize-none'} />
-                  </div>
-                )}
+                <h2 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Consent</h2>
                 <label className="flex items-start gap-3 cursor-pointer">
                   <input type="checkbox" checked={lf.consent_disclosure} onChange={e => setLF('consent_disclosure', e.target.checked)}
                     className="mt-0.5 h-4 w-4 rounded border-gray-300 text-[#1B52C1]" />
