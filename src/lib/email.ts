@@ -947,6 +947,123 @@ export function emailMeetingReminder(memberName: string, date: string, time: str
   }
 }
 
+// ─── JWL Meeting / Event Confirmations & Reminders ────────────────────────────
+
+export function emailMeetingRsvpConfirmation(
+  memberName: string, title: string, date: string, time: string, location: string,
+  attendees: string[], rsvpNoUrl: string,
+) {
+  const firstName = memberName.split(' ')[0]
+  const attendeeList = attendees.filter(n => n !== memberName)
+  return {
+    subject: `You're confirmed — ${title}`,
+    html: wrap(`
+      <h2 style="margin:0 0 16px;font-size:20px;font-weight:700;">You're in, ${firstName}! 🎉</h2>
+      ${p(`Your RSVP for <strong>${title}</strong> is confirmed. We look forward to seeing you!`)}
+      ${infoBox([
+        { label: 'Date', value: fmtDate(date) },
+        { label: 'Time', value: fmtTime(time) },
+        { label: 'Location', value: location },
+      ])}
+      ${attendeeList.length > 0 ? `
+        <div style="background:#f0f4ff;border-radius:8px;padding:16px 20px;margin:16px 0;">
+          <p style="margin:0 0 8px;font-size:13px;font-weight:600;color:#1B52C1;">Also attending (${attendeeList.length})</p>
+          <p style="margin:0;font-size:14px;color:#374151;line-height:1.8;">${attendeeList.join(' · ')}</p>
+        </div>` : ''}
+      <a href="${rsvpNoUrl}" style="display:inline-block;background:#f3f4f6;color:#6b7280;text-decoration:none;padding:10px 20px;border-radius:8px;font-size:13px;margin-top:8px;">Can't make it after all? Click to cancel</a>
+    `),
+  }
+}
+
+export function emailEventShiftConfirmation(
+  memberName: string, title: string, date: string, location: string,
+  myShifts: { label: string; start_time: string; end_time: string }[],
+  allShiftCounts: { label: string; count: number }[],
+) {
+  const firstName = memberName.split(' ')[0]
+  return {
+    subject: `You're signed up — ${title}`,
+    html: wrap(`
+      <h2 style="margin:0 0 16px;font-size:20px;font-weight:700;">You're signed up, ${firstName}! 🎉</h2>
+      ${p(`Your signup for <strong>${title}</strong> is confirmed. Here's what you're helping with:`)}
+      ${infoBox([
+        { label: 'Date', value: fmtDate(date) },
+        { label: 'Location', value: location },
+      ])}
+      <div style="background:#f0f4ff;border-radius:8px;padding:16px 20px;margin:16px 0;">
+        <p style="margin:0 0 10px;font-size:13px;font-weight:600;color:#1B52C1;">Your shift${myShifts.length !== 1 ? 's' : ''}</p>
+        ${myShifts.map(s => `<p style="margin:0 0 4px;font-size:14px;color:#111827;">· <strong>${s.label}</strong>: ${fmtTime(s.start_time)} – ${fmtTime(s.end_time)}</p>`).join('')}
+      </div>
+      ${allShiftCounts.length > 0 ? `
+        <div style="background:#f9fafb;border-radius:8px;padding:14px 18px;margin:12px 0;">
+          <p style="margin:0 0 8px;font-size:13px;font-weight:600;color:#374151;">Current volunteer count</p>
+          ${allShiftCounts.map(s => `<p style="margin:0 0 4px;font-size:13px;color:#6b7280;">· ${s.label}: <strong>${s.count}</strong> signed up</p>`).join('')}
+        </div>` : ''}
+      ${btn('View in portal →', 'https://portal.jwlhuntington.org/members/meetings')}
+    `),
+  }
+}
+
+export function emailMeetingReminderFull(
+  memberName: string, title: string, date: string, time: string, location: string,
+  attendees: string[], daysOut: number, rsvpYesUrl: string, rsvpNoUrl: string,
+) {
+  const when = daysOut === 1 ? 'tomorrow' : 'in one week'
+  const firstName = memberName.split(' ')[0]
+  const others = attendees.filter(n => n !== memberName)
+  return {
+    subject: `Reminder: ${title} is ${when}`,
+    html: wrap(`
+      <h2 style="margin:0 0 16px;font-size:20px;font-weight:700;">See you ${when}, ${firstName}!</h2>
+      ${p(`Just a reminder that <strong>${title}</strong> is coming up ${when}.`)}
+      ${infoBox([
+        { label: 'Date', value: fmtDate(date) },
+        { label: 'Time', value: fmtTime(time) },
+        { label: 'Location', value: location },
+      ])}
+      ${others.length > 0 ? `
+        <div style="background:#f0f4ff;border-radius:8px;padding:16px 20px;margin:16px 0;">
+          <p style="margin:0 0 8px;font-size:13px;font-weight:600;color:#1B52C1;">Also attending (${others.length})</p>
+          <p style="margin:0;font-size:14px;color:#374151;line-height:1.8;">${others.join(' · ')}</p>
+        </div>` : ''}
+      ${p("If your plans have changed, please let us know as soon as possible.")}
+      <a href="${rsvpNoUrl}" style="display:inline-block;background:#f3f4f6;color:#6b7280;text-decoration:none;padding:10px 20px;border-radius:8px;font-size:13px;">Can't make it? Click to cancel</a>
+    `),
+  }
+}
+
+export function emailEventReminderFull(
+  memberName: string, title: string, date: string, location: string,
+  myShifts: { label: string; start_time: string; end_time: string }[],
+  allShiftCounts: { label: string; count: number }[],
+  daysOut: number,
+) {
+  const when = daysOut === 1 ? 'tomorrow' : 'in one week'
+  const firstName = memberName.split(' ')[0]
+  return {
+    subject: `Reminder: ${title} is ${when}`,
+    html: wrap(`
+      <h2 style="margin:0 0 16px;font-size:20px;font-weight:700;">See you ${when}, ${firstName}!</h2>
+      ${p(`Just a reminder that you're signed up for <strong>${title}</strong>, coming up ${when}.`)}
+      ${infoBox([
+        { label: 'Date', value: fmtDate(date) },
+        { label: 'Location', value: location },
+      ])}
+      <div style="background:#f0f4ff;border-radius:8px;padding:16px 20px;margin:16px 0;">
+        <p style="margin:0 0 10px;font-size:13px;font-weight:600;color:#1B52C1;">Your shift${myShifts.length !== 1 ? 's' : ''}</p>
+        ${myShifts.map(s => `<p style="margin:0 0 4px;font-size:14px;color:#111827;">· <strong>${s.label}</strong>: ${fmtTime(s.start_time)} – ${fmtTime(s.end_time)}</p>`).join('')}
+      </div>
+      ${allShiftCounts.length > 0 ? `
+        <div style="background:#f9fafb;border-radius:8px;padding:14px 18px;margin:12px 0;">
+          <p style="margin:0 0 8px;font-size:13px;font-weight:600;color:#374151;">Total volunteers so far</p>
+          ${allShiftCounts.map(s => `<p style="margin:0 0 4px;font-size:13px;color:#6b7280;">· ${s.label}: <strong>${s.count}</strong> signed up</p>`).join('')}
+        </div>` : ''}
+      ${p("We look forward to seeing you! If you can no longer make it, please let us know as soon as possible.")}
+      ${btn('View in portal →', 'https://portal.jwlhuntington.org/members/meetings')}
+    `),
+  }
+}
+
 export function emailMeetingRecap(memberName: string, date: string, recap: string) {
   return {
     subject: `JWL Meeting Recap — ${fmtDate(date)}`,

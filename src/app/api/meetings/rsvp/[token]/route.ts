@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { sendEmail, emailMeetingRsvpConfirmation } from '@/lib/email'
+
+const BASE = 'https://portal.jwlhuntington.org'
 
 function db() {
   return createClient(
@@ -22,7 +25,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
   const { data: rsvp, error } = await supabase
     .from('jwl_meeting_rsvps')
-    .select('id, meeting_id, response, jwl_meetings(meeting_date, location, title)')
+    .select('id, meeting_id, member_id, response, jwl_meetings(id, title, meeting_date, meeting_time, location), jwl_members(name, email)')
     .eq('token', token)
     .single()
 
@@ -30,10 +33,37 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     return new NextResponse('This RSVP link is invalid or has expired.', { status: 404 })
   }
 
+  const wasAlreadyYes = rsvp.response === 'yes'
+
   await supabase
     .from('jwl_meeting_rsvps')
     .update({ response, updated_at: new Date().toISOString() })
     .eq('token', token)
+
+  // Send confirmation only on a new yes (not if they were already yes)
+  if (response === 'yes' && !wasAlreadyYes) {
+    const meeting = (rsvp as any).jwl_meetings
+    const member = (rsvp as any).jwl_members
+    if (meeting && member?.email) {
+      // Fetch other attendees
+      const { data: others } = await supabase
+        .from('jwl_meeting_rsvps')
+        .select('jwl_members(name)')
+        .eq('meeting_id', rsvp.meeting_id)
+        .eq('response', 'yes')
+        .neq('member_id', rsvp.member_id)
+      const attendees = (others ?? []).map((r: any) =>
+        Array.isArray(r.jwl_members) ? r.jwl_members[0]?.name : r.jwl_members?.name
+      ).filter(Boolean)
+
+      const noUrl = `${BASE}/api/meetings/rsvp/${token}?response=no`
+      const { subject, html } = emailMeetingRsvpConfirmation(
+        member.name, meeting.title, meeting.meeting_date,
+        meeting.meeting_time, meeting.location, attendees, noUrl,
+      )
+      await sendEmail({ to: member.email, subject, html })
+    }
+  }
 
   const meeting = (rsvp as any).jwl_meetings
   const dateStr = meeting?.meeting_date
