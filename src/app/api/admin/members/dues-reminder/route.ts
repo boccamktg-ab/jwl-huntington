@@ -18,6 +18,23 @@ export async function POST(request: NextRequest) {
 
   const currentYear = new Date().getFullYear()
 
+  // Look up the current Secretary / VP of Membership
+  const { data: secretaryPos } = await db()
+    .from('member_positions')
+    .select('id')
+    .ilike('label', '%secretary%')
+    .maybeSingle()
+  let secretaryName: string | null = null
+  if (secretaryPos) {
+    const { data: secretary } = await db()
+      .from('jwl_members')
+      .select('name')
+      .eq('position_id', secretaryPos.id)
+      .eq('status', 'approved')
+      .maybeSingle()
+    secretaryName = secretary?.name ?? null
+  }
+
   // Find approved members whose dues are overdue
   // Overdue = dues_paid_through_year < currentYear AND
   //           they're not on the new-member grace period (join_year + 1 >= currentYear)
@@ -37,7 +54,7 @@ export async function POST(request: NextRequest) {
   let sent = 0
   for (const m of overdue) {
     if (!m.email) continue
-    const { subject, html } = emailMemberDuesReminder(m.name, currentYear)
+    const { subject, html } = emailMemberDuesReminder(m.name, currentYear, secretaryName)
     await sendEmail({ to: m.email, subject, html })
     sent++
   }
