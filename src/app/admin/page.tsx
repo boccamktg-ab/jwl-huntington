@@ -160,7 +160,6 @@ export default async function AdminDashboard() {
             <QuickLink href="/admin/meetings" title="Meetings" desc="Schedule meetings, send invites, post recaps" />
             <QuickLink href="/admin/members" title="Members" desc="Approve, manage dues and positions" />
             <QuickLink href="/admin/member-positions" title="Positions" desc="Configure the position dropdown options" />
-            <QuickLink href="/admin/email-preview" title="Email Templates" desc="Preview and test every system email" />
           </div>
         </section>
       )}
@@ -238,6 +237,16 @@ export default async function AdminDashboard() {
           </Link>
         </div>
       </section>
+
+      {/* ── Setup ──────────────────────────────────────── */}
+      {isMemberAdmin && (
+        <section className="space-y-4">
+          <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide">Setup</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <QuickLink href="/admin/email-preview" title="Email Templates" desc="Preview and test every system email" />
+          </div>
+        </section>
+      )}
 
       {/* Notifications */}
       {notifications.length > 0 && <NotificationsList notifications={notifications} />}
