@@ -44,8 +44,37 @@ export async function POST(request: NextRequest) {
 
   const memberName = member?.name ?? user.email
 
-  const shifts = ((meeting as any).jwl_meeting_shifts ?? [])
+  // Get the member's id for token lookup
+  const { data: memberRow } = await supabase
+    .from('jwl_members')
+    .select('id')
+    .eq('auth_id', user.id)
+    .maybeSingle()
+
+  const isEvent = (meeting as any).meeting_type === 'event'
+  let shifts = ((meeting as any).jwl_meeting_shifts ?? [])
     .sort((a: any, b: any) => a.sort_order - b.sort_order)
+
+  // Attach one-click tokens if available
+  if (isEvent && memberRow?.id && shifts.length > 0) {
+    // Seed tokens for this member if not yet seeded
+    for (const s of shifts) {
+      await supabase
+        .from('jwl_shift_invite_tokens')
+        .upsert({ shift_id: s.id, member_id: memberRow.id }, { onConflict: 'shift_id,member_id', ignoreDuplicates: true })
+    }
+    const { data: tokens } = await supabase
+      .from('jwl_shift_invite_tokens')
+      .select('shift_id, token')
+      .eq('member_id', memberRow.id)
+      .in('shift_id', shifts.map((s: any) => s.id))
+
+    const tokenMap = Object.fromEntries((tokens ?? []).map((t: any) => [t.shift_id, t.token]))
+    shifts = shifts.map((s: any) => ({
+      ...s,
+      signupUrl: tokenMap[s.id] ? `${BASE}/api/meetings/shift-signup/${tokenMap[s.id]}` : null,
+    }))
+  }
 
   const payload = emailMeetingPublished(
     memberName,
@@ -55,7 +84,7 @@ export async function POST(request: NextRequest) {
     {
       title: meeting.title,
       description: (meeting as any).description,
-      meetingType: (meeting as any).meeting_type ?? 'meeting',
+      meetingType: isEvent ? 'event' : 'meeting',
       shifts,
       portalUrl: `${BASE}/members/meetings`,
     }

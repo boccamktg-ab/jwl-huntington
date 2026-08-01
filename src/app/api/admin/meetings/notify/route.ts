@@ -17,6 +17,10 @@ function rsvpUrl(token: string, response: 'yes' | 'no') {
   return `${BASE}/api/meetings/rsvp/${token}?response=${response}`
 }
 
+function shiftSignupUrl(token: string) {
+  return `${BASE}/api/meetings/shift-signup/${token}`
+}
+
 // Ensure all approved members have an RSVP row (with token) for this meeting
 async function ensureRsvpTokens(meetingId: string) {
   const supabase = db()
@@ -29,6 +33,24 @@ async function ensureRsvpTokens(meetingId: string) {
     await supabase
       .from('jwl_meeting_rsvps')
       .upsert({ meeting_id: meetingId, member_id: m.id, response: 'no' }, { onConflict: 'meeting_id,member_id', ignoreDuplicates: true })
+  }
+}
+
+// Seed one invite token per member per shift for one-click email sign-up
+async function ensureShiftTokens(meetingId: string, shiftIds: string[]) {
+  if (!shiftIds.length) return
+  const supabase = db()
+  const { data: members } = await supabase
+    .from('jwl_members')
+    .select('id')
+    .eq('status', 'approved')
+
+  for (const m of members ?? []) {
+    for (const shiftId of shiftIds) {
+      await supabase
+        .from('jwl_shift_invite_tokens')
+        .upsert({ shift_id: shiftId, member_id: m.id }, { onConflict: 'shift_id,member_id', ignoreDuplicates: true })
+    }
   }
 }
 
@@ -50,11 +72,17 @@ export async function POST(request: NextRequest) {
 
   if (!meeting) return NextResponse.json({ error: 'Meeting not found' }, { status: 404 })
 
+  const isEvent = (meeting as any).meeting_type === 'event'
   const shifts = ((meeting as any).jwl_meeting_shifts ?? [])
     .sort((a: any, b: any) => a.sort_order - b.sort_order)
 
-  // Ensure every member has an RSVP token row
+  // Ensure every member has an RSVP token row (used for meetings and as auth for events)
   await ensureRsvpTokens(meeting_id)
+
+  // For events, seed one-click shift invite tokens
+  if (isEvent && shifts.length > 0) {
+    await ensureShiftTokens(meeting_id, shifts.map((s: any) => s.id))
+  }
 
   const { data: rsvps } = await supabase
     .from('jwl_meeting_rsvps')
@@ -70,8 +98,24 @@ export async function POST(request: NextRequest) {
     let payload: { subject: string; html: string } | null = null
 
     if (type === 'published') {
-      // Mark meeting published first
       await supabase.from('jwl_meetings').update({ status: 'published' }).eq('id', meeting_id)
+
+      // For events: fetch this member's per-shift tokens
+      let shiftsWithTokens = shifts
+      if (isEvent && shifts.length > 0) {
+        const { data: tokens } = await supabase
+          .from('jwl_shift_invite_tokens')
+          .select('shift_id, token')
+          .eq('member_id', rsvp.member_id)
+          .in('shift_id', shifts.map((s: any) => s.id))
+
+        const tokenMap = Object.fromEntries((tokens ?? []).map((t: any) => [t.shift_id, t.token]))
+        shiftsWithTokens = shifts.map((s: any) => ({
+          ...s,
+          signupUrl: tokenMap[s.id] ? shiftSignupUrl(tokenMap[s.id]) : null,
+        }))
+      }
+
       payload = emailMeetingPublished(
         member.name, meeting.meeting_date, meeting.meeting_time,
         meeting.location, meeting.agenda_notes,
@@ -80,7 +124,7 @@ export async function POST(request: NextRequest) {
           title: meeting.title,
           description: (meeting as any).description,
           meetingType: (meeting as any).meeting_type ?? 'meeting',
-          shifts,
+          shifts: shiftsWithTokens,
           portalUrl: `${BASE}/members/meetings`,
         }
       )
@@ -95,7 +139,6 @@ export async function POST(request: NextRequest) {
     } else if (type === 'recap') {
       if (!meeting.post_meeting_notes) continue
       payload = emailMeetingRecap(member.name, meeting.meeting_date, meeting.post_meeting_notes)
-      // Mark completed
       await supabase.from('jwl_meetings').update({ status: 'completed' }).eq('id', meeting_id)
     }
 

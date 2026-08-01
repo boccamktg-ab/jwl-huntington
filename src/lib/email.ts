@@ -861,17 +861,27 @@ function fmtTime(t: string) {
 export function emailMeetingPublished(
   memberName: string, date: string, time: string, location: string,
   agenda: string | null, rsvpYesUrl: string, rsvpNoUrl: string,
-  opts?: { title?: string; description?: string | null; meetingType?: string; shifts?: { label: string; start_time: string; end_time: string }[]; portalUrl?: string }
+  opts?: { title?: string; description?: string | null; meetingType?: string; shifts?: { label: string; start_time: string; end_time: string; signupUrl?: string | null }[]; portalUrl?: string }
 ) {
   const isEvent = opts?.meetingType === 'event'
   const title = opts?.title ?? (isEvent ? 'New Event' : 'New Meeting Scheduled')
   const description = opts?.description
 
-  // Build shifts block for events
+  // Build shifts block for events — with one-click sign-up buttons when tokens are available
+  const hasTokens = opts?.shifts?.some(s => s.signupUrl)
   const shiftsBlock = isEvent && opts?.shifts?.length
     ? `<div style="background:#f0f4ff;border-radius:8px;padding:16px 20px;margin:16px 0;">
-        <p style="margin:0 0 10px;font-size:13px;font-weight:600;color:#1B52C1;">Available shifts — sign up in the portal</p>
-        ${opts.shifts.map(s => `<p style="margin:0 0 6px;font-size:14px;color:#374151;">· <strong>${s.label}</strong>: ${fmtTime(s.start_time)} – ${fmtTime(s.end_time)}</p>`).join('')}
+        <p style="margin:0 0 12px;font-size:13px;font-weight:600;color:#1B52C1;">${hasTokens ? 'Sign up for a shift — one click, no login needed' : 'Available shifts — sign up in the portal'}</p>
+        ${opts.shifts.map(s => `
+          <div style="margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;gap:16px;">
+            <div>
+              <p style="margin:0;font-size:14px;font-weight:600;color:#111827;">${s.label}</p>
+              <p style="margin:2px 0 0;font-size:13px;color:#6b7280;">${fmtTime(s.start_time)} – ${fmtTime(s.end_time)}</p>
+            </div>
+            ${s.signupUrl
+              ? `<a href="${s.signupUrl}" style="display:inline-block;background:#1B52C1;color:white;text-decoration:none;padding:8px 18px;border-radius:6px;font-size:13px;font-weight:600;white-space:nowrap;">Sign me up →</a>`
+              : ''}
+          </div>`).join('')}
       </div>`
     : ''
 
