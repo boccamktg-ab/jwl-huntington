@@ -82,7 +82,7 @@ export default async function ReviewerApplicationPage({ params }: { params: Prom
         other_assistance, income_expenses_narrative,
         presenting_problem, first_request, prior_request_explanation
       ),
-      social_workers ( name, email, phone )
+      social_workers!grant_applications_referrer_id_fkey ( name, email, phone )
     `)
     .eq('id', id)
     .single()

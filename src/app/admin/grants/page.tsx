@@ -59,7 +59,7 @@ export default async function AdminGrantsPage() {
       id, grant_type, status, source, requested_amount, approved_amount,
       created_at, submitted_at, admin_referrer_name, admin_referrer_org, admin_notes,
       grant_application_details ( beneficiary_name ),
-      social_workers ( name )
+      social_workers!grant_applications_referrer_id_fkey ( name )
     `)
     .order('created_at', { ascending: false })
 
