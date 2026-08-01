@@ -59,8 +59,8 @@ export default function TranscribeForm({ applicationId, grantType, initialDetail
   const [crisis_description, setCrisisDescription] = useState(d?.crisis_description ?? d?.justification ?? '')
   const [presenting_problem, setPresentingProblem] = useState(d?.presenting_problem ?? '')
   const [sustainability_statement, setSustainability] = useState(d?.sustainability_statement ?? '')
-  const [first_request, setFirstRequest] = useState<'yes' | 'no' | 'no_prior' | ''>(
-    d?.first_request === true ? 'yes' : d?.first_request === false ? 'no' : ''
+  const [first_request, setFirstRequest] = useState<'prior_approved' | 'prior_denied' | 'none' | ''>(
+    d?.first_request === true ? 'none' : d?.first_request === false ? 'prior_approved' : ''
   )
   const [prior_request_explanation, setPriorExplanation] = useState(d?.prior_request_explanation ?? '')
   const [confidential, setConfidential] = useState(d?.confidential ?? false)
@@ -113,8 +113,8 @@ export default function TranscribeForm({ applicationId, grantType, initialDetail
         other_assistance, income_expenses_narrative,
         crisis_description, justification: crisis_description, presenting_problem,
         sustainability_statement,
-        first_request: first_request === '' ? null : first_request !== 'no',
-        prior_request_explanation: first_request === 'no' ? prior_request_explanation : null,
+        first_request: first_request === '' ? null : first_request === 'none',
+        prior_request_explanation: (first_request === 'prior_approved' || first_request === 'prior_denied') ? prior_request_explanation : null,
         confidential, confidentiality_notes, consent_disclosure,
         ...assistanceFields,
       } : {
@@ -328,9 +328,9 @@ export default function TranscribeForm({ applicationId, grantType, initialDetail
             <h3 className="text-sm font-semibold text-gray-600 uppercase tracking-wide">Prior Requests</h3>
             <div className="flex flex-col gap-2">
               {([
-                { value: 'yes', label: 'Yes — first request' },
-                { value: 'no', label: 'No — has had prior requests' },
-                { value: 'no_prior', label: 'No prior requests on file' },
+                { value: 'prior_approved', label: 'Yes — approved' },
+                { value: 'prior_denied', label: 'Yes — denied' },
+                { value: 'none', label: 'No Prior Requests' },
               ] as const).map(({ value, label }) => (
                 <label key={value} className="flex items-center gap-2 cursor-pointer">
                   <input type="radio" name="first_request" value={value} checked={first_request === value} onChange={() => setFirstRequest(value)}
@@ -339,7 +339,7 @@ export default function TranscribeForm({ applicationId, grantType, initialDetail
                 </label>
               ))}
             </div>
-            {first_request === 'no' && (
+            {(first_request === 'prior_approved' || first_request === 'prior_denied') && (
               <div>
                 <label className={labelCls}>Explain prior request</label>
                 <textarea value={prior_request_explanation} onChange={e => setPriorExplanation(e.target.value)} rows={3} className={inputCls + ' resize-none'} />

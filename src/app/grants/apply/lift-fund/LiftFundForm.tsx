@@ -55,7 +55,7 @@ export default function LiftFundForm({ referrerId, referrerName, referrerEmail }
     presenting_problem: '',
     requested_amount: '',
     sustainability_statement: '',
-    first_request: '' as '' | 'yes' | 'no' | 'no_prior',
+    first_request: '' as '' | 'prior_approved' | 'prior_denied' | 'none',
     prior_request_explanation: '',
     confidential: true,
     confidentiality_notes: '',
@@ -139,8 +139,8 @@ export default function LiftFundForm({ referrerId, referrerName, referrerEmail }
             justification: form.crisis_description,
             presenting_problem: form.presenting_problem,
             sustainability_statement: form.sustainability_statement,
-            first_request: form.first_request === '' ? null : form.first_request !== 'no',
-            prior_request_explanation: form.first_request === 'no' ? form.prior_request_explanation : null,
+            first_request: form.first_request === '' ? null : form.first_request === 'none',
+            prior_request_explanation: (form.first_request === 'prior_approved' || form.first_request === 'prior_denied') ? form.prior_request_explanation : null,
             confidential: form.confidential,
             confidentiality_notes: form.confidentiality_notes,
             consent_disclosure: form.consent_disclosure,
@@ -432,9 +432,9 @@ export default function LiftFundForm({ referrerId, referrerName, referrerEmail }
           <label className={labelCls}>Is this the applicant's first request from JWL? {reqStar}</label>
           <div className="flex flex-col gap-2 mt-1">
             {([
-              { value: 'yes', label: 'Yes — first request' },
-              { value: 'no', label: 'No — has had prior requests' },
-              { value: 'no_prior', label: 'No prior requests on file' },
+              { value: 'prior_approved', label: 'Yes — approved' },
+              { value: 'prior_denied', label: 'Yes — denied' },
+              { value: 'none', label: 'No Prior Requests' },
             ] as const).map(({ value, label }) => (
               <label key={value} className="flex items-center gap-2 cursor-pointer">
                 <input type="radio" name="first_request" value={value}
@@ -446,7 +446,7 @@ export default function LiftFundForm({ referrerId, referrerName, referrerEmail }
             ))}
           </div>
         </div>
-        {form.first_request === 'no' && (
+        {form.first_request === 'prior_approved' || form.first_request === 'prior_denied' && (
           <div>
             <label className={labelCls}>Please explain the prior request {reqStar}</label>
             <textarea value={form.prior_request_explanation} onChange={e => setF('prior_request_explanation', e.target.value)}
@@ -454,7 +454,7 @@ export default function LiftFundForm({ referrerId, referrerName, referrerEmail }
               className={inputCls + ' resize-none'} />
           </div>
         )}
-        {form.first_request === 'no' && (
+        {form.first_request === 'prior_approved' || form.first_request === 'prior_denied' && (
           <div className="bg-amber-50 border border-amber-200 rounded-lg px-4 py-3 text-xs text-amber-700">
             The Lift Fund is a one-time grant. A prior request will be flagged for the reviewer, who will determine whether an exception applies.
           </div>

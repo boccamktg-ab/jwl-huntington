@@ -52,7 +52,7 @@ export default function AdminNewGrantForm({ socialWorkers }: { socialWorkers: SW
     hours_per_week: '', other_assistance: '', income_expenses_narrative: '',
     crisis_description: '', presenting_problem: '', requested_amount: '',
     sustainability_statement: '',
-    first_request: '' as '' | 'yes' | 'no' | 'no_prior',
+    first_request: '' as '' | 'prior_approved' | 'prior_denied' | 'none',
     prior_request_explanation: '',
     confidential: true, confidentiality_notes: '',
     consent_disclosure: false,
@@ -141,8 +141,8 @@ export default function AdminNewGrantForm({ socialWorkers }: { socialWorkers: SW
           justification: lf.crisis_description,
           presenting_problem: lf.presenting_problem,
           sustainability_statement: lf.sustainability_statement,
-          first_request: lf.first_request === '' ? null : lf.first_request !== 'no',
-          prior_request_explanation: lf.first_request === 'no' ? lf.prior_request_explanation : null,
+          first_request: lf.first_request === '' ? null : lf.first_request === 'none',
+          prior_request_explanation: (lf.first_request === 'prior_approved' || lf.first_request === 'prior_denied') ? lf.prior_request_explanation : null,
           confidential: lf.confidential,
           confidentiality_notes: lf.confidentiality_notes,
           consent_disclosure: lf.consent_disclosure,
@@ -509,9 +509,9 @@ export default function AdminNewGrantForm({ socialWorkers }: { socialWorkers: SW
                   <label className={labelCls}>Is this the applicant's first request from JWL?</label>
                   <div className="flex flex-col gap-2 mt-1">
                     {([
-                      { value: 'yes', label: 'Yes — first request' },
-                      { value: 'no', label: 'No — has had prior requests' },
-                      { value: 'no_prior', label: 'No prior requests on file' },
+                      { value: 'prior_approved', label: 'Yes — approved' },
+                      { value: 'prior_denied', label: 'Yes — denied' },
+                      { value: 'none', label: 'No Prior Requests' },
                     ] as const).map(({ value, label }) => (
                       <label key={value} className="flex items-center gap-2 cursor-pointer">
                         <input type="radio" name="first_request" value={value}
@@ -522,7 +522,7 @@ export default function AdminNewGrantForm({ socialWorkers }: { socialWorkers: SW
                     ))}
                   </div>
                 </div>
-                {lf.first_request === 'no' && (
+                {(lf.first_request === 'prior_approved' || lf.first_request === 'prior_denied') && (
                   <div>
                     <label className={labelCls}>Explain prior request {req}</label>
                     <textarea value={lf.prior_request_explanation} onChange={e => setLF('prior_request_explanation', e.target.value)}
