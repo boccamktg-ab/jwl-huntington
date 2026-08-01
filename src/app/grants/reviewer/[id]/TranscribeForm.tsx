@@ -22,9 +22,11 @@ type Props = {
   grantType: 'charitable_children' | 'lift_fund'
   initialDetail: any
   initialHousehold: any[]
+  onSaved?: () => void
+  editMode?: boolean
 }
 
-export default function TranscribeForm({ applicationId, grantType, initialDetail: d, initialHousehold }: Props) {
+export default function TranscribeForm({ applicationId, grantType, initialDetail: d, initialHousehold, onSaved, editMode }: Props) {
   const router = useRouter()
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
@@ -137,6 +139,7 @@ export default function TranscribeForm({ applicationId, grantType, initialDetail
       })
       const json = await res.json()
       if (!res.ok) throw new Error(json.error ?? 'Something went wrong.')
+      if (onSaved) onSaved()
       router.refresh()
     } catch (err: any) {
       setError(err.message)
@@ -390,14 +393,23 @@ export default function TranscribeForm({ applicationId, grantType, initialDetail
       {error && <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-4 py-3">{error}</p>}
 
       <div className="flex gap-3">
-        <button onClick={() => handleSave(false)} disabled={saving}
-          className="border border-gray-200 text-gray-700 text-sm font-medium px-5 py-2.5 rounded-xl hover:bg-gray-50 disabled:opacity-50">
-          {saving ? 'Saving…' : 'Save draft'}
-        </button>
-        <button onClick={() => handleSave(true)} disabled={saving}
-          className="bg-[#1B52C1] text-white text-sm font-medium px-5 py-2.5 rounded-xl hover:bg-[#1540A0] disabled:opacity-50">
-          {saving ? 'Saving…' : 'Save & Submit for review'}
-        </button>
+        {editMode ? (
+          <button onClick={() => handleSave(false)} disabled={saving}
+            className="bg-[#1B52C1] text-white text-sm font-medium px-5 py-2.5 rounded-xl hover:bg-[#1540A0] disabled:opacity-50">
+            {saving ? 'Saving…' : 'Save changes'}
+          </button>
+        ) : (
+          <>
+            <button onClick={() => handleSave(false)} disabled={saving}
+              className="border border-gray-200 text-gray-700 text-sm font-medium px-5 py-2.5 rounded-xl hover:bg-gray-50 disabled:opacity-50">
+              {saving ? 'Saving…' : 'Save draft'}
+            </button>
+            <button onClick={() => handleSave(true)} disabled={saving}
+              className="bg-[#1B52C1] text-white text-sm font-medium px-5 py-2.5 rounded-xl hover:bg-[#1540A0] disabled:opacity-50">
+              {saving ? 'Saving…' : 'Save & Submit for review'}
+            </button>
+          </>
+        )}
       </div>
     </div>
   )

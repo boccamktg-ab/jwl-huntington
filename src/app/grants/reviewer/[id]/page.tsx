@@ -6,6 +6,7 @@ import ReviewerActions from './ReviewerActions'
 import ReviewerMessageThread from './ReviewerMessageThread'
 import TranscribeForm from './TranscribeForm'
 import ReferrerCard from './ReferrerCard'
+import ApplicationDetailsCard from './ApplicationDetailsCard'
 
 function db() {
   return adminSupabase(
@@ -248,101 +249,15 @@ export default async function ReviewerApplicationPage({ params }: { params: Prom
       />
 
       {/* Application details */}
-      <div className="bg-white border border-gray-200 rounded-xl p-6 space-y-4">
-        <h2 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Application Details</h2>
-
-        {isAdmin
-          ? <Row label="Beneficiary" value={detail?.beneficiary_name} />
-          : <Row label="Beneficiary" value="[Confidential]" />}
-        {isAdmin
-          ? <Row label="Address" value={detail?.address} />
-          : <Row label="Address" value="[Confidential]" />}
-        {detail?.attends_huntington_school && (
-          <Row label="Residency exception" value="Attends a Huntington school district school" />
-        )}
-
-        {isCharitable ? (
-          <>
-            {isAdmin && detail?.dob && <Row label="Date of Birth" value={new Date(detail.dob).toLocaleDateString('en-US', { timeZone: 'UTC' })} />}
-            <Row label="Justification" value={detail?.justification} multiline />
-            {detail?.financial_narrative && <Row label="Financial Narrative" value={detail.financial_narrative} multiline />}
-          </>
-        ) : (
-          <>
-            {/* Household Members — names redacted for non-admins */}
-            {householdMembers && householdMembers.length > 0 && (
-              <div className="space-y-1">
-                <span className="text-sm text-gray-500">Household Members</span>
-                <div className="border border-gray-100 rounded-lg overflow-hidden text-sm">
-                  <div className="grid grid-cols-3 bg-gray-50 px-3 py-1.5 text-xs font-semibold text-gray-500">
-                    <span>Name</span><span>Age</span><span>Married</span>
-                  </div>
-                  {householdMembers.map((m: any) => (
-                    <div key={m.id} className="grid grid-cols-3 px-3 py-1.5 border-t border-gray-100 text-xs">
-                      <span>{isAdmin ? m.full_name : '[Confidential]'}</span>
-                      <span>{m.age ?? '—'}</span>
-                      <span>{m.married ? 'Yes' : 'No'}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Contact — admin only */}
-            {isAdmin && detail?.applicant_phone && <Row label="Phone" value={detail.applicant_phone} />}
-            {isAdmin && detail?.applicant_email && <Row label="Email" value={detail.applicant_email} />}
-
-            {/* Employment */}
-            {detail?.housing_status && <Row label="Housing" value={detail.housing_status === 'rented' ? 'Rented' : 'Owned'} />}
-            {detail?.residence_length && <Row label="Time at Residence" value={detail.residence_length} />}
-            {detail?.occupation && <Row label="Occupation" value={detail.occupation} />}
-            {detail?.employment_type && <Row label="Employment Type" value={
-              ({ full_time: 'Full-time', part_time: 'Part-time', not_employed: 'Not employed', other: 'Other' } as Record<string, string>)[detail.employment_type] ?? detail.employment_type
-            } />}
-            {isAdmin && detail?.employer && <Row label="Employer" value={detail.employer} />}
-            {detail?.annual_salary && <Row label="Annual Salary" value={detail.annual_salary} />}
-            {detail?.weekly_salary && <Row label="Weekly Salary" value={detail.weekly_salary} />}
-
-            {/* Public Assistance */}
-            {(['medicaid','adc','snap','wic','ssi','unemployment','section8','heap'] as const).some(k => (detail as any)?.[`assistance_${k}`]) && (
-              <div className="space-y-1">
-                <span className="text-sm text-gray-500">Public Assistance</span>
-                <div className="flex flex-wrap gap-2">
-                  {(['medicaid','adc','snap','wic','ssi','unemployment','section8','heap'] as const).map(k => {
-                    if (!(detail as any)?.[`assistance_${k}`]) return null
-                    const amt = (detail as any)?.[`assistance_${k}_amt`]
-                    return (
-                      <span key={k} className="text-xs bg-gray-100 text-gray-700 px-2 py-0.5 rounded-full">
-                        {k.toUpperCase()}{amt ? ` — $${amt}/mo` : ''}
-                      </span>
-                    )
-                  })}
-                </div>
-              </div>
-            )}
-            {detail?.other_assistance && <Row label="Other Assistance" value={detail.other_assistance} multiline />}
-            {detail?.income_expenses_narrative && <Row label="Income / Expenses" value={detail.income_expenses_narrative} multiline />}
-
-            {/* Need */}
-            <Row label="Financial Need" value={detail?.crisis_description} multiline />
-            {detail?.presenting_problem && <Row label="Presenting Problem" value={detail.presenting_problem} multiline />}
-            <Row label="Financial Sustainability" value={detail?.sustainability_statement} multiline />
-
-            {/* First request */}
-            {detail?.first_request !== null && detail?.first_request !== undefined && (
-              <Row label="First JWL Request?" value={detail.first_request ? 'Yes' : 'No'} />
-            )}
-            {detail?.prior_request_explanation && (
-              <Row label="Prior Request Explanation" value={detail.prior_request_explanation} multiline />
-            )}
-          </>
-        )}
-
-        <div className="border-t border-gray-100 pt-4 flex items-center justify-between text-sm">
-          <span className="text-gray-500">Requested amount</span>
-          <span className="font-medium text-gray-900">${Number(app.requested_amount).toFixed(2)}</span>
-        </div>
-      </div>
+      <ApplicationDetailsCard
+        applicationId={id}
+        grantType={app.grant_type as 'charitable_children' | 'lift_fund'}
+        isAdmin={isAdmin}
+        isCharitable={isCharitable}
+        requestedAmount={Number(app.requested_amount)}
+        detail={detail}
+        householdMembers={householdMembers ?? []}
+      />
 
       {/* Documents */}
       {documents && documents.length > 0 && (
@@ -393,12 +308,3 @@ export default async function ReviewerApplicationPage({ params }: { params: Prom
   )
 }
 
-function Row({ label, value, multiline }: { label: string; value?: string | null; multiline?: boolean }) {
-  if (!value) return null
-  return (
-    <div className={multiline ? 'space-y-1' : 'flex items-start justify-between gap-4'}>
-      <span className="text-sm text-gray-500 shrink-0">{label}</span>
-      <span className={`text-sm text-gray-900 ${multiline ? 'whitespace-pre-wrap' : 'text-right'}`}>{value}</span>
-    </div>
-  )
-}

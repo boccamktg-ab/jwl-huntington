@@ -19,7 +19,6 @@ export async function POST(request: NextRequest) {
 
   const supabase = db()
 
-  // Verify application is in a transcribable state
   const { data: app } = await supabase
     .from('grant_applications')
     .select('id, status, grant_type')
@@ -27,9 +26,8 @@ export async function POST(request: NextRequest) {
     .single()
 
   if (!app) return NextResponse.json({ error: 'Application not found' }, { status: 404 })
-  if (!['pending_transcription', 'incomplete'].includes(app.status)) {
-    return NextResponse.json({ error: 'Application is not pending transcription' }, { status: 400 })
-  }
+
+  const isNeedsTranscription = ['pending_transcription', 'incomplete'].includes(app.status)
 
   // Upsert details
   const { error: detailError } = await supabase
@@ -52,12 +50,12 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  // Update application amount and optionally status
+  // Update requested amount; only advance status when submitting from a transcription state
   const { error: appError } = await supabase
     .from('grant_applications')
     .update({
       requested_amount: requested_amount ?? 0,
-      ...(submit ? { status: 'submitted' } : {}),
+      ...(submit && isNeedsTranscription ? { status: 'submitted' } : {}),
     })
     .eq('id', application_id)
 
