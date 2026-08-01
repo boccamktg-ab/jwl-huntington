@@ -55,7 +55,7 @@ export default function LiftFundForm({ referrerId, referrerName, referrerEmail }
     presenting_problem: '',
     requested_amount: '',
     sustainability_statement: '',
-    first_request: '' as '' | 'yes' | 'no',
+    first_request: '' as '' | 'yes' | 'no' | 'no_prior',
     prior_request_explanation: '',
     confidential: true,
     confidentiality_notes: '',
@@ -139,7 +139,7 @@ export default function LiftFundForm({ referrerId, referrerName, referrerEmail }
             justification: form.crisis_description,
             presenting_problem: form.presenting_problem,
             sustainability_statement: form.sustainability_statement,
-            first_request: form.first_request === '' ? null : form.first_request === 'yes',
+            first_request: form.first_request === '' ? null : form.first_request !== 'no',
             prior_request_explanation: form.first_request === 'no' ? form.prior_request_explanation : null,
             confidential: form.confidential,
             confidentiality_notes: form.confidentiality_notes,
@@ -430,14 +430,18 @@ export default function LiftFundForm({ referrerId, referrerName, referrerEmail }
         <h2 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Prior Requests</h2>
         <div>
           <label className={labelCls}>Is this the applicant's first request from JWL? {reqStar}</label>
-          <div className="flex gap-4 mt-1">
-            {(['yes', 'no'] as const).map(v => (
-              <label key={v} className="flex items-center gap-2 cursor-pointer">
-                <input type="radio" name="first_request" value={v}
-                  checked={form.first_request === v}
-                  onChange={() => setF('first_request', v)}
+          <div className="flex flex-col gap-2 mt-1">
+            {([
+              { value: 'yes', label: 'Yes — first request' },
+              { value: 'no', label: 'No — has had prior requests' },
+              { value: 'no_prior', label: 'No prior requests on file' },
+            ] as const).map(({ value, label }) => (
+              <label key={value} className="flex items-center gap-2 cursor-pointer">
+                <input type="radio" name="first_request" value={value}
+                  checked={form.first_request === value}
+                  onChange={() => setF('first_request', value)}
                   className="h-4 w-4 border-gray-300 text-[#1B52C1]" />
-                <span className="text-sm text-gray-700 capitalize">{v}</span>
+                <span className="text-sm text-gray-700">{label}</span>
               </label>
             ))}
           </div>

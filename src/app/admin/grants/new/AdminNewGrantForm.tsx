@@ -52,7 +52,7 @@ export default function AdminNewGrantForm({ socialWorkers }: { socialWorkers: SW
     hours_per_week: '', other_assistance: '', income_expenses_narrative: '',
     crisis_description: '', presenting_problem: '', requested_amount: '',
     sustainability_statement: '',
-    first_request: '' as '' | 'yes' | 'no',
+    first_request: '' as '' | 'yes' | 'no' | 'no_prior',
     prior_request_explanation: '',
     confidential: true, confidentiality_notes: '',
     consent_disclosure: false,
@@ -141,7 +141,7 @@ export default function AdminNewGrantForm({ socialWorkers }: { socialWorkers: SW
           justification: lf.crisis_description,
           presenting_problem: lf.presenting_problem,
           sustainability_statement: lf.sustainability_statement,
-          first_request: lf.first_request === '' ? null : lf.first_request === 'yes',
+          first_request: lf.first_request === '' ? null : lf.first_request !== 'no',
           prior_request_explanation: lf.first_request === 'no' ? lf.prior_request_explanation : null,
           confidential: lf.confidential,
           confidentiality_notes: lf.confidentiality_notes,
@@ -507,13 +507,17 @@ export default function AdminNewGrantForm({ socialWorkers }: { socialWorkers: SW
                 <h2 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Prior Requests</h2>
                 <div>
                   <label className={labelCls}>Is this the applicant's first request from JWL?</label>
-                  <div className="flex gap-4 mt-1">
-                    {(['yes', 'no'] as const).map(v => (
-                      <label key={v} className="flex items-center gap-2 cursor-pointer">
-                        <input type="radio" name="first_request" value={v}
-                          checked={lf.first_request === v} onChange={() => setLF('first_request', v)}
+                  <div className="flex flex-col gap-2 mt-1">
+                    {([
+                      { value: 'yes', label: 'Yes — first request' },
+                      { value: 'no', label: 'No — has had prior requests' },
+                      { value: 'no_prior', label: 'No prior requests on file' },
+                    ] as const).map(({ value, label }) => (
+                      <label key={value} className="flex items-center gap-2 cursor-pointer">
+                        <input type="radio" name="first_request" value={value}
+                          checked={lf.first_request === value} onChange={() => setLF('first_request', value)}
                           className="h-4 w-4 border-gray-300 text-[#1B52C1]" />
-                        <span className="text-sm text-gray-700 capitalize">{v}</span>
+                        <span className="text-sm text-gray-700">{label}</span>
                       </label>
                     ))}
                   </div>
