@@ -5,6 +5,7 @@ import { notFound } from 'next/navigation'
 import ReviewerActions from './ReviewerActions'
 import ReviewerMessageThread from './ReviewerMessageThread'
 import TranscribeForm from './TranscribeForm'
+import ReferrerCard from './ReferrerCard'
 
 function db() {
   return adminSupabase(
@@ -131,6 +132,12 @@ export default async function ReviewerApplicationPage({ params }: { params: Prom
     .reduce((sum, h) => sum + Number(h.approved_amount ?? 0), 0)
   const lifetimeRemaining = Math.max(0, 1000 - lifetimeApproved)
 
+  const { data: socialWorkers } = await db()
+    .from('social_workers')
+    .select('id, name, email, type')
+    .eq('status', 'approved')
+    .order('name', { ascending: true })
+
   const { data: householdMembers } = await db()
     .from('grant_household_members')
     .select('id, full_name, age, married, sort_order')
@@ -227,15 +234,18 @@ export default async function ReviewerApplicationPage({ params }: { params: Prom
         </div>
       )}
 
-      {/* Referrer info */}
-      <div className="bg-white border border-gray-200 rounded-xl p-6 space-y-3">
-        <h2 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Referred By</h2>
-        <div className="grid grid-cols-2 gap-3 text-sm">
-          <div><span className="text-gray-500">Name</span><p className="text-gray-900 mt-0.5">{referrer?.name ?? '—'}</p></div>
-          <div><span className="text-gray-500">Email</span><p className="text-gray-900 mt-0.5">{referrer?.email ?? '—'}</p></div>
-          {referrer?.phone && <div><span className="text-gray-500">Phone</span><p className="text-gray-900 mt-0.5">{referrer.phone}</p></div>}
-        </div>
-      </div>
+      {/* Referrer info — editable */}
+      <ReferrerCard
+        applicationId={id}
+        referrerSw={referrer ?? null}
+        adminReferrerName={(app as any).admin_referrer_name ?? null}
+        adminReferrerOrg={(app as any).admin_referrer_org ?? null}
+        adminReferrerPhone={(app as any).admin_referrer_phone ?? null}
+        adminReferrerEmail={(app as any).admin_referrer_email ?? null}
+        adminNotes={(app as any).admin_notes ?? null}
+        assignedSwId={(app as any).assigned_sw_id ?? null}
+        socialWorkers={socialWorkers ?? []}
+      />
 
       {/* Application details */}
       <div className="bg-white border border-gray-200 rounded-xl p-6 space-y-4">

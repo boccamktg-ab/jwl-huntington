@@ -948,6 +948,20 @@ export function emailGrantMoreInfoReceived(adminName: string, memberName: string
   }
 }
 
+export function emailGrantsPortalInvite(inviteeName: string, invitedByName: string, applicationId: string) {
+  return {
+    subject: 'JWL Huntington — You\'ve been invited to the Grants Portal',
+    html: wrap(`
+      <h2 style="margin:0 0 16px;font-size:20px;font-weight:700;">Hi ${inviteeName.split(' ')[0]},</h2>
+      ${p(`<strong>${invitedByName}</strong> from JWL Huntington has invited you to join the Grants Portal to collaborate on a grant application.`)}
+      ${p('The portal lets you view the application, exchange messages with the JWL grants team, and upload supporting documents — all in one place.')}
+      ${btn('Create your account →', 'https://portal.jwlhuntington.org/grants/register')}
+      ${p('<span style="font-size:13px;color:#9ca3af;">If you already have an account, log in and the application will appear in your dashboard.</span>')}
+      ${p('<span style="font-size:13px;color:#9ca3af;">If you did not expect this invitation or have questions, please contact your JWL coordinator directly.</span>')}
+    `),
+  }
+}
+
 export function emailGrantVoteConfirmation(memberName: string, vote: 'yes' | 'no' | 'more_info') {
   const labels = { yes: 'Approve', no: 'Deny', more_info: 'Request More Information' }
   const icons = { yes: '✅', no: '❌', more_info: '❓' }
