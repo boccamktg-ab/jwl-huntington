@@ -93,7 +93,7 @@ export default async function ReviewerDashboardPage() {
         {active.length === 0 ? (
           <p className="text-sm text-gray-400">No active applications.</p>
         ) : (
-          <ApplicationTable rows={active} />
+          <ApplicationTable rows={active} isAdmin={isAdmin} />
         )}
       </section>
 
@@ -102,14 +102,14 @@ export default async function ReviewerDashboardPage() {
           <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wide">
             Closed ({closed.length})
           </h2>
-          <ApplicationTable rows={closed} />
+          <ApplicationTable rows={closed} isAdmin={isAdmin} />
         </section>
       )}
     </div>
   )
 }
 
-function ApplicationTable({ rows }: { rows: any[] }) {
+function ApplicationTable({ rows, isAdmin }: { rows: any[]; isAdmin: boolean }) {
   return (
     <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
       <table className="w-full text-sm">
