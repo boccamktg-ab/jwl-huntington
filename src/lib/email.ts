@@ -880,7 +880,7 @@ export function emailMeetingPublished(
     : ''
 
   return {
-    subject: `JWL ${isEvent ? 'Event' : 'Meeting'} — ${fmtDate(date)}`,
+    subject: `New ${isEvent ? 'Event' : 'Meeting'} Added to JWL - ${title} - Please RSVP ASAP`,
     html: wrap(description
       ? `
         <h2 style="margin:0 0 16px;font-size:20px;font-weight:700;">${title}</h2>
@@ -919,7 +919,7 @@ export function emailMeetingPublished(
 export function emailMeetingReminder(memberName: string, date: string, time: string, location: string, hasRsvpd: boolean, rsvpYesUrl: string, rsvpNoUrl: string, daysOut: number) {
   const when = daysOut === 1 ? 'tomorrow' : 'in one week'
   return {
-    subject: `Reminder: JWL Meeting ${when} — ${fmtDate(date)}`,
+    subject: `Reminder: JWL Meeting ${when} - ${fmtDate(date)} - Please RSVP`,
     html: wrap(`
       <h2 style="margin:0 0 16px;font-size:20px;font-weight:700;">Meeting Reminder</h2>
       ${p(`Hi ${memberName.split(' ')[0]}, just a reminder that the JWL meeting is coming up ${when}.`)}
