@@ -132,6 +132,17 @@ export default function AdminMeetingsPage() {
     load()
   }
 
+  async function testEmail(meetingId: string) {
+    setSending(s => ({ ...s, [meetingId + 'test']: 'sending' }))
+    const res = await fetch('/api/admin/meetings/test-email', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ meeting_id: meetingId }),
+    })
+    const json = await res.json()
+    setSending(s => ({ ...s, [meetingId + 'test']: json.ok ? `Sent to ${json.sent_to}` : 'Error' }))
+  }
+
   function addShift() { setShifts(s => [...s, { ...BLANK_SHIFT }]) }
   function removeShift(i: number) { setShifts(s => s.filter((_, idx) => idx !== i)) }
   function setShift(i: number, f: keyof Shift, v: string) {
@@ -207,7 +218,13 @@ export default function AdminMeetingsPage() {
               {/* Notification actions */}
               <div className="flex flex-wrap gap-2 pt-2 border-t border-gray-100">
                 {m.status === 'draft' && (
-                  <NotifyBtn label="Publish & notify all" meetingId={m.id} type="published" sending={sending} onSend={notify} color="blue" />
+                  <>
+                    <NotifyBtn label="Publish & notify all" meetingId={m.id} type="published" sending={sending} onSend={notify} color="blue" />
+                    <button onClick={() => testEmail(m.id)} disabled={!!sending[m.id + 'test']}
+                      className="text-xs px-3 py-1.5 border border-gray-200 text-gray-600 rounded-lg hover:bg-gray-50 disabled:opacity-60">
+                      {sending[m.id + 'test'] ?? 'Send test to me'}
+                    </button>
+                  </>
                 )}
                 {m.status === 'published' && !isEvent && (
                   <>
