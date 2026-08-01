@@ -4,6 +4,7 @@ import { createClient as adminSupabase } from '@supabase/supabase-js'
 import { notFound } from 'next/navigation'
 import ReviewerActions from './ReviewerActions'
 import ReviewerMessageThread from './ReviewerMessageThread'
+import TranscribeForm from './TranscribeForm'
 
 function db() {
   return adminSupabase(
@@ -166,19 +167,27 @@ export default async function ReviewerApplicationPage({ params }: { params: Prom
         </span>
       </div>
 
-      {/* Transcription / incomplete banner */}
+      {/* Transcription / incomplete — show editable form */}
       {needsTranscription && (
-        <div className={`rounded-xl px-4 py-3 text-sm border ${
-          app.status === 'pending_transcription'
-            ? 'bg-orange-50 border-orange-200 text-orange-800'
-            : 'bg-yellow-50 border-yellow-200 text-yellow-800'
-        }`}>
-          {app.status === 'pending_transcription' ? (
-            <><strong>Needs Transcription.</strong> A scanned paper application was uploaded. Please open the documents below, enter all information from the paper form into a new complete application record, then update the status to Submitted when ready.</>
-          ) : (
-            <><strong>Incomplete Record.</strong> This placeholder was created by an admin. Complete the full application details before it can be reviewed.</>
-          )}
-        </div>
+        <>
+          <div className={`rounded-xl px-4 py-3 text-sm border ${
+            app.status === 'pending_transcription'
+              ? 'bg-orange-50 border-orange-200 text-orange-800'
+              : 'bg-yellow-50 border-yellow-200 text-yellow-800'
+          }`}>
+            {app.status === 'pending_transcription' ? (
+              <><strong>Needs Transcription.</strong> Open the scanned document below, then fill in the form to transcribe the paper application. Click <strong>Save &amp; Submit for review</strong> when all fields are complete.</>
+            ) : (
+              <><strong>Incomplete Record.</strong> This placeholder was created by an admin. Fill in the form below to complete the application before it can be reviewed.</>
+            )}
+          </div>
+          <TranscribeForm
+            applicationId={id}
+            grantType={app.grant_type as 'charitable_children' | 'lift_fund'}
+            initialDetail={detail}
+            initialHousehold={householdMembers ?? []}
+          />
+        </>
       )}
 
       {/* Admin referrer info */}
