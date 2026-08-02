@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 
 type Shift = { id?: string; label: string; start_time: string; end_time: string; signupCount?: number }
 
@@ -16,8 +16,8 @@ type Meeting = {
   meeting_type: 'meeting' | 'event'
   post_meeting_notes: string | null
   status: 'draft' | 'published' | 'completed'
-  jwl_meeting_rsvps: { id: string; response: string }[]
-  jwl_meeting_shifts: (Shift & { jwl_meeting_shift_signups: { id: string }[] })[]
+  jwl_meeting_rsvps: { id: string; response: string; jwl_members: { name: string } | null }[]
+  jwl_meeting_shifts: (Shift & { jwl_meeting_shift_signups: { id: string; jwl_members: { name: string } | null }[] })[]
 }
 
 const inputCls = 'w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#1B52C1]'
@@ -194,17 +194,29 @@ export default function AdminMeetingsPage() {
                 <div className="text-right shrink-0">
                   {isEvent ? (
                     <div className="space-y-1">
-                      {shifts.map(s => (
-                        <p key={s.id} className="text-xs text-gray-500">
-                          {s.label}: <span className="font-medium text-gray-700">{s.jwl_meeting_shift_signups?.length ?? 0}</span> signed up
-                        </p>
-                      ))}
+                      {shifts.map(s => {
+                        const names = (s.jwl_meeting_shift_signups ?? [])
+                          .map(su => su.jwl_members?.name).filter(Boolean) as string[]
+                        return (
+                          <AttendeeCount key={s.id} label={s.label} names={names} />
+                        )
+                      })}
                     </div>
                   ) : (
-                    <>
-                      <p className="text-sm font-medium text-gray-700">{yesCount} attending</p>
-                      <p className="text-xs text-gray-400">{noCount} declined</p>
-                    </>
+                    <div className="space-y-1">
+                      <AttendeeCount
+                        label="Attending"
+                        names={m.jwl_meeting_rsvps.filter(r => r.response === 'yes').map(r => r.jwl_members?.name).filter(Boolean) as string[]}
+                        decline={false}
+                      />
+                      {noCount > 0 && (
+                        <AttendeeCount
+                          label="Declined"
+                          names={m.jwl_meeting_rsvps.filter(r => r.response === 'no').map(r => r.jwl_members?.name).filter(Boolean) as string[]}
+                          decline
+                        />
+                      )}
+                    </div>
                   )}
                 </div>
               </div>
@@ -386,6 +398,47 @@ export default function AdminMeetingsPage() {
               </button>
             </div>
           </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+function AttendeeCount({ label, names, decline }: { label: string; names: string[]; decline?: boolean }) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!open) return
+    function onClick(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener('mousedown', onClick)
+    return () => document.removeEventListener('mousedown', onClick)
+  }, [open])
+
+  const count = names.length
+  const textColor = decline ? 'text-gray-400' : 'text-gray-700'
+  const countSize = decline ? 'text-xs' : 'text-sm font-medium'
+
+  return (
+    <div className="relative inline-block text-right" ref={ref}>
+      <button
+        onClick={() => count > 0 && setOpen(o => !o)}
+        className={`${countSize} ${textColor} ${count > 0 ? 'hover:underline cursor-pointer' : 'cursor-default'}`}
+      >
+        {label !== 'Attending' && label !== 'Declined' ? (
+          <>{label}: <span className="font-medium text-gray-700">{count}</span> signed up</>
+        ) : (
+          <>{count} {label.toLowerCase()}</>
+        )}
+      </button>
+      {open && count > 0 && (
+        <div className="absolute right-0 top-full mt-1 z-20 bg-white border border-gray-200 rounded-xl shadow-lg py-2 min-w-[160px] max-w-[240px]">
+          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide px-3 pb-1">{label} ({count})</p>
+          {names.sort().map(name => (
+            <p key={name} className="px-3 py-1 text-sm text-gray-700 hover:bg-gray-50">{name}</p>
+          ))}
         </div>
       )}
     </div>

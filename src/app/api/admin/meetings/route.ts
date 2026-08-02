@@ -19,9 +19,9 @@ export async function GET(request: NextRequest) {
     .from('jwl_meetings')
     .select(`
       *,
-      jwl_meeting_rsvps(id, response, member_id),
+      jwl_meeting_rsvps(id, response, member_id, jwl_members(name)),
       jwl_meeting_shifts(id, label, start_time, end_time, sort_order,
-        jwl_meeting_shift_signups(id, member_id)
+        jwl_meeting_shift_signups(id, member_id, jwl_members(name))
       )
     `)
     .order('meeting_date', { ascending: false })
