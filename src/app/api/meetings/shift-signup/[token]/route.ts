@@ -88,5 +88,5 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     }
   }
 
-  return NextResponse.redirect(`${BASE}/members/meetings?notice=shift_signup`)
+  return NextResponse.redirect(`${BASE}/login?notice=shift_signup`)
 }

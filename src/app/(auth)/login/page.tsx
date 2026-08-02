@@ -6,7 +6,28 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 
 function NoticeBanner() {
-  const notice = useSearchParams().get('notice')
+  const params = useSearchParams()
+  const notice = params.get('notice')
+  const meeting = params.get('meeting')
+
+  if (notice === 'rsvp_yes') return (
+    <div className="mb-5 bg-green-50 border border-green-200 rounded-lg px-4 py-3 text-sm text-green-800">
+      <p className="font-medium mb-1">✓ RSVP recorded!</p>
+      <p>You're confirmed{meeting ? ` for the ${meeting} meeting` : ''}. Sign in below to view your meetings or make changes.</p>
+    </div>
+  )
+  if (notice === 'rsvp_no') return (
+    <div className="mb-5 bg-blue-50 border border-blue-200 rounded-lg px-4 py-3 text-sm text-blue-800">
+      <p className="font-medium mb-1">Response recorded</p>
+      <p>You've been marked as not attending{meeting ? ` the ${meeting} meeting` : ''}. Sign in below to change your response.</p>
+    </div>
+  )
+  if (notice === 'shift_signup') return (
+    <div className="mb-5 bg-green-50 border border-green-200 rounded-lg px-4 py-3 text-sm text-green-800">
+      <p className="font-medium mb-1">✓ You're signed up!</p>
+      <p>Your shift signup was recorded. Sign in below to view your upcoming events or make changes.</p>
+    </div>
+  )
   if (notice === 'pending') return (
     <div className="mb-5 bg-amber-50 border border-amber-200 rounded-lg px-4 py-3 text-sm text-amber-800">
       <p className="font-medium mb-1">Whoops!</p>
