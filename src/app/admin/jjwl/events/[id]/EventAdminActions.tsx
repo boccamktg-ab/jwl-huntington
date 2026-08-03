@@ -24,6 +24,19 @@ export default function EventAdminActions({ eventId, currentStatus }: Props) {
     router.refresh()
   }
 
+  async function nudge() {
+    if (!confirm('Send the event email to all active members who haven\'t signed up yet?')) return
+    setLoading('nudge')
+    const res = await fetch('/api/jjwl/admin/events/nudge', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ event_id: eventId }),
+    })
+    const json = await res.json()
+    setLoading(null)
+    alert(res.ok ? `Sent to ${json.sent} member${json.sent !== 1 ? 's' : ''}.` : `Error: ${json.error}`)
+  }
+
   async function deleteEvent() {
     setLoading('delete')
     const res = await fetch('/api/jjwl/admin/events', {
@@ -53,13 +66,22 @@ export default function EventAdminActions({ eventId, currentStatus }: Props) {
         </button>
       )}
       {currentStatus === 'active' && (
-        <button
-          onClick={() => setStatus('draft')}
-          disabled={!!loading}
-          className="text-sm px-3 py-1.5 border border-gray-300 text-gray-600 rounded-lg hover:border-gray-400 disabled:opacity-50"
-        >
-          {loading === 'draft' ? '…' : 'Unpublish'}
-        </button>
+        <>
+          <button
+            onClick={nudge}
+            disabled={!!loading}
+            className="text-sm px-3 py-1.5 border border-amber-300 text-amber-700 rounded-lg hover:bg-amber-50 disabled:opacity-50"
+          >
+            {loading === 'nudge' ? 'Sending…' : 'Nudge non-signups'}
+          </button>
+          <button
+            onClick={() => setStatus('draft')}
+            disabled={!!loading}
+            className="text-sm px-3 py-1.5 border border-gray-300 text-gray-600 rounded-lg hover:border-gray-400 disabled:opacity-50"
+          >
+            {loading === 'draft' ? '…' : 'Unpublish'}
+          </button>
+        </>
       )}
 
       {!confirmDelete ? (
