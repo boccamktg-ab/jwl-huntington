@@ -16,7 +16,7 @@ export default async function AccountPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
-  const [{ data: member }, { data: positions }] = await Promise.all([
+  const [{ data: member }, { data: positions }, { data: settings }] = await Promise.all([
     db()
       .from('jwl_members')
       .select('id, name, email, phone, join_year, dues_paid_through_year, avatar_url, position_id, position_detail, member_positions(id, label, allows_detail)')
@@ -27,7 +27,13 @@ export default async function AccountPage() {
       .select('id, label, allows_detail')
       .eq('is_active', true)
       .order('sort_order'),
+    db()
+      .from('app_settings')
+      .select('key, value')
+      .eq('key', 'jwl_dues_url'),
   ])
+
+  const duesUrl = settings?.[0]?.value ?? 'https://membership-99939.cheddarup.com'
 
   const currentYear = new Date().getFullYear()
   const paidThrough = (member as any)?.dues_paid_through_year ?? 0
@@ -58,7 +64,7 @@ export default async function AccountPage() {
           </div>
           {duesStatus === 'overdue' && (
             <a
-              href="https://membership-99939.cheddarup.com"
+              href={duesUrl}
               target="_blank"
               rel="noopener noreferrer"
               className="text-sm bg-[#1B52C1] text-white px-3 py-1.5 rounded-lg hover:bg-[#1540A0] font-medium"
