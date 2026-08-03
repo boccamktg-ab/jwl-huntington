@@ -119,13 +119,16 @@ export default function RegisterPage() {
       <h2 className="text-lg font-medium text-gray-800 mb-4">Create account</h2>
 
       {/* Role toggle */}
-      <div className="flex rounded-lg border border-gray-200 p-1 mb-5">
+      <div className="mb-5">
+      <label className="block text-sm font-medium text-gray-700 mb-1">Registration type</label>
+      <div className="flex rounded-lg border border-gray-200 p-1">
         {(['social_worker', 'jwl_member', 'jjwl'] as const).map(r => (
           <button key={r} type="button" onClick={() => setRole(r)}
             className={`flex-1 text-sm py-1.5 rounded-md transition-colors ${role === r ? 'bg-[#1B52C1] text-white font-medium' : 'text-gray-600 hover:text-gray-900'}`}>
             {r === 'social_worker' ? 'Social Worker' : r === 'jwl_member' ? 'JWL Member' : 'JJWL'}
           </button>
         ))}
+      </div>
       </div>
 
       {/* JJWL redirect */}
