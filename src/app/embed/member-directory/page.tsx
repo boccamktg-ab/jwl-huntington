@@ -37,12 +37,16 @@ export default async function MemberDirectoryEmbed() {
           body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
             background: transparent;
-            padding: 16px;
+            padding: 16px 8px;
           }
           .grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-            gap: 20px;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 24px 16px;
+            justify-items: center;
+          }
+          @media (min-width: 600px) {
+            .grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }
           }
           .card {
             display: flex;
@@ -50,10 +54,11 @@ export default async function MemberDirectoryEmbed() {
             align-items: center;
             text-align: center;
             gap: 10px;
+            width: 100%;
           }
           .avatar {
-            width: 100px;
-            height: 100px;
+            width: 110px;
+            height: 110px;
             border-radius: 50%;
             overflow: hidden;
             background: #e5e7eb;
@@ -121,6 +126,13 @@ export default async function MemberDirectoryEmbed() {
             </div>
           ))}
         </div>
+        <script dangerouslySetInnerHTML={{ __html: `
+          function sendHeight() {
+            window.parent.postMessage({ type: 'jwl-embed-height', height: document.body.scrollHeight }, '*');
+          }
+          window.addEventListener('load', sendHeight);
+          new ResizeObserver(sendHeight).observe(document.body);
+        `}} />
       </body>
     </html>
   )
