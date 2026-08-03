@@ -788,9 +788,10 @@ export function emailAdminSeasonReset(swCount: number) {
   }
 }
 
-export function emailMemberDuesReminder(memberName: string, currentYear: number, secretaryName?: string | null) {
+export function emailMemberDuesReminder(memberName: string, currentYear: number, secretaryName?: string | null, duesUrl?: string | null) {
   const exYear = currentYear + 1
   const exJoinYear = currentYear - 1
+  const payUrl = duesUrl || 'https://membership-99939.cheddarup.com'
   return {
     subject: `JWL Huntington — ${currentYear} membership dues reminder`,
     html: wrap(`
@@ -798,7 +799,7 @@ export function emailMemberDuesReminder(memberName: string, currentYear: number,
       ${p(`This is a friendly reminder that JWL Huntington membership dues for <strong>${currentYear}</strong> have not yet been recorded for you.`)}
       ${p(`Dues are renewed each January, unless you just joined — in which case it is the second January following your first year of membership (ex: if you joined in September ${exJoinYear}, you next pay dues in January ${exYear}). If you have already paid for this year and feel our records may be missing data, please let us know by emailing <a href="mailto:info@jwlhuntington.org" style="color:#1B52C1;">info@jwlhuntington.org</a>.`)}
       ${p('To pay dues online please visit:')}
-      ${btn('Pay Dues Online →', 'https://membership-99939.cheddarup.com')}
+      ${btn('Pay Dues Online →', payUrl)}
       ${p(`If you have any questions about your membership status or how to pay, please contact the JWL Secretary${secretaryName ? ` <strong>${secretaryName}</strong>` : ''} at <a href="mailto:info@jwlhuntington.org" style="color:#1B52C1;">info@JWLHuntington.org</a>.`)}
     `),
   }

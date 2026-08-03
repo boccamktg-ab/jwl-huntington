@@ -18,22 +18,22 @@ export async function POST(request: NextRequest) {
 
   const currentYear = new Date().getFullYear()
 
-  // Look up the current Secretary / VP of Membership
-  const { data: secretaryPos } = await db()
-    .from('member_positions')
-    .select('id')
-    .ilike('label', '%secretary%')
-    .maybeSingle()
+  // Look up the current Secretary / VP of Membership and the dues payment URL
+  const [secretaryPosRes, duesUrlRes] = await Promise.all([
+    db().from('member_positions').select('id').ilike('label', '%secretary%').maybeSingle(),
+    db().from('app_settings').select('value').eq('key', 'jwl_dues_url').maybeSingle(),
+  ])
   let secretaryName: string | null = null
-  if (secretaryPos) {
+  if (secretaryPosRes.data) {
     const { data: secretary } = await db()
       .from('jwl_members')
       .select('name')
-      .eq('position_id', secretaryPos.id)
+      .eq('position_id', secretaryPosRes.data.id)
       .eq('status', 'approved')
       .maybeSingle()
     secretaryName = secretary?.name ?? null
   }
+  const duesUrl = duesUrlRes.data?.value ?? null
 
   // Find approved members whose dues are overdue
   // Overdue = dues_paid_through_year < currentYear AND
@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
   let sent = 0
   for (const m of overdue) {
     if (!m.email) continue
-    const { subject, html } = emailMemberDuesReminder(m.name, currentYear, secretaryName)
+    const { subject, html } = emailMemberDuesReminder(m.name, currentYear, secretaryName, duesUrl)
     await sendEmail({ to: m.email, subject, html })
     sent++
   }

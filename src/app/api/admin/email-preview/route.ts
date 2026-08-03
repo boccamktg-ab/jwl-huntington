@@ -89,7 +89,7 @@ function buildPayload(type: string): { subject: string; html: string } | null {
     case 'meeting_recap':
       return email.emailMeetingRecap(FAKE.name, FAKE.meetingDate, 'We voted to proceed with the fall event. Next meeting is October 20. See you then!')
     case 'member_dues_reminder':
-      return email.emailMemberDuesReminder(FAKE.name, 2026, 'Sarah Kim')
+      return email.emailMemberDuesReminder(FAKE.name, 2026, 'Sarah Kim', 'https://membership-99939.cheddarup.com')
     // ── JWL Admin emails ───────────────────────────────────────────────
     case 'admin_new_member':
       return email.emailAdminNewMember(FAKE.name, FAKE.memberEmail, `${BASE}/admin/members`)
