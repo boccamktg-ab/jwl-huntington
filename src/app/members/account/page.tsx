@@ -58,7 +58,9 @@ export default async function AccountPage() {
           </div>
           {duesStatus === 'overdue' && (
             <a
-              href="#pay-dues"
+              href="https://membership-99939.cheddarup.com"
+              target="_blank"
+              rel="noopener noreferrer"
               className="text-sm bg-[#1B52C1] text-white px-3 py-1.5 rounded-lg hover:bg-[#1540A0] font-medium"
             >
               Pay dues
