@@ -41,12 +41,12 @@ export default async function MemberDirectoryEmbed() {
           }
           .grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-            gap: 24px 16px;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 20px 12px;
             justify-items: center;
           }
-          @media (min-width: 600px) {
-            .grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }
+          @media (min-width: 500px) {
+            .grid { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 24px 14px; }
           }
           .card {
             display: flex;
@@ -57,8 +57,8 @@ export default async function MemberDirectoryEmbed() {
             width: 100%;
           }
           .avatar {
-            width: 110px;
-            height: 110px;
+            width: 90px;
+            height: 90px;
             border-radius: 50%;
             overflow: hidden;
             background: #e5e7eb;
@@ -77,7 +77,7 @@ export default async function MemberDirectoryEmbed() {
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 32px;
+            font-size: 26px;
             font-weight: 600;
             color: #1B52C1;
             background: #dbeafe;
