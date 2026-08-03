@@ -120,7 +120,10 @@ export default function AdminMeetingsPage() {
   }
 
   async function notify(meetingId: string, type: string, label: string) {
-    if (!confirm(`Send "${label}" emails to all members?`)) return
+    const msg = type === 'nudge'
+      ? 'Send a reminder to members who haven\'t responded yet?'
+      : `Send "${label}" emails to all members?`
+    if (!confirm(msg)) return
     setSending(s => ({ ...s, [meetingId + type]: 'sending' }))
     const res = await fetch('/api/admin/meetings/notify', {
       method: 'POST',
@@ -237,6 +240,9 @@ export default function AdminMeetingsPage() {
                       {sending[m.id + 'test'] ?? 'Send test to me'}
                     </button>
                   </>
+                )}
+                {m.status === 'published' && (
+                  <NotifyBtn label="Nudge non-responders" meetingId={m.id} type="nudge" sending={sending} onSend={notify} color="amber" />
                 )}
                 {m.status === 'published' && !isEvent && (
                   <>

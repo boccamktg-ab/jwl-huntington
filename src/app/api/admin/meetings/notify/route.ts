@@ -136,6 +136,50 @@ export async function POST(request: NextRequest) {
         meeting.location, rsvp.response === 'yes',
         rsvpUrl(rsvp.token, 'yes'), rsvpUrl(rsvp.token, 'no'), daysOut,
       )
+    } else if (type === 'nudge') {
+      // Only send to members who haven't responded yet
+      if (isEvent) {
+        // For events: skip if they've signed up for at least one shift
+        const { data: signups } = await supabase
+          .from('jwl_meeting_shift_signups')
+          .select('id')
+          .eq('member_id', rsvp.member_id)
+          .in('shift_id', shifts.map((s: any) => s.id))
+          .limit(1)
+        if (signups && signups.length > 0) continue
+      } else {
+        // For meetings: skip if they've said yes or no
+        if (rsvp.response === 'yes' || rsvp.response === 'no') continue
+      }
+
+      // Re-send the original published email (with their one-click buttons)
+      let shiftsWithTokens = shifts
+      if (isEvent && shifts.length > 0) {
+        const { data: tokens } = await supabase
+          .from('jwl_shift_invite_tokens')
+          .select('shift_id, token')
+          .eq('member_id', rsvp.member_id)
+          .in('shift_id', shifts.map((s: any) => s.id))
+
+        const tokenMap = Object.fromEntries((tokens ?? []).map((t: any) => [t.shift_id, t.token]))
+        shiftsWithTokens = shifts.map((s: any) => ({
+          ...s,
+          signupUrl: tokenMap[s.id] ? shiftSignupUrl(tokenMap[s.id]) : null,
+        }))
+      }
+
+      payload = emailMeetingPublished(
+        member.name, meeting.meeting_date, meeting.meeting_time,
+        meeting.location, meeting.agenda_notes,
+        rsvpUrl(rsvp.token, 'yes'), rsvpUrl(rsvp.token, 'no'),
+        {
+          title: meeting.title,
+          description: (meeting as any).description,
+          meetingType: (meeting as any).meeting_type ?? 'meeting',
+          shifts: shiftsWithTokens,
+          portalUrl: `${BASE}/members/meetings`,
+        }
+      )
     } else if (type === 'recap') {
       if (!meeting.post_meeting_notes) continue
       payload = emailMeetingRecap(member.name, meeting.meeting_date, meeting.post_meeting_notes)
