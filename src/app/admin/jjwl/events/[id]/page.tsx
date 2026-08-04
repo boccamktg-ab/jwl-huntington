@@ -144,8 +144,8 @@ export default async function AdminEventDetailPage({ params }: { params: Promise
                   <th className="text-left px-4 py-3 text-gray-500 font-medium">Contact</th>
                   {evt.time_slots && <th className="text-left px-4 py-3 text-gray-500 font-medium">Slot</th>}
                   <th className="text-left px-4 py-3 text-gray-500 font-medium">Status</th>
-                  {isSunset && <th className="text-right px-4 py-3 text-gray-500 font-medium">Hours</th>}
-                  {isSunset && <th className="px-4 py-3"></th>}
+                  <th className="text-right px-4 py-3 text-gray-500 font-medium">Hours</th>
+                  <th className="px-4 py-3"></th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
@@ -166,23 +166,19 @@ export default async function AdminEventDetailPage({ params }: { params: Promise
                       <td className="px-4 py-3">
                         <StatusBadge status={s.status} />
                       </td>
-                      {isSunset && (
-                        <td className="px-4 py-3 text-right font-medium text-gray-900">
-                          {s.status === 'confirmed_attended' ? Number(s.hours_awarded ?? 0).toFixed(1) : '—'}
-                        </td>
-                      )}
-                      {isSunset && (
-                        <td className="px-4 py-3">
-                          {s.status !== 'cancelled' && (
-                            <AttendanceActions
-                              signupId={s.id}
-                              eventId={evt.id}
-                              creditHours={Number(evt.credit_hours)}
-                              currentStatus={s.status}
-                            />
-                          )}
-                        </td>
-                      )}
+                      <td className="px-4 py-3 text-right font-medium text-gray-900">
+                        {s.status === 'confirmed_attended' ? Number(s.hours_awarded ?? 0).toFixed(1) : '—'}
+                      </td>
+                      <td className="px-4 py-3">
+                        {s.status !== 'cancelled' && (
+                          <AttendanceActions
+                            signupId={s.id}
+                            eventId={evt.id}
+                            creditHours={Number(evt.credit_hours)}
+                            currentStatus={s.status}
+                          />
+                        )}
+                      </td>
                     </tr>
                   )
                 })}
