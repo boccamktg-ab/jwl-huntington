@@ -124,7 +124,7 @@ export default function EventForm({ event }: Props) {
 
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
-        <textarea rows={3} value={form.description} onChange={e => set('description', e.target.value)}
+        <textarea rows={10} value={form.description} onChange={e => set('description', e.target.value)}
           className={`${inputCls} resize-none`} />
       </div>
 
