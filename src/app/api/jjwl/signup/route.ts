@@ -75,13 +75,19 @@ export async function POST(request: NextRequest) {
     .maybeSingle()
 
   if (action === 'cancel') {
-    const { error } = await admin
+    // Cancel a specific slot, or all slots if no time_slot provided
+    let query = admin
       .from('jjwl_signups')
       .update({ status: 'cancelled' })
       .eq('event_id', event_id)
       .eq('member_id', member_id)
       .eq('status', 'signed_up')
 
+    if (time_slot) {
+      query = query.eq('time_slot', time_slot)
+    }
+
+    const { error } = await query
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
     // Notify all JJWL admins
@@ -119,17 +125,41 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    const { error } = await admin
+    // Check if a signup row already exists for this (event_id, member_id, time_slot)
+    let existingQuery = admin
       .from('jjwl_signups')
-      .upsert({
-        event_id,
-        member_id,
-        time_slot: time_slot || null,
-        status: 'signed_up',
-        signed_up_at: new Date().toISOString(),
-      }, { onConflict: 'event_id,member_id' })
+      .select('id, status')
+      .eq('event_id', event_id)
+      .eq('member_id', member_id)
 
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    existingQuery = time_slot
+      ? existingQuery.eq('time_slot', time_slot)
+      : existingQuery.is('time_slot', null)
+
+    const { data: existing } = await existingQuery.maybeSingle()
+
+    if (existing) {
+      if (existing.status === 'signed_up' || existing.status === 'admin_added') {
+        return NextResponse.json({ error: 'Already signed up for this slot.' }, { status: 409 })
+      }
+      // Reactivate a previously cancelled row
+      const { error } = await admin
+        .from('jjwl_signups')
+        .update({ status: 'signed_up', signed_up_at: new Date().toISOString() })
+        .eq('id', existing.id)
+      if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    } else {
+      const { error } = await admin
+        .from('jjwl_signups')
+        .insert({
+          event_id,
+          member_id,
+          time_slot: time_slot || null,
+          status: 'signed_up',
+          signed_up_at: new Date().toISOString(),
+        })
+      if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    }
 
     // Confirmation email to member (CC parent)
     const { subject, html } = emailEventSignupConfirmation(

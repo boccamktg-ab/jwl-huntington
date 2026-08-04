@@ -36,18 +36,19 @@ export default async function JJWLEventDetailPage({ params }: { params: Promise<
 
   if (!evt) notFound()
 
-  const { data: signup } = await admin
-    .from('jjwl_signups')
-    .select('id, status, time_slot')
-    .eq('event_id', id)
-    .eq('member_id', member.id)
-    .maybeSingle()
-
-  const { data: signupCounts } = await admin
-    .from('jjwl_signups')
-    .select('time_slot')
-    .eq('event_id', id)
-    .in('status', ['signed_up', 'confirmed_attended'])
+  const [{ data: mySignups }, { data: signupCounts }] = await Promise.all([
+    admin
+      .from('jjwl_signups')
+      .select('id, status, time_slot')
+      .eq('event_id', id)
+      .eq('member_id', member.id)
+      .in('status', ['signed_up', 'admin_added']),
+    admin
+      .from('jjwl_signups')
+      .select('time_slot')
+      .eq('event_id', id)
+      .in('status', ['signed_up', 'confirmed_attended', 'admin_added']),
+  ])
 
   const totalFilled = signupCounts?.length ?? 0
   const full = evt.volunteer_slots_total > 0 && totalFilled >= evt.volunteer_slots_total
@@ -60,7 +61,8 @@ export default async function JJWLEventDetailPage({ params }: { params: Promise<
     if (s.time_slot) slotCounts[s.time_slot] = (slotCounts[s.time_slot] ?? 0) + 1
   }
 
-  const isSignedUp = signup?.status === 'signed_up'
+  // Which slots this member is currently signed up for
+  const signedUpSlots = (mySignups ?? []).map(s => s.time_slot ?? '')
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
@@ -94,12 +96,12 @@ export default async function JJWLEventDetailPage({ params }: { params: Promise<
         eventId={evt.id}
         memberId={member.id}
         memberName={member.name}
-        memberPhone={member.phone}
-        isSignedUp={isSignedUp}
-        currentSlot={signup?.time_slot ?? null}
-        isFull={full && !isSignedUp}
+        memberPhone={member.phone ?? ''}
+        signedUpSlots={signedUpSlots}
+        isFull={full && signedUpSlots.length === 0}
         timeSlots={timeSlots}
         slotCounts={slotCounts}
+        creditHours={Number(evt.credit_hours)}
       />
     </div>
   )
