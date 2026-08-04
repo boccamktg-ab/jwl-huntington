@@ -67,7 +67,10 @@ export default function EventAdminActions({ eventId, currentStatus }: Props) {
       )}
       {currentStatus === 'sunset' && (
         <button
-          onClick={() => setStatus('active')}
+          onClick={() => {
+            if (!confirm('Reopen this event? Any confirmed attendance marks will be reset to "signed up" so you can re-review.')) return
+            setStatus('active')
+          }}
           disabled={!!loading}
           className="text-sm px-3 py-1.5 border border-gray-300 text-gray-600 rounded-lg hover:border-gray-400 disabled:opacity-50"
         >

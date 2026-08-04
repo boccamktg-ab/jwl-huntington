@@ -84,6 +84,15 @@ export async function PATCH(request: NextRequest) {
       const prevStatus = evt.status
       const dateLabel = new Date(evt.event_date).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric', timeZone: 'UTC' })
 
+      if (status === 'active' && prevStatus === 'sunset') {
+        // Reset attendance marks so the roster is back to pending
+        await admin
+          .from('jjwl_signups')
+          .update({ status: 'signed_up', hours_awarded: null, confirmed_by: null, confirmed_at: null })
+          .eq('event_id', event_id)
+          .in('status', ['confirmed_attended', 'no_show'])
+      }
+
       if (status === 'active' && prevStatus !== 'active') {
         // Notify all active members
         const { data: members } = await admin
