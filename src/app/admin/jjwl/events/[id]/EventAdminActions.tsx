@@ -75,6 +75,16 @@ export default function EventAdminActions({ eventId, currentStatus }: Props) {
             {loading === 'nudge' ? 'Sending…' : 'Nudge non-signups'}
           </button>
           <button
+            onClick={() => {
+              if (!confirm('Close this event and start the attendance review? Members will no longer be able to sign up.')) return
+              setStatus('sunset')
+            }}
+            disabled={!!loading}
+            className="text-sm px-3 py-1.5 border border-blue-300 text-blue-700 rounded-lg hover:bg-blue-50 disabled:opacity-50"
+          >
+            {loading === 'sunset' ? '…' : 'Close event'}
+          </button>
+          <button
             onClick={() => setStatus('draft')}
             disabled={!!loading}
             className="text-sm px-3 py-1.5 border border-gray-300 text-gray-600 rounded-lg hover:border-gray-400 disabled:opacity-50"

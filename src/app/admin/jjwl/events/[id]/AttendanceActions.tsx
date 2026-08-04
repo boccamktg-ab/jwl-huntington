@@ -7,13 +7,14 @@ type Props = {
   signupId: string
   eventId: string
   creditHours: number
+  currentStatus: string
 }
 
-export default function AttendanceActions({ signupId, eventId, creditHours }: Props) {
+export default function AttendanceActions({ signupId, eventId, creditHours, currentStatus }: Props) {
   const router = useRouter()
   const [loading, setLoading] = useState<string | null>(null)
 
-  async function act(action: 'confirm' | 'no_show' | 'remove') {
+  async function act(action: string) {
     setLoading(action)
     const res = await fetch('/api/jjwl/admin/attendance', {
       method: 'PATCH',
@@ -22,6 +23,30 @@ export default function AttendanceActions({ signupId, eventId, creditHours }: Pr
     })
     if (res.ok) router.refresh()
     setLoading(null)
+  }
+
+  if (currentStatus === 'confirmed_attended') {
+    return (
+      <div className="flex items-center gap-2">
+        <span className="text-xs text-green-600 font-medium">✓ Confirmed</span>
+        <button onClick={() => act('no_show')} disabled={!!loading}
+          className="text-xs px-2 py-1 border border-red-200 text-red-500 rounded hover:bg-red-50 disabled:opacity-50">
+          {loading === 'no_show' ? '…' : 'Undo'}
+        </button>
+      </div>
+    )
+  }
+
+  if (currentStatus === 'no_show') {
+    return (
+      <div className="flex items-center gap-2">
+        <span className="text-xs text-red-500">No-show</span>
+        <button onClick={() => act('confirm')} disabled={!!loading}
+          className="text-xs px-2 py-1 border border-green-200 text-green-700 rounded hover:bg-green-50 disabled:opacity-50">
+          {loading === 'confirm' ? '…' : 'Undo'}
+        </button>
+      </div>
+    )
   }
 
   return (

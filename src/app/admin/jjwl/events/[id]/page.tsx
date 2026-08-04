@@ -3,6 +3,8 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import AttendanceActions from './AttendanceActions'
 import EventAdminActions from './EventAdminActions'
+import AddAttendeePanel from './AddAttendeePanel'
+import PostEventActions from './PostEventActions'
 
 function db() {
   return createClient(
@@ -24,16 +26,37 @@ export default async function AdminEventDetailPage({ params }: { params: Promise
 
   if (!evt) notFound()
 
-  const { data: signups } = await admin
-    .from('jjwl_signups')
-    .select('id, status, time_slot, hours_awarded, signed_up_at, jjwl_members(id, name, phone, email)')
-    .eq('event_id', id)
-    .order('signed_up_at', { ascending: true })
+  const [{ data: signups }, { data: allMembers }] = await Promise.all([
+    admin
+      .from('jjwl_signups')
+      .select('id, status, time_slot, hours_awarded, signed_up_at, jjwl_members(id, name, phone, email, grade)')
+      .eq('event_id', id)
+      .order('signed_up_at', { ascending: true }),
+    admin
+      .from('jjwl_members')
+      .select('id, name, grade')
+      .eq('status', 'active')
+      .order('name'),
+  ])
 
   const totalSlots = evt.volunteer_slots_total
   const activeSignups = (signups ?? []).filter(s => ['signed_up', 'confirmed_attended', 'admin_added'].includes(s.status))
   const isSunset = evt.status === 'sunset'
   const isDraft = evt.status === 'draft'
+
+  // Members already on the roster (any non-cancelled status)
+  const rosterMemberIds = new Set(
+    (signups ?? [])
+      .filter(s => s.status !== 'cancelled')
+      .map((s: any) => {
+        const m = Array.isArray(s.jjwl_members) ? s.jjwl_members[0] : s.jjwl_members
+        return m?.id
+      })
+      .filter(Boolean)
+  )
+  const availableMembers = (allMembers ?? []).filter(m => !rosterMemberIds.has(m.id))
+
+  const pendingCount = (signups ?? []).filter(s => ['signed_up', 'admin_added'].includes(s.status)).length
 
   return (
     <div className="space-y-6">
@@ -93,9 +116,18 @@ export default async function AdminEventDetailPage({ params }: { params: Promise
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-base font-semibold text-gray-800">Roster</h2>
           {isSunset && (
-            <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-1">
-              Event has ended — confirm attendance below to award hours
-            </p>
+            <div className="flex items-center gap-2">
+              <PostEventActions
+                eventId={evt.id}
+                creditHours={Number(evt.credit_hours)}
+                pendingCount={pendingCount}
+              />
+              {pendingCount === 0 && (
+                <p className="text-xs text-green-700 bg-green-50 border border-green-200 rounded-lg px-3 py-1">
+                  All attendance confirmed
+                </p>
+              )}
+            </div>
           )}
         </div>
 
@@ -141,15 +173,13 @@ export default async function AdminEventDetailPage({ params }: { params: Promise
                       )}
                       {isSunset && (
                         <td className="px-4 py-3">
-                          {['signed_up', 'admin_added'].includes(s.status) && (
+                          {s.status !== 'cancelled' && (
                             <AttendanceActions
                               signupId={s.id}
                               eventId={evt.id}
                               creditHours={Number(evt.credit_hours)}
+                              currentStatus={s.status}
                             />
-                          )}
-                          {s.status === 'confirmed_attended' && (
-                            <span className="text-xs text-green-600">✓ Confirmed</span>
                           )}
                         </td>
                       )}
@@ -162,9 +192,7 @@ export default async function AdminEventDetailPage({ params }: { params: Promise
         )}
 
         {isSunset && (
-          <div className="mt-4">
-            <AddAttendeeForm eventId={evt.id} />
-          </div>
+          <AddAttendeePanel eventId={evt.id} availableMembers={availableMembers} />
         )}
       </div>
     </div>
@@ -186,17 +214,3 @@ function StatusBadge({ status }: { status: string }) {
   )
 }
 
-// Client component for adding attendee is defined separately
-function AddAttendeeForm({ eventId }: { eventId: string }) {
-  return (
-    <details className="text-sm">
-      <summary className="cursor-pointer text-gray-500 hover:text-gray-700">+ Add attendee who wasn't signed up</summary>
-      <div className="mt-3 bg-gray-50 rounded-lg border border-gray-200 p-4">
-        <p className="text-xs text-gray-500">Use the member search below and add them manually.</p>
-        <a href={`/api/jjwl/admin/attendance?event_id=${eventId}`} className="text-xs text-[#1B52C1] hover:underline mt-1 block">
-          Use Admin API to add by member ID
-        </a>
-      </div>
-    </details>
-  )
-}
