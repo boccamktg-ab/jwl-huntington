@@ -65,6 +65,15 @@ export default function EventAdminActions({ eventId, currentStatus }: Props) {
           {loading === 'active' ? '…' : 'Publish'}
         </button>
       )}
+      {currentStatus === 'sunset' && (
+        <button
+          onClick={() => setStatus('active')}
+          disabled={!!loading}
+          className="text-sm px-3 py-1.5 border border-gray-300 text-gray-600 rounded-lg hover:border-gray-400 disabled:opacity-50"
+        >
+          {loading === 'active' ? '…' : 'Reopen event'}
+        </button>
+      )}
       {currentStatus === 'active' && (
         <>
           <button
