@@ -51,12 +51,46 @@ export async function PATCH(request: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
   }
 
-  const { application_id, action } = await request.json()
-  if (!application_id || !['close', 'resume'].includes(action)) {
+  const { application_id, action, vote_summary } = await request.json()
+  if (!application_id || !['close', 'resume', 'resend'].includes(action)) {
     return NextResponse.json({ error: 'Invalid request' }, { status: 400 })
   }
 
   const supabase = db()
+
+  // Resend: update summary and re-email all members (voting stays open)
+  if (action === 'resend') {
+    if (!vote_summary?.trim()) {
+      return NextResponse.json({ error: 'vote_summary is required' }, { status: 400 })
+    }
+
+    await supabase
+      .from('grant_applications')
+      .update({ vote_summary: vote_summary.trim() })
+      .eq('id', application_id)
+
+    const { data: votes } = await supabase
+      .from('grant_member_votes')
+      .select('token, member_id, jwl_members(name, email)')
+      .eq('application_id', application_id)
+
+    let sent = 0
+    for (const v of votes ?? []) {
+      const member = (v as any).jwl_members
+      if (!member?.email) continue
+      const payload = emailGrantMemberVote(
+        member.name,
+        vote_summary.trim(),
+        `${BASE}/api/grants/vote/${v.token}?v=yes`,
+        `${BASE}/api/grants/vote/${v.token}?v=no`,
+        `${BASE}/vote/${v.token}`,
+      )
+      await sendEmail({ to: member.email, subject: payload.subject, html: payload.html })
+      sent++
+    }
+    return NextResponse.json({ ok: true, sent })
+  }
+
   const newStatus = action === 'close' ? 'closed' : 'open'
 
   await supabase

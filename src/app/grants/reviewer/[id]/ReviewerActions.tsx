@@ -28,6 +28,9 @@ export default function ReviewerActions({ applicationId, currentStatus, requeste
 
   const [voteSummaryDraft, setVoteSummaryDraft] = useState(voteSummary ?? '')
   const [showVoteOpen, setShowVoteOpen] = useState(false)
+  const [showResend, setShowResend] = useState(false)
+  const [resendDraft, setResendDraft] = useState(voteSummary ?? '')
+  const [resendResult, setResendResult] = useState<string | null>(null)
   const [voteLoading, setVoteLoading] = useState<string | null>(null)
   const [voteError, setVoteError] = useState('')
   const [tally, setTally] = useState<VoteTally | null>(null)
@@ -63,6 +66,29 @@ export default function ReviewerActions({ applicationId, currentStatus, requeste
       if (!res.ok) throw new Error(json.error ?? 'Something went wrong.')
       router.refresh()
       if (action !== 'open') await fetchTally()
+      return json
+    } catch (err: any) {
+      setVoteError(err.message)
+    } finally {
+      setVoteLoading(null)
+    }
+  }
+
+  async function resend() {
+    setVoteLoading('resend')
+    setVoteError('')
+    setResendResult(null)
+    try {
+      const res = await fetch('/api/grants/vote/status', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ application_id: applicationId, action: 'resend', vote_summary: resendDraft }),
+      })
+      const json = await res.json()
+      if (!res.ok) throw new Error(json.error ?? 'Something went wrong.')
+      setResendResult(`Sent to ${json.sent} member${json.sent !== 1 ? 's' : ''}.`)
+      setShowResend(false)
+      router.refresh()
     } catch (err: any) {
       setVoteError(err.message)
     } finally {
@@ -286,6 +312,38 @@ export default function ReviewerActions({ applicationId, currentStatus, requeste
                     {d.notes && <span className="text-gray-500 italic">{d.notes}</span>}
                   </div>
                 ))}
+              </div>
+            )}
+
+            {/* Update message & resend */}
+            {voteStatus === 'open' && (
+              <div className="border border-blue-100 rounded-xl p-3 bg-blue-50 space-y-2">
+                {!showResend ? (
+                  <button onClick={() => { setResendDraft(voteSummary ?? ''); setShowResend(true) }}
+                    className="text-sm text-[#1B52C1] hover:underline">
+                    Update message &amp; resend to all members…
+                  </button>
+                ) : (
+                  <div className="space-y-2">
+                    <p className="text-xs font-medium text-blue-800">Edit the summary and resend to all members. Voting remains open.</p>
+                    <textarea
+                      value={resendDraft}
+                      onChange={e => setResendDraft(e.target.value)}
+                      rows={6}
+                      className="w-full border border-blue-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 resize-none bg-white"
+                    />
+                    <div className="flex gap-2">
+                      <button
+                        onClick={resend}
+                        disabled={!resendDraft.trim() || !!voteLoading}
+                        className="text-sm px-4 py-2 bg-[#1B52C1] text-white rounded-lg hover:bg-[#1641a0] disabled:opacity-50">
+                        {voteLoading === 'resend' ? 'Sending…' : 'Update & send to all'}
+                      </button>
+                      <button onClick={() => setShowResend(false)} className="text-sm text-gray-500 hover:text-gray-700">Cancel</button>
+                    </div>
+                  </div>
+                )}
+                {resendResult && <p className="text-xs text-green-700">{resendResult}</p>}
               </div>
             )}
 
