@@ -99,35 +99,8 @@ export async function PATCH(request: NextRequest) {
     .eq('id', application_id)
 
   if (action === 'resume') {
-    // Re-send emails to members who haven't voted yet
-    const { data: votes } = await supabase
-      .from('grant_member_votes')
-      .select('token, member_id, vote, jwl_members(name, email)')
-      .eq('application_id', application_id)
-
-    const { data: app } = await supabase
-      .from('grant_applications')
-      .select('vote_summary')
-      .eq('id', application_id)
-      .single()
-
-    let sent = 0
-    for (const v of votes ?? []) {
-      if (v.vote) continue // already voted
-      const member = (v as any).jwl_members
-      if (!member?.email || !app?.vote_summary) continue
-
-      const payload = emailGrantMemberVote(
-        member.name,
-        app.vote_summary,
-        `${BASE}/api/grants/vote/${v.token}?v=yes`,
-        `${BASE}/api/grants/vote/${v.token}?v=no`,
-        `${BASE}/vote/${v.token}`,
-      )
-      await sendEmail({ to: member.email, subject: payload.subject, html: payload.html })
-      sent++
-    }
-    return NextResponse.json({ ok: true, sent })
+    // No emails — use "Update & Resend" to notify members of new information
+    return NextResponse.json({ ok: true })
   }
 
   return NextResponse.json({ ok: true })
