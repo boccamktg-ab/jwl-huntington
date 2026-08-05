@@ -55,7 +55,7 @@ export default async function ReviewerApplicationPage({ params }: { params: Prom
     .eq('auth_id', user.id)
     .maybeSingle()
 
-  const isAdmin = isSuperAdmin || (reviewer?.is_admin ?? false)
+  const isAdmin = isSuperAdmin || (reviewer?.is_admin ?? false) || (reviewer?.is_grants_reviewer ?? false)
   const isReviewer = reviewer?.status === 'approved' && (reviewer?.is_grants_reviewer ?? false)
   if (!isAdmin && !isReviewer) return notFound()
 
