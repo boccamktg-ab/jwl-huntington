@@ -51,13 +51,12 @@ export default async function ReviewerApplicationPage({ params }: { params: Prom
 
   const { data: reviewer } = await db()
     .from('jwl_members')
-    .select('id, name, is_admin, is_grants_reviewer, status')
+    .select('id, name, is_grants_reviewer, status')
     .eq('auth_id', user.id)
     .maybeSingle()
 
-  const isAdmin = isSuperAdmin || (reviewer?.is_admin ?? false) || (reviewer?.is_grants_reviewer ?? false)
-  const isReviewer = reviewer?.status === 'approved' && (reviewer?.is_grants_reviewer ?? false)
-  if (!isAdmin && !isReviewer) return notFound()
+  const isAdmin = isSuperAdmin || (reviewer?.status === 'approved' && (reviewer?.is_grants_reviewer ?? false))
+  if (!isAdmin) return notFound()
 
   const { data: app } = await db()
     .from('grant_applications')

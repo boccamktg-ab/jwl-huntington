@@ -47,11 +47,7 @@ const ACTIVE_STATUSES = ['submitted', 'needs_more_info', 'under_review', 'pendin
 export default async function ReviewerDashboardPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  const isAdmin = isSuperAdminEmail(user?.email) || await (async () => {
-    if (!user) return false
-    const { data } = await db().from('jwl_members').select('is_admin, is_super_admin').eq('auth_id', user.id).maybeSingle()
-    return !!(data?.is_admin || data?.is_super_admin)
-  })()
+  const isAdmin = isSuperAdminEmail(user?.email)
 
   const { data: applications } = await db()
     .from('grant_applications')

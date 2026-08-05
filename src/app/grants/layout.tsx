@@ -27,7 +27,7 @@ export default async function GrantsLayout({ children }: { children: React.React
     .eq('auth_id', user.id)
     .maybeSingle()
 
-  if (member?.is_admin || (member?.is_grants_reviewer && member?.status === 'approved')) {
+  if (member?.is_grants_reviewer && member?.status === 'approved') {
     return <>{children}</>
   }
 

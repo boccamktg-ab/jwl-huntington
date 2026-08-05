@@ -21,14 +21,13 @@ export default async function GrantsReviewerLayout({ children }: { children: Rea
 
   const { data: member } = await db()
     .from('jwl_members')
-    .select('name, status, is_grants_reviewer, is_admin')
+    .select('name, status, is_grants_reviewer')
     .eq('auth_id', user.id)
     .maybeSingle()
 
-  const isAdmin = isSuperAdmin || (member?.is_admin ?? false)
-  const isReviewer = member?.status === 'approved' && (member?.is_grants_reviewer ?? false)
+  const isReviewer = isSuperAdmin || (member?.status === 'approved' && (member?.is_grants_reviewer ?? false))
 
-  if (!isAdmin && !isReviewer) redirect('/login')
+  if (!isReviewer) redirect('/login')
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -37,7 +36,7 @@ export default async function GrantsReviewerLayout({ children }: { children: Rea
         userName={member?.name ?? 'Admin'}
         links={[
           { href: '/grants/reviewer', label: 'Applications' },
-          ...(isAdmin ? [{ href: '/admin/grants', label: 'Intake' }] : []),
+          ...(isSuperAdmin ? [{ href: '/admin/grants', label: 'Intake' }] : []),
           { href: '/members/dashboard', label: 'My Dashboard' },
         ]}
       />

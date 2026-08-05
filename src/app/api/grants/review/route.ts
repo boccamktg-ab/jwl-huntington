@@ -21,14 +21,13 @@ async function requireGrantsReviewer(request: NextRequest) {
 
   const { data: member } = await db()
     .from('jwl_members')
-    .select('id, status, is_grants_reviewer, is_admin')
+    .select('id, status, is_grants_reviewer')
     .eq('auth_id', user.id)
     .maybeSingle()
 
-  const isAdmin = isSuperAdmin || (member?.is_admin ?? false)
-  const isReviewer = member?.status === 'approved' && (member?.is_grants_reviewer ?? false)
+  const isReviewer = isSuperAdmin || (member?.status === 'approved' && (member?.is_grants_reviewer ?? false))
 
-  if (!isAdmin && !isReviewer) return null
+  if (!isReviewer) return null
   return { user, member }
 }
 
