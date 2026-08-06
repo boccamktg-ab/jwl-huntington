@@ -25,6 +25,8 @@ export default function ReviewerActions({ applicationId, currentStatus, requeste
   const [denialReason, setDenialReason] = useState('')
   const [showApprove, setShowApprove] = useState(false)
   const [showDeny, setShowDeny] = useState(false)
+  const [approveMemberMsg, setApproveMemberMsg] = useState('')
+  const [denyMemberMsg, setDenyMemberMsg] = useState('')
 
   const [voteSummaryDraft, setVoteSummaryDraft] = useState(voteSummary ?? '')
   const [showVoteOpen, setShowVoteOpen] = useState(false)
@@ -165,12 +167,23 @@ export default function ReviewerActions({ applicationId, currentStatus, requeste
                 </div>
                 <span className="text-xs text-gray-400">max ${maxAmount.toFixed(2)}</span>
               </div>
+              <div className="space-y-2 border-t border-green-200 pt-3">
+                <p className="text-xs font-medium text-green-800">Member announcement <span className="font-normal text-green-600">(optional)</span></p>
+                <p className="text-xs text-green-600">Write a sanitized update to send to all JWL members. Do not include identifying information. Leave blank to skip.</p>
+                <textarea
+                  value={approveMemberMsg}
+                  onChange={e => setApproveMemberMsg(e.target.value)}
+                  rows={4}
+                  placeholder="e.g. The grants committee has approved a request this week. Thank you to all who participated in the vote."
+                  className="w-full border border-green-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-400 resize-none bg-white"
+                />
+              </div>
               <div className="flex gap-2">
                 <button
-                  onClick={() => act('approve', { approved_amount: parseFloat(approveAmount) })}
+                  onClick={() => act('approve', { approved_amount: parseFloat(approveAmount), member_message: approveMemberMsg || undefined })}
                   disabled={!!loading}
                   className="text-sm px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50">
-                  {loading === 'approve' ? 'Approving…' : 'Confirm Approval'}
+                  {loading === 'approve' ? 'Approving…' : approveMemberMsg.trim() ? 'Approve & Notify Members' : 'Confirm Approval'}
                 </button>
                 <button onClick={() => setShowApprove(false)} className="text-sm text-gray-500 hover:text-gray-700">Cancel</button>
               </div>
@@ -197,12 +210,23 @@ export default function ReviewerActions({ applicationId, currentStatus, requeste
                 placeholder="Reason for denial (shown to referrer)…"
                 className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-400 resize-none"
               />
+              <div className="space-y-2 border-t border-red-200 pt-3">
+                <p className="text-xs font-medium text-red-800">Member announcement <span className="font-normal text-red-500">(optional)</span></p>
+                <p className="text-xs text-red-500">Write a sanitized update to send to all JWL members. Do not include identifying information. Leave blank to skip.</p>
+                <textarea
+                  value={denyMemberMsg}
+                  onChange={e => setDenyMemberMsg(e.target.value)}
+                  rows={4}
+                  placeholder="e.g. The grants committee reviewed a request this week and was unable to approve it at this time."
+                  className="w-full border border-red-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-400 resize-none bg-white"
+                />
+              </div>
               <div className="flex gap-2">
                 <button
-                  onClick={() => act('deny', { denial_reason: denialReason })}
+                  onClick={() => act('deny', { denial_reason: denialReason, member_message: denyMemberMsg || undefined })}
                   disabled={!!loading || !denialReason.trim()}
                   className="text-sm px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50">
-                  {loading === 'deny' ? 'Denying…' : 'Confirm Denial'}
+                  {loading === 'deny' ? 'Denying…' : denyMemberMsg.trim() ? 'Deny & Notify Members' : 'Confirm Denial'}
                 </button>
                 <button onClick={() => setShowDeny(false)} className="text-sm text-gray-500 hover:text-gray-700">Cancel</button>
               </div>

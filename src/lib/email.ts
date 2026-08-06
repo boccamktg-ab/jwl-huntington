@@ -1131,6 +1131,20 @@ export function emailGrantsPortalInvite(inviteeName: string, invitedByName: stri
   }
 }
 
+export function emailGrantDecisionAnnouncement(memberName: string, decision: 'approved' | 'denied', message: string) {
+  const icon = decision === 'approved' ? '✅' : '❌'
+  const label = decision === 'approved' ? 'Grant Approved' : 'Grant Denied'
+  return {
+    subject: `JWL Grants — ${label}`,
+    html: wrap(`
+      <h2 style="margin:0 0 16px;font-size:20px;font-weight:700;">${icon} ${label}</h2>
+      ${p(`Hi ${memberName.split(' ')[0]},`)}
+      ${p(message.replace(/\n/g, '<br>'))}
+      ${p('<span style="font-size:13px;color:#9ca3af;">This message was sent by the JWL Grants Committee.</span>')}
+    `),
+  }
+}
+
 export function emailGrantVoteConfirmation(memberName: string, vote: 'yes' | 'no' | 'more_info') {
   const labels = { yes: 'Approve', no: 'Deny', more_info: 'Request More Information' }
   const icons = { yes: '✅', no: '❌', more_info: '❓' }

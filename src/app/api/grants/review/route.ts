@@ -2,7 +2,7 @@ import { isSuperAdminEmail } from '@/lib/admin'
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createClient as adminSupabase } from '@supabase/supabase-js'
-import { sendEmail, emailSocialWorkerGrantStatusUpdate } from '@/lib/email'
+import { sendEmail, emailSocialWorkerGrantStatusUpdate, emailGrantDecisionAnnouncement } from '@/lib/email'
 
 function db() {
   return adminSupabase(
@@ -35,7 +35,7 @@ export async function PATCH(request: NextRequest) {
   const auth = await requireGrantsReviewer(request)
   if (!auth) return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
 
-  const { application_id, action, approved_amount, denial_reason } = await request.json()
+  const { application_id, action, approved_amount, denial_reason, member_message } = await request.json()
 
   if (!application_id || !action) {
     return NextResponse.json({ error: 'Missing application_id or action' }, { status: 400 })
@@ -107,6 +107,22 @@ export async function PATCH(request: NextRequest) {
         )
         await sendEmail({ to: sw.email, subject, html })
       }
+    }
+  }
+
+  // Optional member announcement on approve/deny
+  if (member_message?.trim() && ['approve', 'deny'].includes(action)) {
+    const decision = action === 'approve' ? 'approved' : 'denied'
+    const { data: members } = await db()
+      .from('jwl_members')
+      .select('name, email')
+      .eq('status', 'approved')
+      .not('email', 'is', null)
+
+    for (const m of members ?? []) {
+      if (!m.email) continue
+      const { subject, html } = emailGrantDecisionAnnouncement(m.name, decision, member_message.trim())
+      await sendEmail({ to: m.email, subject, html })
     }
   }
 
