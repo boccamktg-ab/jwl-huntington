@@ -109,6 +109,8 @@ export default function ReviewerActions({ applicationId, currentStatus, requeste
       })
       const json = await res.json()
       if (!res.ok) throw new Error(json.error ?? 'Something went wrong.')
+      setShowApprove(false)
+      setShowDeny(false)
       router.refresh()
     } catch (err: any) {
       setError(err.message)
