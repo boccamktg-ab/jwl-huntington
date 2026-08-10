@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation'
 import MemberAdminActions from './MemberAdminActions'
 import HourAdjustmentForm from './HourAdjustmentForm'
 import CertificateButton from './CertificateButton'
+import EditRegistrationForm from './EditRegistrationForm'
 
 function db() {
   return createClient(
@@ -19,7 +20,7 @@ export default async function AdminJJWLMemberDetailPage({ params }: { params: Pr
   const [{ data: member }, { data: signups }, { data: adjustments }] = await Promise.all([
     admin
       .from('jjwl_members')
-      .select('*, schools(name)')
+      .select('*, school_id, schools(name)')
       .eq('id', id)
       .maybeSingle(),
     admin
@@ -82,6 +83,21 @@ export default async function AdminJJWLMemberDetailPage({ params }: { params: Pr
             <p className="text-sm text-gray-700 whitespace-pre-wrap">{member.notes}</p>
           </div>
         )}
+        <div className="pt-1 border-t border-gray-100">
+          <EditRegistrationForm
+            memberId={id}
+            initial={{
+              name: member.name,
+              phone: member.phone ?? null,
+              grade: member.grade ?? null,
+              school_id: member.school_id ?? null,
+              parent_name: member.parent_name ?? null,
+              parent_phone: member.parent_phone ?? null,
+              parent_email: member.parent_email ?? null,
+              notes: member.notes ?? null,
+            }}
+          />
+        </div>
       </div>
 
       {/* Status + actions */}

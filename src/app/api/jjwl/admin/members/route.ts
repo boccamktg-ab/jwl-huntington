@@ -33,7 +33,8 @@ export async function PATCH(request: NextRequest) {
   const user = await requireJJWLAdmin()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
 
-  const { member_id, action } = await request.json()
+  const body = await request.json()
+  const { member_id, action } = body
   if (!member_id || !action) return NextResponse.json({ error: 'Missing fields.' }, { status: 400 })
 
   const admin = db()
@@ -104,6 +105,22 @@ export async function PATCH(request: NextRequest) {
     await sendEmail({ to: member.email, subject, html })
     if (member.parent_email) await sendEmail({ to: member.parent_email, subject, html })
 
+    return NextResponse.json({ ok: true })
+  }
+
+  if (action === 'update_info') {
+    const { name, phone, grade, school_id, parent_name, parent_phone, parent_email, notes } = body
+    const updates: Record<string, any> = {}
+    if (name !== undefined) updates.name = name
+    if (phone !== undefined) updates.phone = phone
+    if (grade !== undefined) updates.grade = grade
+    if (school_id !== undefined) updates.school_id = school_id || null
+    if (parent_name !== undefined) updates.parent_name = parent_name
+    if (parent_phone !== undefined) updates.parent_phone = parent_phone
+    if (parent_email !== undefined) updates.parent_email = parent_email
+    if (notes !== undefined) updates.notes = notes
+    const { error } = await admin.from('jjwl_members').update(updates).eq('id', member_id)
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
     return NextResponse.json({ ok: true })
   }
 
