@@ -73,6 +73,7 @@ const GROUPS = [
       { type: 'jjwl_event_reminder_2', label: 'Event reminder — 2 days out' },
       { type: 'jjwl_event_cancelled', label: 'Event cancelled' },
       { type: 'jjwl_hours_confirmed', label: 'Hours confirmed' },
+      { type: 'jjwl_payment_nudge', label: 'Payment reminder (nudge)' },
       { type: 'jjwl_dues_paid', label: 'Dues paid' },
       { type: 'jjwl_waiver_confirmed', label: 'Waiver confirmed' },
       { type: 'jjwl_year_end_certificate', label: 'Year-end certificate' },

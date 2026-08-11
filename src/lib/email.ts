@@ -1153,7 +1153,7 @@ export function emailPaymentNudge(name: string, cheddarUpUrl: string) {
       ${p("Your JJWL registration has been approved, but your account isn't fully active yet because your membership dues haven't been paid.")}
       ${p("<strong>You must pay your dues before you can sign up for events and start earning volunteer hours.</strong>")}
       ${btn('Pay Membership Dues →', cheddarUpUrl)}
-      ${p("If you have any questions or believe this is an error, please contact us at <a href='mailto:info@jwlhuntington.org' style='color:#1B52C1;'>info@jwlhuntington.org</a>.")}
+      ${p("If you recently paid, disregard — sometimes this crosses paths in the system! If you have any questions or believe this is an error, please contact us at <a href='mailto:info@jwlhuntington.org' style='color:#1B52C1;'>info@jwlhuntington.org</a>.")}
     `),
   }
 }
