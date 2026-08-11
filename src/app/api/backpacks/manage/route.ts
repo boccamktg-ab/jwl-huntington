@@ -96,6 +96,12 @@ export async function PATCH(request: NextRequest) {
     return NextResponse.json({ ok: true, sent: (confirmed ?? []).length })
   }
 
+  if (action === 'delete') {
+    const { error } = await admin.from('backpack_signups').delete().eq('id', id)
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json({ ok: true })
+  }
+
   return NextResponse.json({ error: 'Invalid action.' }, { status: 400 })
 }
 

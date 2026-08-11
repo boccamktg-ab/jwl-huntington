@@ -101,13 +101,14 @@ export default async function BackpackAdminPage() {
                   {new Date(s.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                 </td>
                 <td className="px-4 py-3">
-                  <div className="flex gap-1 justify-end">
+                  <div className="flex gap-1 justify-end items-center">
                     {s.status !== 'confirmed' && (
                       <BackpackActions id={s.id} action="confirm" label="Confirm" variant="green" confirmedCount={confirmed} />
                     )}
                     {s.status !== 'waitlisted' && (
                       <BackpackActions id={s.id} action="waitlist" label="Waitlist" variant="gray" />
                     )}
+                    <BackpackActions id={s.id} action="delete" label="Delete" variant="danger" />
                   </div>
                 </td>
               </tr>
