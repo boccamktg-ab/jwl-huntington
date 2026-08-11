@@ -31,7 +31,7 @@ export default function ResetPasswordPage() {
     setError('')
 
     if (password !== confirm) {
-      setError('Passwords don't match.')
+      setError("Passwords don't match.")
       return
     }
     if (password.length < 8) {
