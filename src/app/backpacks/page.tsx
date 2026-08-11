@@ -69,7 +69,7 @@ export default function BackpackSignupPage() {
               <p className="text-sm font-semibold uppercase tracking-wide opacity-75">Event Details</p>
               <div className="space-y-1.5 text-sm">
                 <div className="flex gap-2"><span className="opacity-70 w-20 shrink-0">What</span><span className="font-medium">Stuffing backpacks with school supplies for local kids</span></div>
-                <div className="flex gap-2"><span className="opacity-70 w-20 shrink-0">Date</span><span className="font-medium">Tuesday, August 26, 2025</span></div>
+                <div className="flex gap-2"><span className="opacity-70 w-20 shrink-0">Date</span><span className="font-medium">Wednesday, August 26, 2025</span></div>
                 <div className="flex gap-2"><span className="opacity-70 w-20 shrink-0">Time</span><span className="font-medium">8:00 AM – 11:00 AM</span></div>
                 <div className="flex gap-2"><span className="opacity-70 w-20 shrink-0">Location</span><span className="font-medium">Huntington Village (sent upon confirmation)</span></div>
                 <div className="flex gap-2"><span className="opacity-70 w-20 shrink-0">Credit</span><span className="font-medium">3 hours community service (certificate provided)</span></div>
@@ -122,7 +122,7 @@ export default function BackpackSignupPage() {
                     className="mt-0.5 h-4 w-4 rounded border-gray-300 text-[#1B52C1] focus:ring-[#1B52C1]"
                   />
                   <span className="text-sm text-gray-700">
-                    I confirm I am available on <strong>Tuesday, August 26, 2025 from 8:00 AM to 11:00 AM</strong> to volunteer in Huntington Village.
+                    I confirm I am available on <strong>Wednesday, August 26, 2025 from 8:00 AM to 11:00 AM</strong> to volunteer in Huntington Village.
                   </span>
                 </label>
 
