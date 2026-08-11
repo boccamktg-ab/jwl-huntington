@@ -5,6 +5,7 @@ import AttendanceActions from './AttendanceActions'
 import EventAdminActions from './EventAdminActions'
 import AddAttendeePanel from './AddAttendeePanel'
 import PostEventActions from './PostEventActions'
+import RemoveOrphanButton from './RemoveOrphanButton'
 
 function db() {
   return createClient(
@@ -186,6 +187,9 @@ export default async function AdminEventDetailPage({ params }: { params: Promise
                             creditHours={Number(evt.credit_hours)}
                             currentStatus={s.status}
                           />
+                        )}
+                        {!m?.id && s.status !== 'cancelled' && (
+                          <RemoveOrphanButton signupId={s.id} />
                         )}
                       </td>
                     </tr>

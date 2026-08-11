@@ -89,6 +89,16 @@ export async function PATCH(request: NextRequest) {
     return NextResponse.json({ ok: true })
   }
 
+  if (action === 'remove_orphan') {
+    // Delete a signup row with no linked member (null member_id)
+    if (!signup_id) return NextResponse.json({ error: 'Missing signup_id.' }, { status: 400 })
+    const { data: row } = await admin.from('jjwl_signups').select('member_id').eq('id', signup_id).maybeSingle()
+    if (row?.member_id) return NextResponse.json({ error: 'Signup still has a member — use cancel instead.' }, { status: 400 })
+    const { error } = await admin.from('jjwl_signups').delete().eq('id', signup_id)
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json({ ok: true })
+  }
+
   if (action === 'confirm_all') {
     if (!event_id) return NextResponse.json({ error: 'Missing event_id.' }, { status: 400 })
 
