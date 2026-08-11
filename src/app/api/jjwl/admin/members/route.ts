@@ -126,6 +126,22 @@ export async function PATCH(request: NextRequest) {
 
   if (action === 'delete') {
     const authId = member.auth_id ?? null
+
+    // Snapshot member name into signup rows and cancel any active/upcoming signups
+    // so event rosters remain legible after the member row is deleted.
+    await admin
+      .from('jjwl_signups')
+      .update({ member_name: member.name })
+      .eq('member_id', member_id)
+
+    // Cancel any pending signups so event rosters show cancelled rather than
+    // silently losing the row when the FK is nulled out on delete.
+    await admin
+      .from('jjwl_signups')
+      .update({ status: 'cancelled' })
+      .eq('member_id', member_id)
+      .in('status', ['signed_up', 'admin_added'])
+
     const { error } = await admin.from('jjwl_members').delete().eq('id', member_id)
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
     if (authId) await admin.auth.admin.deleteUser(authId)

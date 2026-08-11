@@ -29,7 +29,7 @@ export default async function AdminEventDetailPage({ params }: { params: Promise
   const [{ data: signups }, { data: allMembers }] = await Promise.all([
     admin
       .from('jjwl_signups')
-      .select('id, status, time_slot, hours_awarded, signed_up_at, jjwl_members(id, name, phone, email, grade)')
+      .select('id, status, time_slot, hours_awarded, signed_up_at, member_name, jjwl_members(id, name, phone, email, grade)')
       .eq('event_id', id)
       .order('signed_up_at', { ascending: true }),
     admin
@@ -151,12 +151,21 @@ export default async function AdminEventDetailPage({ params }: { params: Promise
               <tbody className="divide-y divide-gray-100">
                 {(signups ?? []).map((s: any) => {
                   const m = Array.isArray(s.jjwl_members) ? s.jjwl_members[0] : s.jjwl_members
+                  const displayName = m?.name ?? s.member_name ?? '—'
+                  const isDeleted = !m && s.member_name
                   return (
                     <tr key={s.id} className={s.status === 'cancelled' ? 'opacity-40' : ''}>
                       <td className="px-4 py-3">
-                        <Link href={`/admin/jjwl/members/${m?.id}`} className="font-medium text-[#1B52C1] hover:underline">
-                          {m?.name ?? '—'}
-                        </Link>
+                        {m?.id ? (
+                          <Link href={`/admin/jjwl/members/${m.id}`} className="font-medium text-[#1B52C1] hover:underline">
+                            {displayName}
+                          </Link>
+                        ) : (
+                          <span className="font-medium text-gray-700">
+                            {displayName}
+                            {isDeleted && <span className="ml-1 text-xs text-gray-400">(removed)</span>}
+                          </span>
+                        )}
                       </td>
                       <td className="px-4 py-3 text-gray-500 text-xs">
                         {m?.phone && <p>{m.phone}</p>}
@@ -170,7 +179,7 @@ export default async function AdminEventDetailPage({ params }: { params: Promise
                         {s.status === 'confirmed_attended' ? Number(s.hours_awarded ?? 0).toFixed(1) : '—'}
                       </td>
                       <td className="px-4 py-3">
-                        {s.status !== 'cancelled' && (
+                        {s.status !== 'cancelled' && m?.id && (
                           <AttendanceActions
                             signupId={s.id}
                             eventId={evt.id}
