@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { sendEmail, emailBackpackAdminAlert, emailBackpackPending } from '@/lib/email'
+import { generateActionUrl } from '../action/route'
 
 const ADMIN_EMAIL = 'info@jwlhuntington.org'
+const BASE = 'https://portal.jwlhuntington.org'
 const MAX_CONFIRMED = 15
 
 function db() {
@@ -42,8 +44,18 @@ export async function POST(request: NextRequest) {
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
-  // Alert admin
-  const alert = emailBackpackAdminAlert(name.trim(), email.trim(), mobile.trim())
+  // Get the new row's ID for action URLs
+  const { data: newRow } = await admin
+    .from('backpack_signups')
+    .select('id')
+    .eq('email', email.trim().toLowerCase())
+    .maybeSingle()
+
+  const confirmUrl = newRow ? generateActionUrl(BASE, newRow.id, 'confirm') : `${BASE}/admin/backpacks`
+  const waitlistUrl = newRow ? generateActionUrl(BASE, newRow.id, 'waitlist') : `${BASE}/admin/backpacks`
+
+  // Alert admin with one-click action buttons
+  const alert = emailBackpackAdminAlert(name.trim(), email.trim(), mobile.trim(), confirmUrl, waitlistUrl)
   await sendEmail({ to: ADMIN_EMAIL, subject: alert.subject, html: alert.html })
 
   // Pending confirmation to registrant

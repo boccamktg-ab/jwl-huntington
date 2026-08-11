@@ -1167,7 +1167,7 @@ const BACKPACK_CONTACT_NAME = 'Andrea Boccard'
 const BACKPACK_CONTACT_EMAIL = 'info@jwlhuntington.org'
 const BACKPACK_CONTACT_MOBILE = '631-889-0949'
 
-export function emailBackpackAdminAlert(name: string, email: string, mobile: string) {
+export function emailBackpackAdminAlert(name: string, email: string, mobile: string, confirmUrl: string, waitlistUrl: string) {
   return {
     subject: `Backpack Event — New signup: ${name}`,
     html: wrap(`
@@ -1178,8 +1178,12 @@ export function emailBackpackAdminAlert(name: string, email: string, mobile: str
         { label: 'Email', value: email },
         { label: 'Mobile', value: mobile },
       ])}
-      ${p('Log in to the admin portal to confirm or waitlist this signup.')}
-      ${btn('Manage signups →', 'https://portal.jwlhuntington.org/admin/backpacks')}
+      <p style="margin:16px 0 8px;font-size:15px;line-height:1.6;color:#374151;">Take action directly from this email:</p>
+      <div style="display:flex;gap:12px;margin-bottom:16px;">
+        <a href="${confirmUrl}" style="display:inline-block;background:#16a34a;color:white;text-decoration:none;padding:10px 20px;border-radius:8px;font-size:14px;font-weight:600;">✓ Confirm</a>
+        <a href="${waitlistUrl}" style="display:inline-block;background:#6b7280;color:white;text-decoration:none;padding:10px 20px;border-radius:8px;font-size:14px;font-weight:600;">Waitlist</a>
+      </div>
+      ${p(`Or <a href="https://portal.jwlhuntington.org/admin/backpacks" style="color:#1B52C1;">view all signups in the admin panel</a>.`)}
     `),
   }
 }
