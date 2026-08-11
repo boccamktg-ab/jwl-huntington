@@ -1145,6 +1145,19 @@ export function emailGrantDecisionAnnouncement(memberName: string, decision: 'ap
   }
 }
 
+export function emailPaymentNudge(name: string, cheddarUpUrl: string) {
+  return {
+    subject: 'JJWL — Reminder: dues payment needed to activate your account',
+    html: wrap(`
+      <h2 style="margin:0 0 16px;font-size:20px;font-weight:700;">Hi ${name.split(' ')[0]} — just a quick reminder!</h2>
+      ${p("Your JJWL registration has been approved, but your account isn't fully active yet because your membership dues haven't been paid.")}
+      ${p("<strong>You must pay your dues before you can sign up for events and start earning volunteer hours.</strong>")}
+      ${btn('Pay Membership Dues →', cheddarUpUrl)}
+      ${p("If you have any questions or believe this is an error, please contact us at <a href='mailto:info@jwlhuntington.org' style='color:#1B52C1;'>info@jwlhuntington.org</a>.")}
+    `),
+  }
+}
+
 export function emailGrantVoteConfirmation(memberName: string, vote: 'yes' | 'no' | 'more_info') {
   const labels = { yes: 'Approve', no: 'Deny', more_info: 'Request More Information' }
   const icons = { yes: '✅', no: '❌', more_info: '❓' }

@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
 import Link from 'next/link'
+import NudgePaymentButton from './NudgePaymentButton'
 
 function db() {
   return createClient(
@@ -61,11 +62,16 @@ export default async function AdminJJWLMembersPage() {
     STATUS_ORDER.indexOf(a.status) - STATUS_ORDER.indexOf(b.status)
   )
 
+  const awaitingPaymentCount = (members ?? []).filter(m => m.status === 'approved_unpaid' && !m.membership_paid).length
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-semibold text-gray-900">JJWL Members</h1>
-        <span className="text-sm text-gray-500">{(members ?? []).filter(m => m.status === 'active').length} active</span>
+        <div className="flex items-center gap-3">
+          <NudgePaymentButton count={awaitingPaymentCount} />
+          <span className="text-sm text-gray-500">{(members ?? []).filter(m => m.status === 'active').length} active</span>
+        </div>
       </div>
 
       <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
