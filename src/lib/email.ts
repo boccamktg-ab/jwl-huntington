@@ -17,13 +17,17 @@ export async function sendEmail({ to, cc, subject, html }: EmailPayload): Promis
   }
   try {
     const resend = new Resend(process.env.RESEND_API_KEY)
-    await resend.emails.send({
+    const { data, error: resendError } = await resend.emails.send({
       from: FROM,
       to: Array.isArray(to) ? to : [to],
       ...(cc ? { cc: Array.isArray(cc) ? cc : [cc] } : {}),
       subject,
       html,
     })
+    if (resendError) {
+      console.error('[email] resend error', JSON.stringify(resendError))
+      return { success: false, error: resendError.message }
+    }
     return { success: true }
   } catch (err: any) {
     console.error('[email] send error', err)
