@@ -1158,6 +1158,114 @@ export function emailPaymentNudge(name: string, cheddarUpUrl: string) {
   }
 }
 
+// ── Backpack Event ─────────────────────────────────────────────────────────────
+
+const BACKPACK_DATE = 'Tuesday, August 26, 2025'
+const BACKPACK_TIME = '8:00 AM – 11:00 AM'
+const BACKPACK_LOCATION = '62 Hollywood Place, Huntington, NY 11743'
+const BACKPACK_CONTACT_NAME = 'Andrea Boccard'
+const BACKPACK_CONTACT_EMAIL = 'info@jwlhuntington.org'
+const BACKPACK_CONTACT_MOBILE = '631-889-0949'
+
+export function emailBackpackAdminAlert(name: string, email: string, mobile: string) {
+  return {
+    subject: `Backpack Event — New signup: ${name}`,
+    html: wrap(`
+      <h2 style="margin:0 0 16px;font-size:20px;font-weight:700;">New Backpack Event Signup</h2>
+      ${p(`<strong>${name}</strong> just signed up for the August 26 backpack stuffing event.`)}
+      ${infoBox([
+        { label: 'Name', value: name },
+        { label: 'Email', value: email },
+        { label: 'Mobile', value: mobile },
+      ])}
+      ${p('Log in to the admin portal to confirm or waitlist this signup.')}
+      ${btn('Manage signups →', 'https://portal.jwlhuntington.org/admin/backpacks')}
+    `),
+  }
+}
+
+export function emailBackpackPending(name: string) {
+  return {
+    subject: 'Backpack Stuffing Event — We received your signup!',
+    html: wrap(`
+      <h2 style="margin:0 0 16px;font-size:20px;font-weight:700;">Thanks for signing up, ${name.split(' ')[0]}!</h2>
+      ${p("We've received your signup for the JWL Huntington backpack stuffing event. We'll send you a confirmation once your spot is secured.")}
+      ${infoBox([
+        { label: 'Date', value: BACKPACK_DATE },
+        { label: 'Time', value: BACKPACK_TIME },
+        { label: 'Location', value: 'To be sent upon confirmation' },
+      ])}
+      ${p(`Questions? Contact <strong>${BACKPACK_CONTACT_NAME}</strong> at <a href="mailto:${BACKPACK_CONTACT_EMAIL}" style="color:#1B52C1;">${BACKPACK_CONTACT_EMAIL}</a> or ${BACKPACK_CONTACT_MOBILE}.`)}
+    `),
+  }
+}
+
+export function emailBackpackConfirmed(name: string) {
+  return {
+    subject: "You're confirmed — Backpack Stuffing Event, August 26",
+    html: wrap(`
+      <h2 style="margin:0 0 16px;font-size:20px;font-weight:700;">You're confirmed, ${name.split(' ')[0]}!</h2>
+      ${p("Great news — your spot is confirmed for the JWL Huntington backpack stuffing event. We look forward to seeing you there!")}
+      ${infoBox([
+        { label: 'Date', value: BACKPACK_DATE },
+        { label: 'Time', value: BACKPACK_TIME },
+        { label: 'Location', value: BACKPACK_LOCATION },
+      ])}
+      ${p("We'll be stuffing backpacks with supplies for local kids in need. Please arrive on time — the shift runs 3 hours and earns you a volunteer certificate from the Junior Welfare League of Huntington.")}
+      ${p(`Questions? Contact <strong>${BACKPACK_CONTACT_NAME}</strong> at <a href="mailto:${BACKPACK_CONTACT_EMAIL}" style="color:#1B52C1;">${BACKPACK_CONTACT_EMAIL}</a> or ${BACKPACK_CONTACT_MOBILE}.`)}
+    `),
+  }
+}
+
+export function emailBackpackWaitlisted(name: string) {
+  return {
+    subject: 'Backpack Stuffing Event — You\'re on the waitlist',
+    html: wrap(`
+      <h2 style="margin:0 0 16px;font-size:20px;font-weight:700;">You\'re on the waitlist, ${name.split(' ')[0]}</h2>
+      ${p("Thank you for signing up! Our August 26 backpack stuffing event is currently full, but we've added you to the waitlist.")}
+      ${p("We'll reach out right away if a spot opens up. We hope to see you there!")}
+      ${p(`Questions? Contact <strong>${BACKPACK_CONTACT_NAME}</strong> at <a href="mailto:${BACKPACK_CONTACT_EMAIL}" style="color:#1B52C1;">${BACKPACK_CONTACT_EMAIL}</a> or ${BACKPACK_CONTACT_MOBILE}.`)}
+    `),
+  }
+}
+
+export function emailBackpackReminder(name: string) {
+  return {
+    subject: 'Reminder: Backpack Stuffing Event tomorrow, August 26!',
+    html: wrap(`
+      <h2 style="margin:0 0 16px;font-size:20px;font-weight:700;">See you tomorrow, ${name.split(' ')[0]}!</h2>
+      ${p("This is a friendly reminder that the JWL Huntington backpack stuffing event is <strong>tomorrow</strong>. We're looking forward to seeing you!")}
+      ${infoBox([
+        { label: 'Date', value: BACKPACK_DATE },
+        { label: 'Time', value: BACKPACK_TIME },
+        { label: 'Location', value: BACKPACK_LOCATION },
+      ])}
+      ${p("Please plan to arrive on time. The shift earns 3 hours of volunteer credit.")}
+      ${p(`Questions? Contact <strong>${BACKPACK_CONTACT_NAME}</strong> at <a href="mailto:${BACKPACK_CONTACT_EMAIL}" style="color:#1B52C1;">${BACKPACK_CONTACT_EMAIL}</a> or ${BACKPACK_CONTACT_MOBILE}.`)}
+    `),
+  }
+}
+
+export function emailBackpackCertificate(name: string) {
+  return {
+    subject: 'Volunteer Certificate — JWL Huntington Backpack Event',
+    html: wrap(`
+      <h2 style="margin:0 0 16px;font-size:20px;font-weight:700;">Thank you for volunteering, ${name.split(' ')[0]}!</h2>
+      ${p("This email certifies that you completed <strong>3 hours of community service</strong> with the Junior Welfare League of Huntington.")}
+      ${infoBox([
+        { label: 'Event', value: 'Backpack Stuffing — Huntington Village' },
+        { label: 'Date', value: BACKPACK_DATE },
+        { label: 'Hours', value: '3 hours' },
+        { label: 'Organization', value: 'Junior Welfare League of Huntington' },
+        { label: 'Certified by', value: BACKPACK_CONTACT_NAME },
+      ])}
+      ${p("Please save this email as your record of volunteer service. It can be used for school community service requirements.")}
+      ${p(`Questions? Contact <strong>${BACKPACK_CONTACT_NAME}</strong> at <a href="mailto:${BACKPACK_CONTACT_EMAIL}" style="color:#1B52C1;">${BACKPACK_CONTACT_EMAIL}</a> or ${BACKPACK_CONTACT_MOBILE}.`)}
+      ${p('<span style="font-size:13px;color:#9ca3af;">Junior Welfare League of Huntington is a 501(c)(3) nonprofit organization.</span>')}
+    `),
+  }
+}
+
 export function emailGrantVoteConfirmation(memberName: string, vote: 'yes' | 'no' | 'more_info') {
   const labels = { yes: 'Approve', no: 'Deny', more_info: 'Request More Information' }
   const icons = { yes: '✅', no: '❌', more_info: '❓' }

@@ -26,7 +26,6 @@ export default function AdminNav({ isMemberAdmin, isProgramsAdmin, isJjwlAdmin, 
     ...(isMemberAdmin ? [
       { href: '/admin/meetings', label: 'Meetings' },
       { href: '/admin/members', label: 'Members' },
-      { href: '/admin/member-positions', label: 'Positions' },
       { href: '/admin/setup', label: 'Setup' },
     ] : []),
     ...(isGrantsReviewer ? [
@@ -34,6 +33,7 @@ export default function AdminNav({ isMemberAdmin, isProgramsAdmin, isJjwlAdmin, 
       { href: '/admin/grants', label: 'Grant Intake' },
     ] : []),
     ...(isJjwlAdmin ? [{ href: '/admin/jjwl', label: 'JJWL' }] : []),
+    { href: '/admin/backpacks', label: 'Backpacks' },
     { href: '/members/dashboard', label: 'My Dashboard' },
   ]
 
