@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { createHmac } from 'crypto'
+import { verifyActionToken } from '@/lib/backpack-tokens'
 import { sendEmail, emailBackpackConfirmed, emailBackpackWaitlisted } from '@/lib/email'
 
 const MAX_CONFIRMED = 15
@@ -11,16 +11,6 @@ function db() {
     process.env.SUPABASE_SERVICE_ROLE_KEY!,
     { auth: { autoRefreshToken: false, persistSession: false } }
   )
-}
-
-function makeToken(id: string, action: string) {
-  const secret = process.env.BACKPACK_ACTION_SECRET ?? 'fallback-secret'
-  return createHmac('sha256', secret).update(`${id}:${action}`).digest('hex').slice(0, 16)
-}
-
-export function generateActionUrl(base: string, id: string, action: string) {
-  const token = makeToken(id, action)
-  return `${base}/api/backpacks/action?id=${id}&action=${action}&token=${token}`
 }
 
 function htmlPage(title: string, body: string) {
@@ -44,8 +34,7 @@ export async function GET(request: NextRequest) {
     return new Response(htmlPage('Invalid action', '<p>Unknown action.</p>'), { headers: { 'Content-Type': 'text/html' } })
   }
 
-  const expected = makeToken(id, action)
-  if (token !== expected) {
+  if (!verifyActionToken(id, action, token)) {
     return new Response(htmlPage('Invalid link', '<p>This link is invalid or has expired.</p>'), { headers: { 'Content-Type': 'text/html' } })
   }
 

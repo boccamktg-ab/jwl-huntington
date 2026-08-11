@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { sendEmail, emailBackpackAdminAlert, emailBackpackPending } from '@/lib/email'
-import { generateActionUrl } from '../action/route'
+import { generateActionUrl } from '@/lib/backpack-tokens'
 
 const ADMIN_EMAIL = 'info@jwlhuntington.org'
 const BASE = 'https://portal.jwlhuntington.org'
