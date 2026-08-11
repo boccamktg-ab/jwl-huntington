@@ -56,11 +56,13 @@ export async function POST(request: NextRequest) {
 
   // Alert admin with one-click action buttons
   const alert = emailBackpackAdminAlert(name.trim(), email.trim(), mobile.trim(), confirmUrl, waitlistUrl)
-  await sendEmail({ to: ADMIN_EMAIL, subject: alert.subject, html: alert.html })
+  const adminResult = await sendEmail({ to: ADMIN_EMAIL, subject: alert.subject, html: alert.html })
+  console.log('[backpacks] admin alert result:', JSON.stringify(adminResult))
 
   // Pending confirmation to registrant
   const pending = emailBackpackPending(name.trim())
-  await sendEmail({ to: email.trim(), subject: pending.subject, html: pending.html })
+  const pendingResult = await sendEmail({ to: email.trim(), subject: pending.subject, html: pending.html })
+  console.log('[backpacks] pending email result:', JSON.stringify(pendingResult))
 
   return NextResponse.json({ ok: true })
 }
