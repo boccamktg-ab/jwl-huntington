@@ -26,10 +26,10 @@ async function requireAdmin() {
   if (isSuperAdminEmail(user.email)) return user
   const { data: member } = await db()
     .from('jwl_members')
-    .select('is_admin')
+    .select('is_admin, is_super_admin, is_programs_admin, is_jjwl_admin, is_grants_reviewer')
     .eq('auth_id', user.id)
     .maybeSingle()
-  if (member?.is_admin) return user
+  if (member?.is_admin || member?.is_super_admin || member?.is_programs_admin || member?.is_jjwl_admin || member?.is_grants_reviewer) return user
   return null
 }
 
