@@ -1164,7 +1164,7 @@ export function emailPaymentNudge(name: string, cheddarUpUrl: string) {
 
 // ── Backpack Event ─────────────────────────────────────────────────────────────
 
-const BACKPACK_DATE = 'Tuesday, August 26, 2025'
+const BACKPACK_DATE = 'Wednesday, August 26, 2025'
 const BACKPACK_TIME = '8:00 AM – 11:00 AM'
 const BACKPACK_LOCATION = '62 Hollywood Place, Huntington, NY 11743'
 const BACKPACK_CONTACT_NAME = 'Andrea Boccard'
