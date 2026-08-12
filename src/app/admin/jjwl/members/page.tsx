@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js'
 import Link from 'next/link'
 import NudgePaymentButton from './NudgePaymentButton'
+import NudgeWaiverButton from './NudgeWaiverButton'
 import ApproveWaitlistButton from './ApproveWaitlistButton'
 
 function db() {
@@ -68,12 +69,14 @@ export default async function AdminJJWLMembersPage() {
   const awaitingPaymentCount = (members ?? []).filter(m => m.status === 'approved_unpaid' && !m.membership_paid).length
   const waitlistedCount = (members ?? []).filter(m => m.status === 'waitlisted').length
   const activeTotal = (members ?? []).filter(m => !['inactive', 'waitlisted'].includes(m.status)).length
+  const needsWaiverCount = (members ?? []).filter(m => m.status === 'active' && m.membership_paid && !waiverSet.has(m.id)).length
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-semibold text-gray-900">JJWL Members</h1>
         <div className="flex items-center gap-3">
+          <NudgeWaiverButton count={needsWaiverCount} />
           <NudgePaymentButton count={awaitingPaymentCount} />
           {waitlistedCount > 0 && (
             <span className="text-sm text-purple-600">{waitlistedCount} waitlisted</span>

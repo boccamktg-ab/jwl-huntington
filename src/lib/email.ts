@@ -262,6 +262,19 @@ export function emailDuesPaid(name: string) {
   }
 }
 
+export function emailWaiverNudge(name: string) {
+  return {
+    subject: 'JJWL — Reminder: complete your waiver',
+    html: wrap(`
+      <h2 style="margin:0 0 16px;font-size:20px;font-weight:700;">Hi ${name.split(' ')[0]},</h2>
+      ${p("Just a quick reminder — your JJWL account is active, but we still need your parent/guardian waiver on file before you can sign up for events.")}
+      ${p("It only takes a few minutes to complete. Log in to get it done:")}
+      ${btn('Complete waiver →', 'https://portal.jwlhuntington.org/jjwl/waiver')}
+      ${p("If you have any questions, reach out at <a href='mailto:info@jwlhuntington.org' style='color:#1B52C1;'>info@jwlhuntington.org</a>.")}
+    `),
+  }
+}
+
 export function emailWaiverConfirmed(name: string, season: string) {
   return {
     subject: `JJWL — Waiver on file for ${season}`,
