@@ -70,6 +70,7 @@ export default async function BackpackAdminPage() {
           <thead className="bg-gray-50 border-b border-gray-200">
             <tr>
               <th className="text-left px-4 py-3 text-gray-500 font-medium">Name</th>
+              <th className="text-left px-4 py-3 text-gray-500 font-medium">School</th>
               <th className="text-left px-4 py-3 text-gray-500 font-medium">Contact</th>
               <th className="text-left px-4 py-3 text-gray-500 font-medium">Status</th>
               <th className="text-left px-4 py-3 text-gray-500 font-medium">Cert</th>
@@ -81,6 +82,7 @@ export default async function BackpackAdminPage() {
             {(signups ?? []).map((s: any) => (
               <tr key={s.id} className={s.status === 'waitlisted' ? 'opacity-60' : ''}>
                 <td className="px-4 py-3 font-medium text-gray-900">{s.name}</td>
+                <td className="px-4 py-3 text-gray-600 text-xs">{s.school ?? '—'}</td>
                 <td className="px-4 py-3 text-gray-500 text-xs">
                   <p>{s.email}</p>
                   <p>{s.mobile}</p>

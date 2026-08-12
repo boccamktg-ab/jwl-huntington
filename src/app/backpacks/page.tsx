@@ -6,8 +6,23 @@ import Image from 'next/image'
 const inputCls = 'w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1B52C1] focus:border-transparent'
 
 export default function BackpackSignupPage() {
-  const [form, setForm] = useState({ name: '', email: '', mobile: '' })
+  const SCHOOLS = [
+    'Huntington High School',
+    'Walt Whitman High School',
+    'Harborfields High School',
+    'Northport-East Northport High School',
+    'Half Hollow Hills East',
+    'Cold Spring Harbor High School',
+    'John Glenn (Elwood) High School',
+    "St. Anthony's (Huntington Residency Required)",
+    "St. Dominic's (Huntington Residency Required)",
+    'Kellenberg (Huntington Residency Required)',
+    'Chaminade (Huntington Residency Required)',
+  ]
+
+  const [form, setForm] = useState({ name: '', email: '', mobile: '', school: '' })
   const [agreed, setAgreed] = useState(false)
+  const [resident, setResident] = useState(false)
   const [loading, setLoading] = useState(false)
   const [done, setDone] = useState(false)
   const [error, setError] = useState('')
@@ -19,7 +34,9 @@ export default function BackpackSignupPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
+    if (!form.school) { setError('Please select your school.'); return }
     if (!agreed) { setError('Please confirm you can attend before submitting.'); return }
+    if (!resident) { setError('Please confirm you are a current resident of the Town of Huntington.'); return }
     setLoading(true)
     setError('')
     try {
@@ -113,6 +130,20 @@ export default function BackpackSignupPage() {
                     className={inputCls}
                   />
                 </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">School <span className="text-red-400">*</span></label>
+                  <select
+                    required
+                    value={form.school}
+                    onChange={e => set('school', e.target.value)}
+                    className={inputCls}
+                  >
+                    <option value="">Select your school…</option>
+                    {SCHOOLS.map(s => (
+                      <option key={s} value={s}>{s}</option>
+                    ))}
+                  </select>
+                </div>
 
                 <label className="flex items-start gap-3 cursor-pointer pt-1">
                   <input
@@ -123,6 +154,18 @@ export default function BackpackSignupPage() {
                   />
                   <span className="text-sm text-gray-700">
                     I confirm I am available on <strong>Wednesday, August 26, 2025 from 8:00 AM to 11:00 AM</strong> to volunteer in Huntington Village.
+                  </span>
+                </label>
+
+                <label className="flex items-start gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={resident}
+                    onChange={e => { setResident(e.target.checked); setError('') }}
+                    className="mt-0.5 h-4 w-4 rounded border-gray-300 text-[#1B52C1] focus:ring-[#1B52C1]"
+                  />
+                  <span className="text-sm text-gray-700">
+                    I confirm I am a current resident of the Town of Huntington.
                   </span>
                 </label>
 

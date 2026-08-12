@@ -113,12 +113,12 @@ export async function GET(request: NextRequest) {
   const admin = db()
   const { data } = await admin
     .from('backpack_signups')
-    .select('name, email, mobile, status, certificate_sent, created_at')
+    .select('name, email, mobile, school, status, certificate_sent, created_at')
     .order('created_at', { ascending: true })
 
-  const header = 'Name,Email,Mobile,Status,Certificate Sent,Registered At'
+  const header = 'Name,Email,Mobile,School,Status,Certificate Sent,Registered At'
   const rows = (data ?? []).map(r =>
-    [r.name, r.email, r.mobile, r.status, r.certificate_sent ? 'Yes' : 'No',
+    [r.name, r.email, r.mobile, r.school ?? '', r.status, r.certificate_sent ? 'Yes' : 'No',
       new Date(r.created_at).toLocaleString('en-US', { timeZone: 'America/New_York' })]
       .map(v => `"${String(v).replace(/"/g, '""')}"`)
       .join(',')

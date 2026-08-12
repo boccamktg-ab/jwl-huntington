@@ -16,9 +16,9 @@ function db() {
 }
 
 export async function POST(request: NextRequest) {
-  const { name, email, mobile } = await request.json()
+  const { name, email, mobile, school } = await request.json()
 
-  if (!name?.trim() || !email?.trim() || !mobile?.trim()) {
+  if (!name?.trim() || !email?.trim() || !mobile?.trim() || !school?.trim()) {
     return NextResponse.json({ error: 'All fields are required.' }, { status: 400 })
   }
 
@@ -39,6 +39,7 @@ export async function POST(request: NextRequest) {
     name: name.trim(),
     email: email.trim().toLowerCase(),
     mobile: mobile.trim(),
+    school: school.trim(),
     status: 'pending',
   })
 
