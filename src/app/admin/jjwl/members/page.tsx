@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js'
 import Link from 'next/link'
 import NudgePaymentButton from './NudgePaymentButton'
+import ApproveWaitlistButton from './ApproveWaitlistButton'
 
 function db() {
   return createClient(
@@ -10,14 +11,16 @@ function db() {
   )
 }
 
-const STATUS_ORDER = ['pending_approval', 'approved_unpaid', 'active', 'inactive']
+const STATUS_ORDER = ['waitlisted', 'pending_approval', 'approved_unpaid', 'active', 'inactive']
 const STATUS_LABELS: Record<string, string> = {
+  waitlisted: 'Waitlisted',
   pending_approval: 'Pending',
   approved_unpaid: 'Awaiting Payment',
   active: 'Active',
   inactive: 'Inactive',
 }
 const STATUS_COLORS: Record<string, string> = {
+  waitlisted: 'bg-purple-100 text-purple-700',
   pending_approval: 'bg-amber-100 text-amber-700',
   approved_unpaid: 'bg-blue-100 text-blue-700',
   active: 'bg-green-100 text-green-700',
@@ -63,6 +66,8 @@ export default async function AdminJJWLMembersPage() {
   )
 
   const awaitingPaymentCount = (members ?? []).filter(m => m.status === 'approved_unpaid' && !m.membership_paid).length
+  const waitlistedCount = (members ?? []).filter(m => m.status === 'waitlisted').length
+  const activeTotal = (members ?? []).filter(m => !['inactive', 'waitlisted'].includes(m.status)).length
 
   return (
     <div className="space-y-6">
@@ -70,7 +75,10 @@ export default async function AdminJJWLMembersPage() {
         <h1 className="text-xl font-semibold text-gray-900">JJWL Members</h1>
         <div className="flex items-center gap-3">
           <NudgePaymentButton count={awaitingPaymentCount} />
-          <span className="text-sm text-gray-500">{(members ?? []).filter(m => m.status === 'active').length} active</span>
+          {waitlistedCount > 0 && (
+            <span className="text-sm text-purple-600">{waitlistedCount} waitlisted</span>
+          )}
+          <span className="text-sm text-gray-500">{activeTotal} / 75 enrolled</span>
         </div>
       </div>
 
@@ -84,6 +92,7 @@ export default async function AdminJJWLMembersPage() {
               <th className="text-center px-4 py-3 text-gray-500 font-medium">Waiver</th>
               <th className="text-right px-4 py-3 text-gray-500 font-medium">Hours</th>
               <th className="text-right px-4 py-3 text-gray-500 font-medium">Registered</th>
+              <th className="px-4 py-3"></th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
@@ -119,6 +128,11 @@ export default async function AdminJJWLMembersPage() {
                   </td>
                   <td className="px-4 py-3 text-right text-gray-400 text-xs">
                     {new Date(m.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                  </td>
+                  <td className="px-4 py-3">
+                    {m.status === 'waitlisted' && (
+                      <ApproveWaitlistButton memberId={m.id} />
+                    )}
                   </td>
                 </tr>
               )

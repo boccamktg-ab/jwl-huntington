@@ -4,6 +4,8 @@ import { createClient } from '@/lib/supabase/server'
 import { createClient as adminClient } from '@supabase/supabase-js'
 import { sendEmail, emailRegistrationApproved, emailRegistrationRejected, emailDuesPaid } from '@/lib/email'
 
+const MEMBER_CAP = 75
+
 function db() {
   return adminClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -95,6 +97,41 @@ export async function PATCH(request: NextRequest) {
 
   if (action === 'reactivate') {
     await admin.from('jjwl_members').update({ status: 'active' }).eq('id', member_id)
+    return NextResponse.json({ ok: true })
+  }
+
+  if (action === 'approve_waitlist') {
+    // Re-check cap before approving off waitlist
+    const { count: activeCount } = await admin
+      .from('jjwl_members')
+      .select('*', { count: 'exact', head: true })
+      .not('status', 'in', '("inactive","waitlisted")')
+
+    if ((activeCount ?? 0) >= MEMBER_CAP) {
+      return NextResponse.json({ error: `Still at capacity (${MEMBER_CAP} members). Deactivate or remove a member first.` }, { status: 409 })
+    }
+
+    await admin.from('jjwl_members').update({
+      status: 'approved_unpaid',
+      approved_at: new Date().toISOString(),
+      approved_by: user.id,
+    }).eq('id', member_id)
+
+    const { data: setting } = await admin
+      .from('app_settings')
+      .select('value')
+      .eq('key', 'jjwl_cheddarup_url')
+      .maybeSingle()
+    const cheddarUpUrl = setting?.value ?? ''
+
+    const { subject, html } = emailRegistrationApproved(member.name, cheddarUpUrl)
+    await sendEmail({ to: member.email, subject, html })
+    if (member.parent_email) await sendEmail({ to: member.parent_email, subject, html })
+
+    await admin.from('jjwl_notifications_log').insert({
+      trigger: 'registration_approved', recipient: member.email, member_id, success: true,
+    })
+
     return NextResponse.json({ ok: true })
   }
 

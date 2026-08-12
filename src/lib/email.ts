@@ -137,6 +137,18 @@ export function emailRegistrationSubmitted(name: string) {
   }
 }
 
+export function emailRegistrationWaitlisted(name: string) {
+  return {
+    subject: 'JJWL — You\'re on the waitlist',
+    html: wrap(`
+      <h2 style="margin:0 0 16px;font-size:20px;font-weight:700;">Hi ${name.split(' ')[0]},</h2>
+      ${p("Thank you for applying to the Junior Junior Welfare League of Huntington! We've received your registration.")}
+      ${p("Our membership roster is currently full, so we've added you to our waitlist. You'll receive an email as soon as a spot opens up.")}
+      ${p("If you have any questions, please reach out to us at <a href='mailto:info@jwlhuntington.org' style='color:#1B52C1;'>info@jwlhuntington.org</a>.")}
+    `),
+  }
+}
+
 export function emailRegistrationApproved(name: string, cheddarUpUrl: string) {
   return {
     subject: 'JJWL — Your registration has been approved!',

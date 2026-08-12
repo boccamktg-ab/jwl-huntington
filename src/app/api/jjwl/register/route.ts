@@ -4,8 +4,11 @@ import {
   sendEmail,
   getJjwlAdminEmails,
   emailRegistrationSubmitted,
+  emailRegistrationWaitlisted,
   emailAdminNewRegistration,
 } from '@/lib/email'
+
+const MEMBER_CAP = 75
 
 function db() {
   return createClient(
@@ -32,6 +35,14 @@ export async function POST(request: NextRequest) {
     .eq('id', school_id)
     .maybeSingle()
 
+  // Check cap (count all non-inactive, non-waitlisted members)
+  const { count: activeCount } = await admin
+    .from('jjwl_members')
+    .select('*', { count: 'exact', head: true })
+    .not('status', 'in', '("inactive","waitlisted")')
+
+  const isWaitlisted = (activeCount ?? 0) >= MEMBER_CAP
+
   // Create Supabase Auth account
   const { data: authData, error: authError } = await admin.auth.admin.createUser({
     email,
@@ -53,7 +64,7 @@ export async function POST(request: NextRequest) {
     parent_name: parent_name || null,
     parent_phone: parent_phone || null,
     parent_email: parent_email || null,
-    status: 'pending_approval',
+    status: isWaitlisted ? 'waitlisted' : 'pending_approval',
   })
 
   if (insertError) {
@@ -62,12 +73,12 @@ export async function POST(request: NextRequest) {
   }
 
   // Confirm to applicant (CC parent if provided)
-  const { subject, html } = emailRegistrationSubmitted(name)
+  const emailFn = isWaitlisted ? emailRegistrationWaitlisted(name) : emailRegistrationSubmitted(name)
   await sendEmail({
     to: email,
     cc: parent_email || undefined,
-    subject,
-    html,
+    subject: emailFn.subject,
+    html: emailFn.html,
   })
 
   // Notify all JJWL admins
