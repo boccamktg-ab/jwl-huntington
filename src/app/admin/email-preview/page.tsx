@@ -75,6 +75,7 @@ const GROUPS = [
       { type: 'jjwl_hours_confirmed', label: 'Hours confirmed' },
       { type: 'jjwl_payment_nudge', label: 'Payment reminder (nudge)' },
       { type: 'jjwl_dues_paid', label: 'Dues paid' },
+      { type: 'jjwl_waiver_nudge', label: 'Waiver reminder (nudge)' },
       { type: 'jjwl_waiver_confirmed', label: 'Waiver confirmed' },
       { type: 'jjwl_year_end_certificate', label: 'Year-end certificate' },
       { type: 'member_children_assigned', label: 'Children assigned' },

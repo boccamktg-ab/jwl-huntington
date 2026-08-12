@@ -163,6 +163,8 @@ function buildPayload(type: string): { subject: string; html: string } | null {
       return email.emailPaymentNudge(FAKE.name, 'https://membership-99939.cheddarup.com')
     case 'jjwl_dues_paid':
       return email.emailDuesPaid(FAKE.name)
+    case 'jjwl_waiver_nudge':
+      return email.emailWaiverNudge(FAKE.name)
     case 'jjwl_waiver_confirmed':
       return email.emailWaiverConfirmed(FAKE.name, '2025–2026')
     case 'jjwl_year_end_certificate':
