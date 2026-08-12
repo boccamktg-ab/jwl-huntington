@@ -25,7 +25,7 @@ export default function EditRegistrationForm({ memberId, initial }: Props) {
   const router = useRouter()
   const [open, setOpen] = useState(false)
   const [schools, setSchools] = useState<School[]>([])
-  const [form, setForm] = useState({ ...initial })
+  const [form, setForm] = useState({ ...initial, grade: initial.grade != null ? String(initial.grade) : null })
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState<{ ok?: boolean; error?: string } | null>(null)
 
