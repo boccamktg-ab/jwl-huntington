@@ -56,7 +56,7 @@ export async function POST(request: NextRequest) {
   const waitlistUrl = newRow ? generateActionUrl(BASE, newRow.id, 'waitlist') : `${BASE}/admin/backpacks`
 
   // Alert admin with one-click action buttons
-  const alert = emailBackpackAdminAlert(name.trim(), email.trim(), mobile.trim(), confirmUrl, waitlistUrl)
+  const alert = emailBackpackAdminAlert(name.trim(), email.trim(), mobile.trim(), confirmUrl, waitlistUrl, school.trim())
   const adminResult = await sendEmail({ to: ADMIN_EMAIL, subject: alert.subject, html: alert.html })
   console.log('[backpacks] admin alert result:', JSON.stringify(adminResult))
 

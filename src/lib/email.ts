@@ -1183,7 +1183,7 @@ const BACKPACK_CONTACT_NAME = 'Andrea Boccard'
 const BACKPACK_CONTACT_EMAIL = 'info@jwlhuntington.org'
 const BACKPACK_CONTACT_MOBILE = '631-889-0949'
 
-export function emailBackpackAdminAlert(name: string, email: string, mobile: string, confirmUrl: string, waitlistUrl: string) {
+export function emailBackpackAdminAlert(name: string, email: string, mobile: string, confirmUrl: string, waitlistUrl: string, school?: string) {
   return {
     subject: `Backpack Event — New signup: ${name}`,
     html: wrap(`
@@ -1193,6 +1193,7 @@ export function emailBackpackAdminAlert(name: string, email: string, mobile: str
         { label: 'Name', value: name },
         { label: 'Email', value: email },
         { label: 'Mobile', value: mobile },
+        ...(school ? [{ label: 'School', value: school }] : []),
       ])}
       <p style="margin:16px 0 8px;font-size:15px;line-height:1.6;color:#374151;">Take action directly from this email:</p>
       <div style="display:flex;gap:12px;margin-bottom:16px;">
