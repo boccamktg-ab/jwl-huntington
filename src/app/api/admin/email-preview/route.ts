@@ -161,6 +161,8 @@ function buildPayload(type: string): { subject: string; html: string } | null {
       return email.emailHoursConfirmed(FAKE.name, FAKE.eventTitle, 4)
     case 'jjwl_payment_nudge':
       return email.emailPaymentNudge(FAKE.name, 'https://membership-99939.cheddarup.com')
+    case 'jjwl_unpaid_enrollment_warning':
+      return email.emailUnpaidEnrollmentWarning(FAKE.name, 'https://membership-99939.cheddarup.com')
     case 'jjwl_dues_paid':
       return email.emailDuesPaid(FAKE.name)
     case 'jjwl_waiver_nudge':

@@ -1187,6 +1187,21 @@ export function emailPaymentNudge(name: string, cheddarUpUrl: string) {
   }
 }
 
+export function emailUnpaidEnrollmentWarning(name: string, cheddarUpUrl: string) {
+  return {
+    subject: 'JJWL — Important: complete your dues payment to hold your spot',
+    html: wrap(`
+      <h2 style="margin:0 0 16px;font-size:20px;font-weight:700;">Hi ${name.split(' ')[0]},</h2>
+      ${p("Your JJWL registration has been approved, but your membership dues are still unpaid. We want to make sure you don't lose your spot.")}
+      <h3 style="margin:20px 0 8px;font-size:16px;font-weight:600;color:#111827;">Here's what you need to know</h3>
+      ${p("JJWL membership is limited to <strong>75 members</strong>. If we reach capacity, members with unpaid dues may be moved to the waitlist to make room for students who are ready to complete their registration — including those currently waiting.")}
+      ${p("To secure your place in JJWL for this season, please complete your dues payment as soon as possible.")}
+      ${cheddarUpUrl ? btn('Pay Membership Dues →', cheddarUpUrl) : p("<strong>Payment link:</strong> Please contact <a href='mailto:info@jwlhuntington.org' style='color:#1B52C1;'>info@jwlhuntington.org</a> for your payment link.")}
+      ${p("If you recently paid, disregard — sometimes this crosses paths in the system! If you have any questions, please reach out at <a href='mailto:info@jwlhuntington.org' style='color:#1B52C1;'>info@jwlhuntington.org</a>.")}
+    `),
+  }
+}
+
 // ── Backpack Event ─────────────────────────────────────────────────────────────
 
 const BACKPACK_DATE = 'Wednesday, August 26, 2025'
