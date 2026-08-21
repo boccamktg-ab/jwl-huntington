@@ -29,15 +29,65 @@ const STATUS_COLORS: Record<string, string> = {
   inactive: 'bg-gray-100 text-gray-400',
 }
 
-export default async function AdminJJWLMembersPage() {
+type SortKey = 'name' | 'grade' | 'status' | 'hours' | 'registered'
+
+function sortMembers(members: any[], hoursMap: Record<string, number>, sortKey: SortKey, dir: 'asc' | 'desc') {
+  return [...members].sort((a, b) => {
+    let cmp = 0
+    if (sortKey === 'name') {
+      cmp = a.name.localeCompare(b.name)
+    } else if (sortKey === 'grade') {
+      cmp = Number(a.grade ?? 0) - Number(b.grade ?? 0)
+    } else if (sortKey === 'status') {
+      cmp = STATUS_ORDER.indexOf(a.status) - STATUS_ORDER.indexOf(b.status)
+    } else if (sortKey === 'hours') {
+      cmp = (hoursMap[a.id] ?? 0) - (hoursMap[b.id] ?? 0)
+    } else if (sortKey === 'registered') {
+      cmp = new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+    }
+    return dir === 'asc' ? cmp : -cmp
+  })
+}
+
+function SortLink({ label, col, current, dir, align }: {
+  label: string
+  col: SortKey
+  current: SortKey
+  dir: 'asc' | 'desc'
+  align?: string
+}) {
+  const active = current === col
+  const nextDir = active && dir === 'asc' ? 'desc' : 'asc'
+  const arrow = active ? (dir === 'asc' ? ' ↑' : ' ↓') : ''
+  return (
+    <th className={`px-4 py-3 text-gray-500 font-medium ${align ?? 'text-left'}`}>
+      <Link
+        href={`?sort=${col}&dir=${nextDir}`}
+        className={`hover:text-gray-900 ${active ? 'text-gray-900' : ''}`}
+      >
+        {label}{arrow}
+      </Link>
+    </th>
+  )
+}
+
+export default async function AdminJJWLMembersPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ sort?: string; dir?: string }>
+}) {
+  const params = await searchParams
+  const sortKey = (['name', 'grade', 'status', 'hours', 'registered'].includes(params.sort ?? '')
+    ? params.sort
+    : 'status') as SortKey
+  const dir = params.dir === 'desc' ? 'desc' : 'asc'
+
   const admin = db()
 
   const { data: members } = await admin
     .from('jjwl_members')
     .select('id, name, email, grade, status, membership_paid, created_at, schools(name)')
-    .order('created_at', { ascending: false })
 
-  // Hour totals per member
   const { data: signups } = await admin
     .from('jjwl_signups')
     .select('member_id, hours_awarded')
@@ -63,9 +113,7 @@ export default async function AdminJJWLMembersPage() {
     hoursMap[a.member_id] = (hoursMap[a.member_id] ?? 0) + Number(a.delta)
   }
 
-  const sorted = [...(members ?? [])].sort((a, b) =>
-    STATUS_ORDER.indexOf(a.status) - STATUS_ORDER.indexOf(b.status)
-  )
+  const sorted = sortMembers(members ?? [], hoursMap, sortKey, dir)
 
   const awaitingPaymentCount = (members ?? []).filter(m => m.status === 'approved_unpaid' && !m.membership_paid).length
   const waitlistedCount = (members ?? []).filter(m => m.status === 'waitlisted').length
@@ -95,12 +143,12 @@ export default async function AdminJJWLMembersPage() {
         <table className="w-full text-sm">
           <thead className="bg-gray-50 border-b border-gray-200">
             <tr>
-              <th className="text-left px-4 py-3 text-gray-500 font-medium">Name</th>
-              <th className="text-left px-4 py-3 text-gray-500 font-medium">Grade / School</th>
-              <th className="text-left px-4 py-3 text-gray-500 font-medium">Status</th>
+              <SortLink label="Name" col="name" current={sortKey} dir={dir} />
+              <SortLink label="Grade / School" col="grade" current={sortKey} dir={dir} />
+              <SortLink label="Status" col="status" current={sortKey} dir={dir} />
               <th className="text-center px-4 py-3 text-gray-500 font-medium">Waiver</th>
-              <th className="text-right px-4 py-3 text-gray-500 font-medium">Hours</th>
-              <th className="text-right px-4 py-3 text-gray-500 font-medium">Registered</th>
+              <SortLink label="Hours" col="hours" current={sortKey} dir={dir} align="text-right" />
+              <SortLink label="Registered" col="registered" current={sortKey} dir={dir} align="text-right" />
               <th className="px-4 py-3"></th>
             </tr>
           </thead>
