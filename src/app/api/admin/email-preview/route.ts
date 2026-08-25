@@ -159,6 +159,8 @@ function buildPayload(type: string): { subject: string; html: string } | null {
       return email.emailEventCancelledToSignup(FAKE.name, FAKE.eventTitle, 'September 15, 2026')
     case 'jjwl_hours_confirmed':
       return email.emailHoursConfirmed(FAKE.name, FAKE.eventTitle, 4)
+    case 'jjwl_signup_fix_notice':
+      return email.emailSignupFixNotice(FAKE.name)
     case 'jjwl_payment_nudge':
       return email.emailPaymentNudge(FAKE.name, 'https://membership-99939.cheddarup.com')
     case 'jjwl_unpaid_enrollment_warning':
