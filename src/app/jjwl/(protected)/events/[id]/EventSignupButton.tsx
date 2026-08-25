@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 
 type TimeSlot = { label: string; capacity: number }
@@ -22,9 +22,13 @@ export default function EventSignupButton({
   signedUpSlots, isFull, timeSlots, slotCounts, creditHours,
 }: Props) {
   const router = useRouter()
+  const [isPending, startTransition] = useTransition()
   const [loadingSlot, setLoadingSlot] = useState<string | null>(null)
   const [error, setError] = useState('')
   const [confirmCancel, setConfirmCancel] = useState<string | null>(null)
+
+  // Locked while a fetch is in flight OR while the server re-render is settling
+  const busy = !!loadingSlot || isPending
 
   const hasSlots = timeSlots.length > 0
   const isSignedUpNoSlot = !hasSlots && signedUpSlots.length > 0
@@ -44,7 +48,7 @@ export default function EventSignupButton({
       setError(json.error ?? 'Something went wrong.')
       return
     }
-    router.refresh()
+    startTransition(() => router.refresh())
   }
 
   async function cancel(timeSlot: string | null) {
@@ -63,7 +67,7 @@ export default function EventSignupButton({
       return
     }
     setConfirmCancel(null)
-    router.refresh()
+    startTransition(() => router.refresh())
   }
 
   // ── No time slots ──────────────────────────────────────────────────────────
@@ -86,9 +90,9 @@ export default function EventSignupButton({
             <div className="space-y-2">
               <p className="text-sm text-gray-700">Are you sure you want to cancel?</p>
               <div className="flex gap-3">
-                <button onClick={() => cancel(null)} disabled={!!loadingSlot}
+                <button onClick={() => cancel(null)} disabled={busy}
                   className="text-sm px-4 py-1.5 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 disabled:opacity-50">
-                  {loadingSlot ? '…' : 'Yes, cancel'}
+                  {busy ? '…' : 'Yes, cancel'}
                 </button>
                 <button onClick={() => setConfirmCancel(null)} className="text-sm text-gray-500 hover:text-gray-700">
                   Keep my spot
@@ -120,10 +124,10 @@ export default function EventSignupButton({
         {error && <p className="text-sm text-red-600">{error}</p>}
         <button
           onClick={() => signup(null)}
-          disabled={!!loadingSlot}
+          disabled={busy}
           className="w-full bg-[#1B52C1] text-white rounded-lg px-4 py-2.5 text-sm font-medium hover:bg-[#1540A0] disabled:opacity-50"
         >
-          {loadingSlot ? 'Signing up…' : 'Confirm Sign-up'}
+          {busy ? 'Signing up…' : 'Confirm Sign-up'}
         </button>
       </div>
     )
@@ -150,7 +154,7 @@ export default function EventSignupButton({
           const count = slotCounts[slot.label] ?? 0
           const slotFull = slot.capacity > 0 && count >= slot.capacity
           const isSignedUp = signedSet.has(slot.label)
-          const loading = loadingSlot === slot.label
+          const slotBusy = busy && loadingSlot === slot.label || isPending
           const cancelling = confirmCancel === slot.label
 
           return (
@@ -184,10 +188,10 @@ export default function EventSignupButton({
                     <span className="text-xs text-gray-500">Sure?</span>
                     <button
                       onClick={() => cancel(slot.label)}
-                      disabled={!!loading}
+                      disabled={slotBusy}
                       className="text-xs px-2 py-1 bg-red-100 text-red-700 rounded hover:bg-red-200 disabled:opacity-50"
                     >
-                      {loading ? '…' : 'Yes'}
+                      {slotBusy ? '…' : 'Yes'}
                     </button>
                     <button
                       onClick={() => setConfirmCancel(null)}
@@ -200,10 +204,10 @@ export default function EventSignupButton({
                 {!isSignedUp && !slotFull && (
                   <button
                     onClick={() => signup(slot.label)}
-                    disabled={!!loading}
+                    disabled={busy}
                     className="text-xs px-3 py-1.5 bg-[#1B52C1] text-white rounded-lg hover:bg-[#1540A0] disabled:opacity-50"
                   >
-                    {loading ? '…' : 'Sign up'}
+                    {busy && loadingSlot === slot.label ? '…' : 'Sign up'}
                   </button>
                 )}
                 {!isSignedUp && slotFull && (
