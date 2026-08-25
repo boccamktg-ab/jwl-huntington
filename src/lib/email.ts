@@ -1187,6 +1187,18 @@ export function emailPaymentNudge(name: string, cheddarUpUrl: string) {
   }
 }
 
+export function emailSignupFixNotice(name: string) {
+  return {
+    subject: 'JJWL — Signup issue resolved, try again!',
+    html: wrap(`
+      <h2 style="margin:0 0 16px;font-size:20px;font-weight:700;">Hi ${name.split(' ')[0]},</h2>
+      ${p("We recently fixed a technical issue that may have affected event signups. If you tried to sign up for an event and had trouble — or found yourself signed up and then removed — you can now log back in and sign up again.")}
+      ${btn('Browse upcoming events →', 'https://portal.jwlhuntington.org/jjwl/events')}
+      ${p("Sorry for the inconvenience! If you have any questions, reach out at <a href='mailto:info@jwlhuntington.org' style='color:#1B52C1;'>info@jwlhuntington.org</a>.")}
+    `),
+  }
+}
+
 export function emailUnpaidEnrollmentWarning(name: string, cheddarUpUrl: string) {
   return {
     subject: 'JJWL — Important: complete your dues payment to hold your spot',

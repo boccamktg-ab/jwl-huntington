@@ -3,6 +3,7 @@ import Link from 'next/link'
 import NudgePaymentButton from './NudgePaymentButton'
 import NudgeWaiverButton from './NudgeWaiverButton'
 import NudgeUnpaidButton from './NudgeUnpaidButton'
+import NotifyCancelledButton from './NotifyCancelledButton'
 import ApproveWaitlistButton from './ApproveWaitlistButton'
 
 function db() {
@@ -129,6 +130,7 @@ export default async function AdminJJWLMembersPage({
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-semibold text-gray-900">JJWL Members</h1>
         <div className="flex items-center gap-3">
+          <NotifyCancelledButton />
           <NudgeUnpaidButton count={unpaidOldCount} />
           <NudgeWaiverButton count={needsWaiverCount} />
           <NudgePaymentButton count={awaitingPaymentCount} />
