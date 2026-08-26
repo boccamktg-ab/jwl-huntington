@@ -82,10 +82,33 @@ export async function PATCH(request: NextRequest) {
 
   if (action === 'admin_add') {
     if (!member_id || !event_id) return NextResponse.json({ error: 'Missing member_id or event_id.' }, { status: 400 })
-    const { error } = await admin.from('jjwl_signups').upsert({
-      event_id, member_id, status: 'admin_added', signed_up_at: new Date().toISOString(),
-    }, { onConflict: 'event_id,member_id' })
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+    // Check for an existing non-slot row (cancelled or active)
+    const { data: existing } = await admin
+      .from('jjwl_signups')
+      .select('id, status')
+      .eq('event_id', event_id)
+      .eq('member_id', member_id)
+      .is('time_slot', null)
+      .maybeSingle()
+
+    if (existing) {
+      if (existing.status === 'signed_up' || existing.status === 'admin_added') {
+        return NextResponse.json({ error: 'Member is already on the roster.' }, { status: 409 })
+      }
+      // Reactivate a previously cancelled row
+      const { error } = await admin
+        .from('jjwl_signups')
+        .update({ status: 'admin_added', signed_up_at: new Date().toISOString() })
+        .eq('id', existing.id)
+      if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    } else {
+      const { error } = await admin.from('jjwl_signups').insert({
+        event_id, member_id, status: 'admin_added', signed_up_at: new Date().toISOString(),
+      })
+      if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    }
+
     return NextResponse.json({ ok: true })
   }
 
