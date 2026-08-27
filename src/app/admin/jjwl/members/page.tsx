@@ -138,6 +138,12 @@ export default async function AdminJJWLMembersPage({
             <span className="text-sm text-purple-600">{waitlistedCount} waitlisted</span>
           )}
           <span className="text-sm text-gray-500">{activeTotal} / 85 enrolled</span>
+          <a
+            href="/api/jjwl/admin/members-export"
+            className="text-sm px-3 py-1.5 border border-gray-200 rounded-lg text-gray-600 hover:border-gray-400"
+          >
+            Export CSV
+          </a>
         </div>
       </div>
 
