@@ -43,6 +43,7 @@ export default async function AdminEventDetailPage({ params }: { params: Promise
   const totalSlots = evt.volunteer_slots_total
   const activeSignups = (signups ?? []).filter(s => ['signed_up', 'confirmed_attended', 'admin_added'].includes(s.status))
   const isSunset = evt.status === 'sunset'
+  const isFinalized = evt.status === 'finalized'
   const isDraft = evt.status === 'draft'
 
   // Members already on the roster (any non-cancelled status)
@@ -76,6 +77,7 @@ export default async function AdminEventDetailPage({ params }: { params: Promise
           <span className={`text-xs px-2 py-1 rounded-full ${
             isDraft ? 'bg-yellow-100 text-yellow-700' :
             isSunset ? 'bg-gray-100 text-gray-500' :
+            isFinalized ? 'bg-blue-100 text-blue-700' :
             'bg-green-100 text-green-700'
           }`}>
             {evt.status}
@@ -84,7 +86,7 @@ export default async function AdminEventDetailPage({ params }: { params: Promise
             className="text-sm px-3 py-1.5 border border-gray-200 rounded-lg hover:border-gray-400 text-gray-600">
             Edit
           </Link>
-          <EventAdminActions eventId={id} currentStatus={evt.status} />
+          <EventAdminActions eventId={id} currentStatus={evt.status} pendingCount={pendingCount} />
         </div>
       </div>
 
@@ -129,6 +131,11 @@ export default async function AdminEventDetailPage({ params }: { params: Promise
                 </p>
               )}
             </div>
+          )}
+          {isFinalized && (
+            <p className="text-xs text-blue-700 bg-blue-50 border border-blue-200 rounded-lg px-3 py-1">
+              Attendance records locked
+            </p>
           )}
         </div>
 
@@ -180,7 +187,7 @@ export default async function AdminEventDetailPage({ params }: { params: Promise
                         {s.status === 'confirmed_attended' ? Number(s.hours_awarded ?? 0).toFixed(1) : '—'}
                       </td>
                       <td className="px-4 py-3">
-                        {s.status !== 'cancelled' && m?.id && (
+                        {!isFinalized && s.status !== 'cancelled' && m?.id && (
                           <AttendanceActions
                             signupId={s.id}
                             eventId={evt.id}
@@ -188,7 +195,7 @@ export default async function AdminEventDetailPage({ params }: { params: Promise
                             currentStatus={s.status}
                           />
                         )}
-                        {!m?.id && s.status !== 'cancelled' && (
+                        {!isFinalized && !m?.id && s.status !== 'cancelled' && (
                           <RemoveOrphanButton signupId={s.id} />
                         )}
                       </td>
@@ -200,7 +207,7 @@ export default async function AdminEventDetailPage({ params }: { params: Promise
           </div>
         )}
 
-        {isSunset && (
+        {isSunset && !isFinalized && (
           <AddAttendeePanel eventId={evt.id} availableMembers={availableMembers} />
         )}
       </div>

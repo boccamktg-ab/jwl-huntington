@@ -6,9 +6,10 @@ import { useRouter } from 'next/navigation'
 type Props = {
   eventId: string
   currentStatus: string
+  pendingCount?: number
 }
 
-export default function EventAdminActions({ eventId, currentStatus }: Props) {
+export default function EventAdminActions({ eventId, currentStatus, pendingCount }: Props) {
   const router = useRouter()
   const [loading, setLoading] = useState<string | null>(null)
   const [confirmDelete, setConfirmDelete] = useState(false)
@@ -66,16 +67,35 @@ export default function EventAdminActions({ eventId, currentStatus }: Props) {
         </button>
       )}
       {currentStatus === 'sunset' && (
-        <button
-          onClick={() => {
-            if (!confirm('Reopen this event? Any confirmed attendance marks will be reset to "signed up" so you can re-review.')) return
-            setStatus('active')
-          }}
-          disabled={!!loading}
-          className="text-sm px-3 py-1.5 border border-gray-300 text-gray-600 rounded-lg hover:border-gray-400 disabled:opacity-50"
-        >
-          {loading === 'active' ? '…' : 'Reopen event'}
-        </button>
+        <>
+          {pendingCount === 0 && (
+            <button
+              onClick={() => {
+                if (!confirm('Finalize this event? This locks all attendance records and cannot be undone. Use this once you are done reviewing.')) return
+                setStatus('finalized')
+              }}
+              disabled={!!loading}
+              className="text-sm px-3 py-1.5 bg-[#1B52C1] text-white rounded-lg hover:bg-[#1540A0] disabled:opacity-50"
+            >
+              {loading === 'finalized' ? '…' : 'Finalize event'}
+            </button>
+          )}
+          <button
+            onClick={() => {
+              if (!confirm('Reopen this event? Any confirmed attendance marks will be reset to "signed up" so you can re-review.')) return
+              setStatus('active')
+            }}
+            disabled={!!loading}
+            className="text-sm px-3 py-1.5 border border-gray-300 text-gray-600 rounded-lg hover:border-gray-400 disabled:opacity-50"
+          >
+            {loading === 'active' ? '…' : 'Reopen event'}
+          </button>
+        </>
+      )}
+      {currentStatus === 'finalized' && (
+        <span className="text-xs text-gray-400 px-2 py-1 bg-gray-100 rounded-lg">
+          Event finalized — records locked
+        </span>
       )}
       {currentStatus === 'active' && (
         <>
