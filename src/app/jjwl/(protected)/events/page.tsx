@@ -26,7 +26,8 @@ export default async function JJWLEventsPage() {
 
   if (!member || member.status !== 'active') redirect('/jjwl/pending')
 
-  const [{ data: events }, { data: mySignups }] = await Promise.all([
+  const SEASON = '2026-2027'
+  const [{ data: events }, { data: mySignups }, { data: waiver }] = await Promise.all([
     admin
       .from('jjwl_events')
       .select('id, title, location, event_date, start_time, end_time, volunteer_slots_total, credit_hours, description')
@@ -38,6 +39,12 @@ export default async function JJWLEventsPage() {
       .select('event_id, status')
       .eq('member_id', member.id)
       .in('status', ['signed_up', 'confirmed_attended']),
+    admin
+      .from('jjwl_waivers')
+      .select('id')
+      .eq('member_id', member.id)
+      .eq('season', SEASON)
+      .maybeSingle(),
   ])
 
   // Count current signups per event
@@ -56,6 +63,24 @@ export default async function JJWLEventsPage() {
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-semibold text-gray-900">Upcoming Events</h1>
+
+      {!waiver && (
+        <div className="bg-amber-50 border border-amber-200 rounded-2xl p-5 flex items-start gap-4">
+          <span className="text-2xl shrink-0">📋</span>
+          <div className="flex-1 min-w-0">
+            <p className="font-semibold text-amber-900">Waiver required to sign up for events</p>
+            <p className="text-sm text-amber-800 mt-0.5">
+              You must submit a parent or guardian waiver for the 2026–2027 season before you can register for any event.
+            </p>
+          </div>
+          <Link
+            href="/jjwl/waiver"
+            className="shrink-0 text-sm px-4 py-2 bg-[#1B52C1] text-white rounded-lg hover:bg-[#1540A0] font-medium whitespace-nowrap"
+          >
+            Complete waiver
+          </Link>
+        </div>
+      )}
 
       {(!events || events.length === 0) && (
         <p className="text-gray-400 py-8 text-center">No upcoming events at this time. Check back soon!</p>

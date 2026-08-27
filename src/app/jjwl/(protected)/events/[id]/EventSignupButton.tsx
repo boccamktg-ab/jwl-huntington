@@ -15,11 +15,12 @@ type Props = {
   timeSlots: TimeSlot[]
   slotCounts: Record<string, number>
   creditHours: number
+  hasWaiver: boolean
 }
 
 export default function EventSignupButton({
   eventId, memberId, memberName, memberPhone,
-  signedUpSlots, isFull, timeSlots, slotCounts, creditHours,
+  signedUpSlots, isFull, timeSlots, slotCounts, creditHours, hasWaiver,
 }: Props) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
@@ -29,6 +30,30 @@ export default function EventSignupButton({
 
   // Locked while a fetch is in flight OR while the server re-render is settling
   const busy = !!loadingSlot || isPending
+
+  // Waiver gate — shown instead of signup UI when waiver is not on file
+  if (!hasWaiver && signedUpSlots.length === 0) {
+    return (
+      <div className="bg-amber-50 border border-amber-200 rounded-2xl p-6 space-y-4">
+        <div className="flex items-start gap-3">
+          <span className="text-2xl">📋</span>
+          <div>
+            <p className="font-semibold text-amber-900">Waiver required before signing up</p>
+            <p className="text-sm text-amber-800 mt-1">
+              A parent or guardian waiver must be on file for the 2026–2027 season before you can sign up for events.
+              It only takes a few minutes to complete.
+            </p>
+          </div>
+        </div>
+        <a
+          href="/jjwl/waiver"
+          className="inline-block bg-[#1B52C1] text-white rounded-lg px-4 py-2.5 text-sm font-medium hover:bg-[#1540A0]"
+        >
+          Complete waiver now →
+        </a>
+      </div>
+    )
+  }
 
   const hasSlots = timeSlots.length > 0
   const isSignedUpNoSlot = !hasSlots && signedUpSlots.length > 0
@@ -45,7 +70,11 @@ export default function EventSignupButton({
     const json = await res.json()
     setLoadingSlot(null)
     if (!res.ok) {
-      setError(json.error ?? 'Something went wrong.')
+      if (json.error === 'waiver_required') {
+        setError('Your waiver is not on file. Please complete it at jjwl/waiver before signing up.')
+      } else {
+        setError(json.error ?? 'Something went wrong.')
+      }
       return
     }
     startTransition(() => router.refresh())

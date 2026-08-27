@@ -36,7 +36,8 @@ export default async function JJWLEventDetailPage({ params }: { params: Promise<
 
   if (!evt) notFound()
 
-  const [{ data: mySignups }, { data: signupCounts }] = await Promise.all([
+  const SEASON = '2026-2027'
+  const [{ data: mySignups }, { data: signupCounts }, { data: waiver }] = await Promise.all([
     admin
       .from('jjwl_signups')
       .select('id, status, time_slot')
@@ -48,6 +49,12 @@ export default async function JJWLEventDetailPage({ params }: { params: Promise<
       .select('time_slot')
       .eq('event_id', id)
       .in('status', ['signed_up', 'confirmed_attended', 'admin_added']),
+    admin
+      .from('jjwl_waivers')
+      .select('id')
+      .eq('member_id', member.id)
+      .eq('season', SEASON)
+      .maybeSingle(),
   ])
 
   const totalFilled = signupCounts?.length ?? 0
@@ -102,6 +109,7 @@ export default async function JJWLEventDetailPage({ params }: { params: Promise<
         timeSlots={timeSlots}
         slotCounts={slotCounts}
         creditHours={Number(evt.credit_hours)}
+        hasWaiver={!!waiver}
       />
     </div>
   )
