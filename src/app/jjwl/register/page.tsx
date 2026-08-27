@@ -11,6 +11,7 @@ const GRADES = ['6th', '7th', '8th', '9th', '10th', '11th', '12th']
 
 export default function JJWLRegisterPage() {
   const [schools, setSchools] = useState<School[]>([])
+  const [spotsRemaining, setSpotsRemaining] = useState<number | null>(null)
   const [loading, setLoading] = useState(false)
   const [done, setDone] = useState(false)
   const [error, setError] = useState('')
@@ -25,6 +26,9 @@ export default function JJWLRegisterPage() {
   useEffect(() => {
     fetch('/api/jjwl/schools').then(r => r.json()).then(d => {
       if (d.schools) setSchools(d.schools)
+    })
+    fetch('/api/jjwl/enrollment-count').then(r => r.json()).then(d => {
+      setSpotsRemaining(d.remaining ?? null)
     })
   }, [])
 
@@ -79,6 +83,9 @@ export default function JJWLRegisterPage() {
 
       <div className="bg-red-50 border-b border-red-200 px-4 py-3 text-center text-sm text-red-800">
         <strong>Enrollment is nearing capacity.</strong> JJWL membership will close at 85 members — register now to secure your spot.
+        {spotsRemaining !== null && (
+          <span className="ml-1 font-semibold">Only {spotsRemaining} spot{spotsRemaining !== 1 ? 's' : ''} remaining.</span>
+        )}
       </div>
 
       <div className="max-w-lg mx-auto px-4 py-10">
