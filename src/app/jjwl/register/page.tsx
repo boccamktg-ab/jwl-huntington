@@ -77,6 +77,10 @@ export default function JJWLRegisterPage() {
         </div>
       )}
 
+      <div className="bg-red-50 border-b border-red-200 px-4 py-3 text-center text-sm text-red-800">
+        <strong>Enrollment is nearing capacity.</strong> JJWL membership will close at 85 members — register now to secure your spot.
+      </div>
+
       <div className="max-w-lg mx-auto px-4 py-10">
         <div className="bg-white rounded-2xl border border-gray-200 p-8 space-y-6">
           <div>
