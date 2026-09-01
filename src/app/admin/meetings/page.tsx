@@ -91,35 +91,31 @@ export default function AdminMeetingsPage() {
   async function save() {
     setSaving(true)
     setSaveError('')
-    const body = {
-      title, meeting_date: date, meeting_time: time, end_time: endTime || null,
-      location, agenda_notes: agenda || null, description: description || null,
-      meeting_type: meetingType,
-      post_meeting_notes: recap || null,
-      shifts: meetingType === 'event' ? shifts : [],
-    }
-    let res: Response
-    if (editing) {
-      res = await fetch('/api/admin/meetings', {
-        method: 'PATCH',
+    try {
+      const body = {
+        title, meeting_date: date, meeting_time: time, end_time: endTime || null,
+        location, agenda_notes: agenda || null, description: description || null,
+        meeting_type: meetingType,
+        post_meeting_notes: recap || null,
+        shifts: meetingType === 'event' ? shifts : [],
+      }
+      const res = await fetch('/api/admin/meetings', {
+        method: editing ? 'PATCH' : 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: editing.id, ...body }),
+        body: JSON.stringify(editing ? { id: editing.id, ...body } : body),
       })
-    } else {
-      res = await fetch('/api/admin/meetings', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-      })
+      if (!res.ok) {
+        const json = await res.json().catch(() => ({}))
+        setSaveError(json.error ?? `Error ${res.status} — please try again or contact support.`)
+        return
+      }
+      setShowForm(false)
+      load()
+    } catch (err: any) {
+      setSaveError(err?.message ?? 'Network error — please try again.')
+    } finally {
+      setSaving(false)
     }
-    setSaving(false)
-    if (!res.ok) {
-      const json = await res.json().catch(() => ({}))
-      setSaveError(json.error ?? `Error ${res.status} — please try again or contact support.`)
-      return
-    }
-    setShowForm(false)
-    load()
   }
 
   async function deleteMeeting(id: string) {
