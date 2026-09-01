@@ -86,8 +86,11 @@ export default function AdminMeetingsPage() {
     setShowForm(true)
   }
 
+  const [saveError, setSaveError] = useState('')
+
   async function save() {
     setSaving(true)
+    setSaveError('')
     const body = {
       title, meeting_date: date, meeting_time: time, end_time: endTime || null,
       location, agenda_notes: agenda || null, description: description || null,
@@ -95,20 +98,26 @@ export default function AdminMeetingsPage() {
       post_meeting_notes: recap || null,
       shifts: meetingType === 'event' ? shifts : [],
     }
+    let res: Response
     if (editing) {
-      await fetch('/api/admin/meetings', {
+      res = await fetch('/api/admin/meetings', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id: editing.id, ...body }),
       })
     } else {
-      await fetch('/api/admin/meetings', {
+      res = await fetch('/api/admin/meetings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
       })
     }
     setSaving(false)
+    if (!res.ok) {
+      const json = await res.json().catch(() => ({}))
+      setSaveError(json.error ?? `Error ${res.status} — please try again or contact support.`)
+      return
+    }
     setShowForm(false)
     load()
   }
@@ -391,6 +400,16 @@ export default function AdminMeetingsPage() {
                 <textarea rows={4} value={recap} onChange={e => setRecap(e.target.value)}
                   placeholder="Meeting notes, decisions made, follow-up items…" className={inputCls} />
               </div>
+            )}
+
+            {saveError && (
+              <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">{saveError}</p>
+            )}
+
+            {(!title || !date || !time || !location) && (
+              <p className="text-xs text-gray-400">
+                Required: {[!title && 'title', !date && 'date', !time && 'time', !location && 'location'].filter(Boolean).join(', ')}
+              </p>
             )}
 
             <div className="flex gap-3 pt-1">

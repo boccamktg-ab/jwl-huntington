@@ -66,6 +66,24 @@ export async function requireAdminFromRequest(request: NextRequest): Promise<{ i
   return ok ? { id: user.id, email: user.email } : null
 }
 
+// For use in JJWL admin API routes (uses session cookies, not request cookies)
+export async function requireJJWLAdminUser(): Promise<{ id: string; email: string | undefined } | null> {
+  const { createClient: serverClient } = await import('@/lib/supabase/server')
+  const supabase = await serverClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return null
+  if (isSuperAdminEmail(user.email)) return { id: user.id, email: user.email }
+  const { data: member } = await db()
+    .from('jwl_members')
+    .select('is_admin, is_super_admin, is_jjwl_admin, status')
+    .eq('auth_id', user.id)
+    .maybeSingle()
+  if (member?.is_admin || member?.is_super_admin || (member?.is_jjwl_admin && member?.status === 'approved')) {
+    return { id: user.id, email: user.email }
+  }
+  return null
+}
+
 export async function requireGrantsReviewerFromRequest(request: NextRequest): Promise<{ id: string; email: string | undefined } | null> {
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
