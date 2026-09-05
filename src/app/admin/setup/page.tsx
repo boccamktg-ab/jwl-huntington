@@ -6,6 +6,7 @@ import AddSchoolForm from './AddSchoolForm'
 import RemoveSchoolButton from './RemoveSchoolButton'
 import SeasonSettings from './SeasonSettings'
 import SeasonReset from './SeasonReset'
+import JJWLRegistrationToggle from './JJWLRegistrationToggle'
 
 function adminClient() {
   return createClient(
@@ -19,13 +20,14 @@ export default async function SetupPage() {
   const supabase = adminClient()
   const [{ data: districts }, { data: settings }] = await Promise.all([
     supabase.from('districts').select('id, name, schools(id, name)').order('name'),
-    supabase.from('app_settings').select('key, value').in('key', ['submissions_open', 'submissions_closed_message', 'jwl_dues_url']),
+    supabase.from('app_settings').select('key, value').in('key', ['submissions_open', 'submissions_closed_message', 'jwl_dues_url', 'jjwl_registration_open']),
   ])
 
   const settingsMap = Object.fromEntries((settings ?? []).map(s => [s.key, s.value]))
   const submissionsOpen = settingsMap['submissions_open'] !== 'false'
   const closedMessage = settingsMap['submissions_closed_message'] ?? 'Family registration is currently closed.'
   const jwlDuesUrl = settingsMap['jwl_dues_url'] ?? 'https://membership-99939.cheddarup.com'
+  const jjwlRegistrationOpen = settingsMap['jjwl_registration_open'] !== 'false'
 
   return (
     <div className="space-y-8 max-w-2xl">
@@ -53,6 +55,11 @@ export default async function SetupPage() {
       </div>
 
       <SeasonSettings submissionsOpen={submissionsOpen} closedMessage={closedMessage} />
+
+      <div className="bg-white rounded-xl border border-gray-200 p-5 space-y-4">
+        <h2 className="font-semibold text-gray-900">JJWL Settings</h2>
+        <JJWLRegistrationToggle registrationOpen={jjwlRegistrationOpen} />
+      </div>
 
       <SeasonReset />
 
