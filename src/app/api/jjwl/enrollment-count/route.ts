@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
-const CAP = 85
+const CAP = 88
 
 function db() {
   return createClient(

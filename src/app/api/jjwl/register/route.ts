@@ -8,7 +8,7 @@ import {
   emailAdminNewRegistration,
 } from '@/lib/email'
 
-const MEMBER_CAP = 85
+const MEMBER_CAP = 88
 
 function db() {
   return createClient(

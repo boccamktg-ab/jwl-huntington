@@ -137,7 +137,7 @@ export default async function AdminJJWLMembersPage({
           {waitlistedCount > 0 && (
             <span className="text-sm text-purple-600">{waitlistedCount} waitlisted</span>
           )}
-          <span className="text-sm text-gray-500">{activeTotal} / 85 enrolled</span>
+          <span className="text-sm text-gray-500">{activeTotal} / 88 enrolled</span>
           <a
             href="/api/jjwl/admin/members-export"
             className="text-sm px-3 py-1.5 border border-gray-200 rounded-lg text-gray-600 hover:border-gray-400"

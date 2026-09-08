@@ -4,7 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { createClient as adminClient } from '@supabase/supabase-js'
 import { sendEmail, emailRegistrationApproved, emailRegistrationRejected, emailDuesPaid } from '@/lib/email'
 
-const MEMBER_CAP = 85
+const MEMBER_CAP = 88
 
 function db() {
   return adminClient(
