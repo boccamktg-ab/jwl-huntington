@@ -3,6 +3,8 @@ import SiteNav from '@/app/(auth)/SiteNav'
 import Link from 'next/link'
 import RegisterForm from './RegisterForm'
 
+export const dynamic = 'force-dynamic'
+
 function db() {
   return createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,

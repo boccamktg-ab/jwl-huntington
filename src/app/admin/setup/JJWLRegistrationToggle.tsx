@@ -11,12 +11,16 @@ export default function JJWLRegistrationToggle({ registrationOpen }: { registrat
   async function toggle() {
     setLoading(true)
     const newValue = !open
-    await fetch('/api/admin/settings', {
+    const res = await fetch('/api/admin/settings', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ key: 'jjwl_registration_open', value: String(newValue) }),
     })
-    setOpen(newValue)
+    if (res.ok) {
+      setOpen(newValue)
+    } else {
+      alert('Failed to save — please try again.')
+    }
     setLoading(false)
     router.refresh()
   }
