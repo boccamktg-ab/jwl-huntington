@@ -82,6 +82,10 @@ export default async function AdminEventDetailPage({ params }: { params: Promise
           }`}>
             {evt.status}
           </span>
+          <a href={`/api/jjwl/admin/events/${id}/export`}
+            className="text-sm px-3 py-1.5 border border-gray-200 rounded-lg hover:border-gray-400 text-gray-600">
+            Export CSV
+          </a>
           <Link href={`/admin/jjwl/events/${id}/edit`}
             className="text-sm px-3 py-1.5 border border-gray-200 rounded-lg hover:border-gray-400 text-gray-600">
             Edit
