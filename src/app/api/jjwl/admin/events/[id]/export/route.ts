@@ -18,10 +18,10 @@ function csvEscape(val: string | null | undefined) {
   return s
 }
 
-export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function GET(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
 
-  if (!await requireJJWLAdminUser(request)) {
+  if (!await requireJJWLAdminUser()) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
   }
 
