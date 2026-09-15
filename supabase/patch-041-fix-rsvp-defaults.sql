@@ -1,7 +1,7 @@
--- Fix RSVP rows that were auto-seeded as 'no' instead of null.
--- Resets upcoming meetings only — past meetings are left as-is.
--- Members who explicitly clicked 'no' via email will also be reset;
--- they'll simply appear as "not yet responded" again.
+-- Drop the not-null constraint so response can be null (no response yet)
+alter table jwl_meeting_rsvps alter column response drop not null;
+
+-- Reset auto-seeded 'no' rows on upcoming published meetings to null
 update jwl_meeting_rsvps r
 set response = null
 where r.response = 'no'
