@@ -22,33 +22,38 @@ export default function MeetingRsvpButton({ meetingId, currentResponse }: { meet
   }
 
   return (
-    <div className="flex gap-2 shrink-0">
-      <button
-        onClick={() => rsvp('yes')}
-        disabled={loading}
-        className={`text-sm px-3 py-1.5 rounded-lg font-medium transition-colors disabled:opacity-50 ${
-          response === 'yes' ? 'bg-green-600 text-white' : 'border border-green-300 text-green-700 hover:bg-green-50'
-        }`}
-      >
-        {response === 'yes' ? '✓ Going' : 'Going'}
-      </button>
-      {response === 'no' ? (
-        <button
-          onClick={() => rsvp(null)}
-          disabled={loading}
-          className="text-sm px-3 py-1.5 rounded-lg font-medium transition-colors disabled:opacity-50 bg-gray-400 text-white hover:bg-gray-500"
-        >
-          Can&apos;t go · undo
-        </button>
-      ) : (
-        <button
-          onClick={() => rsvp('no')}
-          disabled={loading}
-          className="text-sm px-3 py-1.5 rounded-lg font-medium transition-colors disabled:opacity-50 border border-gray-200 text-gray-500 hover:bg-gray-50"
-        >
-          Can&apos;t go
-        </button>
+    <div className="flex flex-col items-end gap-1.5 shrink-0">
+      {response === null && (
+        <span className="text-xs text-amber-600 font-medium">Not yet responded</span>
       )}
+      <div className="flex gap-2">
+        <button
+          onClick={() => rsvp('yes')}
+          disabled={loading}
+          className={`text-sm px-3 py-1.5 rounded-lg font-medium transition-colors disabled:opacity-50 ${
+            response === 'yes' ? 'bg-green-600 text-white' : 'border border-green-300 text-green-700 hover:bg-green-50'
+          }`}
+        >
+          {response === 'yes' ? '✓ Going' : 'Going'}
+        </button>
+        {response === 'no' ? (
+          <button
+            onClick={() => rsvp(null)}
+            disabled={loading}
+            className="text-sm px-3 py-1.5 rounded-lg font-medium transition-colors disabled:opacity-50 bg-gray-400 text-white hover:bg-gray-500"
+          >
+            Can&apos;t go · undo
+          </button>
+        ) : (
+          <button
+            onClick={() => rsvp('no')}
+            disabled={loading}
+            className="text-sm px-3 py-1.5 rounded-lg font-medium transition-colors disabled:opacity-50 border border-gray-200 text-gray-500 hover:bg-gray-50"
+          >
+            Can&apos;t go
+          </button>
+        )}
+      </div>
     </div>
   )
 }

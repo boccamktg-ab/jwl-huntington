@@ -17,6 +17,10 @@
       "schedule": "0 9 * * *"
     },
     {
+      "path": "/api/cron/jwl-complete",
+      "schedule": "0 6 * * *"
+    },
+    {
       "path": "/api/cron/backpacks-reminder",
       "schedule": "0 12 25 8 *"
     }
