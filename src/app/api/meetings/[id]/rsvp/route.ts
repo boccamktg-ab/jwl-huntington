@@ -25,7 +25,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const { response } = await request.json()
-  if (response !== 'yes' && response !== 'no') {
+  if (response !== 'yes' && response !== 'no' && response !== null) {
     return NextResponse.json({ error: 'Invalid response' }, { status: 400 })
   }
 

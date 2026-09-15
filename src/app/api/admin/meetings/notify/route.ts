@@ -32,7 +32,7 @@ async function ensureRsvpTokens(meetingId: string) {
   for (const m of members ?? []) {
     await supabase
       .from('jwl_meeting_rsvps')
-      .upsert({ meeting_id: meetingId, member_id: m.id, response: 'no' }, { onConflict: 'meeting_id,member_id', ignoreDuplicates: true })
+      .upsert({ meeting_id: meetingId, member_id: m.id, response: null }, { onConflict: 'meeting_id,member_id', ignoreDuplicates: true })
   }
 }
 

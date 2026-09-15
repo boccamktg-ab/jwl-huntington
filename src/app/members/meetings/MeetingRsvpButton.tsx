@@ -8,7 +8,7 @@ export default function MeetingRsvpButton({ meetingId, currentResponse }: { meet
   const [loading, setLoading] = useState(false)
   const router = useRouter()
 
-  async function rsvp(r: 'yes' | 'no') {
+  async function rsvp(r: 'yes' | 'no' | null) {
     if (loading) return
     setLoading(true)
     await fetch(`/api/meetings/${meetingId}/rsvp`, {
@@ -32,15 +32,23 @@ export default function MeetingRsvpButton({ meetingId, currentResponse }: { meet
       >
         {response === 'yes' ? '✓ Going' : 'Going'}
       </button>
-      <button
-        onClick={() => rsvp('no')}
-        disabled={loading}
-        className={`text-sm px-3 py-1.5 rounded-lg font-medium transition-colors disabled:opacity-50 ${
-          response === 'no' ? 'bg-gray-400 text-white' : 'border border-gray-200 text-gray-500 hover:bg-gray-50'
-        }`}
-      >
-        {response === 'no' ? "Can't go" : "Can't go"}
-      </button>
+      {response === 'no' ? (
+        <button
+          onClick={() => rsvp(null)}
+          disabled={loading}
+          className="text-sm px-3 py-1.5 rounded-lg font-medium transition-colors disabled:opacity-50 bg-gray-400 text-white hover:bg-gray-500"
+        >
+          Can&apos;t go · undo
+        </button>
+      ) : (
+        <button
+          onClick={() => rsvp('no')}
+          disabled={loading}
+          className="text-sm px-3 py-1.5 rounded-lg font-medium transition-colors disabled:opacity-50 border border-gray-200 text-gray-500 hover:bg-gray-50"
+        >
+          Can&apos;t go
+        </button>
+      )}
     </div>
   )
 }
