@@ -31,7 +31,7 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
     admin.from('jjwl_events').select('title, event_date').eq('id', id).single(),
     admin
       .from('jjwl_signups')
-      .select('status, time_slot, hours_awarded, signed_up_at, jjwl_members(name, email, phone, grade, school)')
+      .select('status, time_slot, hours_awarded, signed_up_at, member_name, jjwl_members(name, email, phone, grade)')
       .eq('event_id', id)
       .order('signed_up_at', { ascending: true }),
   ])
@@ -40,16 +40,16 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
 
   const rows = (signups ?? []).filter(s => s.status !== 'cancelled')
 
-  const headers = ['Name', 'Grade', 'School', 'Email', 'Phone', 'Time Slot', 'Status', 'Hours Awarded', 'Signed Up At']
+  const headers = ['Name', 'Grade', 'Email', 'Phone', 'Time Slot', 'Status', 'Hours Awarded', 'Signed Up At']
 
   const lines = [
     headers.join(','),
     ...rows.map(s => {
       const m: any = Array.isArray(s.jjwl_members) ? s.jjwl_members[0] : s.jjwl_members
+      const name = m?.name ?? (s as any).member_name ?? ''
       return [
-        csvEscape(m?.name),
+        csvEscape(name),
         csvEscape(m?.grade),
-        csvEscape(m?.school),
         csvEscape(m?.email),
         csvEscape(m?.phone),
         csvEscape(s.time_slot),
