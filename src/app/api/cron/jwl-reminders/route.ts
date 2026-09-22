@@ -81,15 +81,23 @@ export async function GET(request: NextRequest) {
           if (result.success) totalSent++
         }
       } else {
-        // For meetings: send to members who RSVPd yes
-        const { data: rsvps } = await admin
+        // For meetings: 1-day reminder goes to yes + unanswered; 7-day goes to yes only
+        const rsvpQuery = admin
           .from('jwl_meeting_rsvps')
-          .select('member_id, token, jwl_members(id, name, email)')
+          .select('member_id, token, response, jwl_members(id, name, email)')
           .eq('meeting_id', meeting.id)
-          .eq('response', 'yes')
+          .neq('response', 'no')
 
-        // Build attendee list
-        const attendees = (rsvps ?? []).map((r: any) => {
+        const { data: rsvps } = daysOut === 1
+          ? await rsvpQuery
+          : await admin
+              .from('jwl_meeting_rsvps')
+              .select('member_id, token, response, jwl_members(id, name, email)')
+              .eq('meeting_id', meeting.id)
+              .eq('response', 'yes')
+
+        // Build attendee list (confirmed yes only)
+        const attendees = (rsvps ?? []).filter((r: any) => r.response === 'yes').map((r: any) => {
           const m = Array.isArray(r.jwl_members) ? r.jwl_members[0] : r.jwl_members
           return m?.name
         }).filter(Boolean)
