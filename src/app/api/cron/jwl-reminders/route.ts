@@ -81,15 +81,12 @@ export async function GET(request: NextRequest) {
           if (result.success) totalSent++
         }
       } else {
-        // For meetings: 1-day reminder goes to yes + unanswered; 7-day goes to yes only
-        const rsvpQuery = admin
-          .from('jwl_meeting_rsvps')
-          .select('member_id, token, response, jwl_members(id, name, email)')
-          .eq('meeting_id', meeting.id)
-          .neq('response', 'no')
-
+        // For meetings: 1-day reminder goes to all members; 7-day goes to yes only
         const { data: rsvps } = daysOut === 1
-          ? await rsvpQuery
+          ? await admin
+              .from('jwl_meeting_rsvps')
+              .select('member_id, token, response, jwl_members(id, name, email)')
+              .eq('meeting_id', meeting.id)
           : await admin
               .from('jwl_meeting_rsvps')
               .select('member_id, token, response, jwl_members(id, name, email)')
