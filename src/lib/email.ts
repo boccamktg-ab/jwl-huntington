@@ -1100,12 +1100,13 @@ export function emailEventReminderFull(
   }
 }
 
-export function emailMeetingRecap(memberName: string, date: string, recap: string) {
+export function emailMeetingRecap(memberName: string, date: string, recap: string, title?: string) {
+  const displayTitle = title || `our ${fmtDate(date)} meeting`
   return {
-    subject: `JWL Meeting Recap — ${fmtDate(date)}`,
+    subject: `Meeting Recap: ${title || fmtDate(date)}`,
     html: wrap(`
-      <h2 style="margin:0 0 16px;font-size:20px;font-weight:700;">Meeting Recap</h2>
-      ${p(`Hi ${memberName.split(' ')[0]}, here are the notes and highlights from our ${fmtDate(date)} meeting.`)}
+      <h2 style="margin:0 0 16px;font-size:20px;font-weight:700;">Meeting Recap: ${title || fmtDate(date)}</h2>
+      ${p(`Hi ${memberName.split(' ')[0]}, here are the notes and highlights from ${displayTitle}.`)}
       <div style="background:#f9fafb;border-radius:8px;padding:20px 24px;margin:16px 0;">
         <p style="margin:0;font-size:14px;color:#374151;line-height:1.8;white-space:pre-line;">${recap}</p>
       </div>

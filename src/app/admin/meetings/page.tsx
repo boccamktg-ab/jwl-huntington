@@ -256,7 +256,7 @@ export default function AdminMeetingsPage() {
                   </>
                 )}
                 {(m.status === 'published' || m.status === 'completed') && m.post_meeting_notes && (
-                  <NotifyBtn label="Send recap" meetingId={m.id} type="recap" sending={sending} onSend={notify} color="green" />
+                  <NotifyBtn label="Send recap to all members" meetingId={m.id} type="recap" sending={sending} onSend={notify} color="green" />
                 )}
                 <button onClick={() => openEdit(m)}
                   className="text-xs px-3 py-1.5 border border-gray-200 text-gray-600 rounded-lg hover:bg-gray-50">
@@ -411,7 +411,7 @@ export default function AdminMeetingsPage() {
             <div className="flex gap-3 pt-1">
               <button onClick={save} disabled={saving || !title || !date || !time || !location}
                 className="flex-1 bg-[#1B52C1] text-white rounded-lg px-4 py-2 text-sm font-medium hover:bg-[#1540A0] disabled:opacity-50">
-                {saving ? 'Saving…' : 'Save draft'}
+                {saving ? 'Saving…' : (editing ? 'Update' : 'Save draft')}
               </button>
               <button onClick={() => setShowForm(false)}
                 className="flex-1 border border-gray-300 text-gray-700 rounded-lg px-4 py-2 text-sm hover:bg-gray-50">

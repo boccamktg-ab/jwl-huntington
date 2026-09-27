@@ -181,15 +181,35 @@ export async function POST(request: NextRequest) {
         }
       )
     } else if (type === 'recap') {
-      if (!meeting.post_meeting_notes) continue
-      payload = emailMeetingRecap(member.name, meeting.meeting_date, meeting.post_meeting_notes)
-      await supabase.from('jwl_meetings').update({ status: 'completed' }).eq('id', meeting_id)
+      // Recap is handled below for all members — skip here
+      continue
     }
 
     if (payload) {
       await sendEmail({ to: member.email, subject: payload.subject, html: payload.html })
       sent++
     }
+  }
+
+  // Recap: send to ALL approved members, not just those who RSVPd
+  if (type === 'recap') {
+    if (!meeting.post_meeting_notes) {
+      return NextResponse.json({ error: 'No recap notes saved yet' }, { status: 400 })
+    }
+    const { data: allMembers } = await supabase
+      .from('jwl_members')
+      .select('name, email')
+      .eq('status', 'approved')
+
+    for (const member of allMembers ?? []) {
+      if (!member.email) continue
+      const { subject, html } = emailMeetingRecap(
+        member.name, meeting.meeting_date, meeting.post_meeting_notes, meeting.title,
+      )
+      await sendEmail({ to: member.email, subject, html })
+      sent++
+    }
+    await supabase.from('jwl_meetings').update({ status: 'completed' }).eq('id', meeting_id)
   }
 
   return NextResponse.json({ ok: true, sent })
