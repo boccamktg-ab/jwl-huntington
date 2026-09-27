@@ -42,7 +42,7 @@ export async function GET(request: NextRequest) {
 
     const { data: meetings } = await admin
       .from('jwl_meetings')
-      .select('id, title, meeting_date, meeting_time, location, meeting_type, jwl_meeting_shifts(id, label, start_time, end_time)')
+      .select('id, title, meeting_date, meeting_time, location, meeting_type, description, agenda_notes, jwl_meeting_shifts(id, label, start_time, end_time)')
       .eq('status', 'published')
       .eq('meeting_date', targetDate)
 
@@ -106,10 +106,11 @@ export async function GET(request: NextRequest) {
           const rsvpYesUrl = rsvp.token ? `${BASE}/api/meetings/rsvp/${rsvp.token}?response=yes` : `${BASE}/members/meetings`
           const rsvpNoUrl = rsvp.token ? `${BASE}/api/meetings/rsvp/${rsvp.token}?response=no` : `${BASE}/members/meetings`
 
+          const details = (meeting as any).description || (meeting as any).agenda_notes || ''
           const { subject, html } = emailMeetingReminderFull(
             member.name, meeting.title, formatDate(meeting.meeting_date),
             meeting.meeting_time, meeting.location, attendees, daysOut,
-            rsvpYesUrl, rsvpNoUrl,
+            rsvpYesUrl, rsvpNoUrl, details,
           )
           const result = await sendEmail({ to: member.email, subject, html })
           if (result.success) totalSent++

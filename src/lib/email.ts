@@ -1037,6 +1037,7 @@ export function emailEventShiftConfirmation(
 export function emailMeetingReminderFull(
   memberName: string, title: string, date: string, time: string, location: string,
   attendees: string[], daysOut: number, rsvpYesUrl: string, rsvpNoUrl: string,
+  details?: string,
 ) {
   const when = daysOut === 1 ? 'tomorrow' : 'in one week'
   const firstName = memberName.split(' ')[0]
@@ -1051,6 +1052,11 @@ export function emailMeetingReminderFull(
         { label: 'Time', value: fmtTime(time) },
         { label: 'Location', value: location },
       ])}
+      ${details ? `
+        <div style="background:#f9fafb;border-radius:8px;padding:16px 20px;margin:16px 0;">
+          <p style="margin:0 0 8px;font-size:13px;font-weight:600;color:#374151;">About this meeting</p>
+          <p style="margin:0;font-size:14px;color:#374151;line-height:1.7;white-space:pre-line;">${details}</p>
+        </div>` : ''}
       ${others.length > 0 ? `
         <div style="background:#f0f4ff;border-radius:8px;padding:16px 20px;margin:16px 0;">
           <p style="margin:0 0 8px;font-size:13px;font-weight:600;color:#1B52C1;">Also attending (${others.length})</p>
