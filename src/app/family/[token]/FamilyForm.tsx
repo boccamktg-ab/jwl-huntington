@@ -79,6 +79,7 @@ export default function FamilyForm({ family }: { family: Family }) {
   async function handleEditChild(e: React.FormEvent, childId: string) {
     e.preventDefault()
     if (!editForm.firstName.trim()) { setEditError(tr.childRequired); return }
+    if (!family.linkToken) { setEditError('Session error — please reload the page.'); return }
     setEditLoading(true)
     setEditError('')
 
@@ -407,6 +408,11 @@ export default function FamilyForm({ family }: { family: Family }) {
 
         {/* Submit */}
         <div className="pb-8">
+          {children.length > 0 && (
+            <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 mb-3 text-center">
+              {tr.submitWarning}
+            </p>
+          )}
           <button
             onClick={handleSubmit}
             disabled={submitLoading || children.length === 0}
