@@ -99,6 +99,62 @@ export async function POST(
   return NextResponse.json({ child: data })
 }
 
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ token: string }> }
+) {
+  const { token } = await params
+  const family = await getFamilyByToken(token)
+  if (!family) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+  if (family.status === 'approved') return NextResponse.json({ error: 'Already approved' }, { status: 403 })
+
+  const { id, firstName, age, gender, giftRequests, topSize, bottomSize, shoeSize } = await request.json()
+  if (!id) return NextResponse.json({ error: 'Missing child id' }, { status: 400 })
+  if (!firstName?.trim()) return NextResponse.json({ error: 'First name required' }, { status: 400 })
+
+  // Re-translate if gift requests changed and family is Spanish-speaking
+  let giftRequestsEn: string | null = null
+  let translationStatus: string | null = null
+  if (giftRequests && family.language_pref === 'es') {
+    try {
+      giftRequestsEn = await translateGiftRequests(giftRequests)
+      translationStatus = 'pending_review'
+    } catch {
+      // Non-fatal
+    }
+  }
+
+  const update: Record<string, any> = {
+    first_name: firstName,
+    age: age ? Number(age) : null,
+    gender: gender || null,
+    gift_requests: giftRequests || null,
+    top_size: topSize || null,
+    bottom_size: bottomSize || null,
+    shoe_size: shoeSize || null,
+  }
+  if (family.language_pref === 'es') {
+    update.gift_requests_en = giftRequestsEn
+    update.translation_status = translationStatus
+  }
+
+  const { data, error } = await adminClient()
+    .from('children')
+    .update(update)
+    .eq('id', id)
+    .eq('family_id', family.id)
+    .select()
+    .single()
+
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+  if (['submitted', 'approved'].includes(family.status)) {
+    await sendAuditEmails(family, [`Child updated: ${firstName}`])
+  }
+
+  return NextResponse.json({ child: data })
+}
+
 export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ token: string }> }
