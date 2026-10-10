@@ -96,6 +96,7 @@ export default async function FamilyDetailPage({ params }: { params: Promise<{ i
         childCount={children.length}
         expectedCount={family.num_children}
         linkToken={family.link_token}
+        pendingTranslations={children.filter((c: any) => c.translation_status === 'pending_review').length}
       />
 
       {/* Children */}

@@ -9,9 +9,10 @@ type Props = {
   childCount: number
   expectedCount: number
   linkToken: string
+  pendingTranslations: number
 }
 
-export default function FamilyActions({ familyId, status, childCount, expectedCount, linkToken }: Props) {
+export default function FamilyActions({ familyId, status, childCount, expectedCount, linkToken, pendingTranslations }: Props) {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [copied, setCopied] = useState(false)
@@ -82,7 +83,7 @@ export default function FamilyActions({ familyId, status, childCount, expectedCo
         {(status === 'draft' || status === 'submitted') && (
           <button
             onClick={() => updateStatus('approved')}
-            disabled={loading || childCount === 0}
+            disabled={loading || childCount === 0 || pendingTranslations > 0}
             className="text-sm px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50"
           >
             Approve
@@ -90,6 +91,11 @@ export default function FamilyActions({ familyId, status, childCount, expectedCo
         )}
         {childCount === 0 && (
           <p className="text-xs text-gray-400 self-center">Add at least one child to approve</p>
+        )}
+        {pendingTranslations > 0 && (
+          <p className="text-xs text-amber-700 self-center">
+            Review {pendingTranslations === 1 ? '1 translation' : `${pendingTranslations} translations`} above before approving
+          </p>
         )}
       </div>
     </div>
