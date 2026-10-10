@@ -14,7 +14,7 @@ function adminClient() {
 async function getFamilyByToken(token: string) {
   const { data } = await adminClient()
     .from('families')
-    .select('id, status, guardian_name, family_number, language_pref, social_worker_id, social_workers(name, email)')
+    .select('id, status, family_number, language_pref, social_worker_id, social_workers(name, email)')
     .eq('link_token', token)
     .single()
   return data
@@ -27,7 +27,7 @@ async function sendAuditEmails(
   const sw = Array.isArray(family.social_workers) ? family.social_workers[0] : family.social_workers
   if (!sw?.email) return
 
-  const familyName = family.guardian_name ?? `Family #${family.family_number}`
+  const familyName = `Family #${family.family_number}`
   const familyRef = `#${family.family_number}`
   const admin = adminClient()
 
