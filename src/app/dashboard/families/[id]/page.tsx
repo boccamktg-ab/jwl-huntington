@@ -17,7 +17,7 @@ export default async function FamilyDetailPage({ params }: { params: Promise<{ i
     supabase
       .from('families')
       .select(`
-        id, family_number, num_children, status, language_pref, link_token,
+        id, family_number, family_surname, num_children, status, language_pref, link_token,
         school_id, social_worker_id,
         schools ( id, name, districts ( name ) ),
         children ( id, first_name, age, gender, gift_requests, gift_requests_en, translation_status, top_size, bottom_size, shoe_size, created_at )
@@ -81,6 +81,7 @@ export default async function FamilyDetailPage({ params }: { params: Promise<{ i
         <EditFamilyForm
           familyId={family.id}
           familyNumber={family.family_number}
+          familySurname={(family as any).family_surname ?? null}
           numChildren={family.num_children}
           languagePref={family.language_pref}
           schoolId={family.school_id}

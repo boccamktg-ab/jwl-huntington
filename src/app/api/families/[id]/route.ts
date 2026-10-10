@@ -35,7 +35,7 @@ export async function PATCH(
     .single()
   if (!sw) return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
 
-  const { familyNumber, numChildren, languagePref, schoolId } = await request.json()
+  const { familyNumber, familySurname, numChildren, languagePref, schoolId } = await request.json()
 
   // Fetch current state for diff (only matters if already submitted)
   const admin = adminDb()
@@ -48,7 +48,7 @@ export async function PATCH(
 
   const { error } = await supabase
     .from('families')
-    .update({ family_number: familyNumber, num_children: numChildren, language_pref: languagePref, school_id: schoolId })
+    .update({ family_number: familyNumber, family_surname: familySurname ?? null, num_children: numChildren, language_pref: languagePref, school_id: schoolId })
     .eq('id', id)
     .eq('social_worker_id', sw.id)
 

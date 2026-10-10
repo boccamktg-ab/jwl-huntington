@@ -8,16 +8,17 @@ type School = { id: string; name: string }
 type Props = {
   familyId: string
   familyNumber: string
+  familySurname: string | null
   numChildren: number
   languagePref: string
   schoolId: string
   schools: School[]
 }
 
-export default function EditFamilyForm({ familyId, familyNumber, numChildren, languagePref, schoolId, schools }: Props) {
+export default function EditFamilyForm({ familyId, familyNumber, familySurname, numChildren, languagePref, schoolId, schools }: Props) {
   const router = useRouter()
   const [open, setOpen] = useState(false)
-  const [form, setForm] = useState({ familyNumber, numChildren, languagePref, schoolId })
+  const [form, setForm] = useState({ familyNumber, familySurname: familySurname ?? '', numChildren, languagePref, schoolId })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
@@ -76,6 +77,17 @@ export default function EditFamilyForm({ familyId, familyNumber, numChildren, la
           required
           value={form.familyNumber}
           onChange={e => set('familyNumber', e.target.value)}
+          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">Family surname <span className="text-gray-400 font-normal">(optional)</span></label>
+        <input
+          type="text"
+          placeholder="e.g. Smith"
+          value={form.familySurname}
+          onChange={e => set('familySurname', e.target.value)}
           className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
       </div>

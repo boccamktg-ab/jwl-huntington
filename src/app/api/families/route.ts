@@ -21,12 +21,31 @@ export async function POST(request: NextRequest) {
   const { allowed, message } = await checkSubmissionsAllowed(sw.id)
   if (!allowed) return NextResponse.json({ error: message }, { status: 403 })
 
-  const { familyNumber, numChildren, schoolId, languagePref } = await request.json()
+  const body = await request.json()
 
+  // Bulk create: array of families
+  if (Array.isArray(body)) {
+    const rows = body.map((f: any) => ({
+      family_number: f.familyNumber,
+      family_surname: f.familySurname || null,
+      num_children: f.numChildren,
+      school_id: f.schoolId,
+      social_worker_id: sw.id,
+      language_pref: f.languagePref ?? 'en',
+      status: 'draft',
+    }))
+    const { data, error } = await supabase.from('families').insert(rows).select('id')
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json({ ids: data.map((d: any) => d.id) })
+  }
+
+  // Single create
+  const { familyNumber, familySurname, numChildren, schoolId, languagePref } = body
   const { data, error } = await supabase
     .from('families')
     .insert({
       family_number: familyNumber,
+      family_surname: familySurname || null,
       num_children: numChildren,
       school_id: schoolId,
       social_worker_id: sw.id,

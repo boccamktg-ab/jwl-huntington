@@ -3,7 +3,7 @@ import { createClient as adminSupabase } from '@supabase/supabase-js'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import IntakeCompleteButton from './IntakeCompleteButton'
-import FamiliesList from './FamiliesList'
+import FamiliesTable from './FamiliesTable'
 
 function db() {
   return adminSupabase(
@@ -45,14 +45,16 @@ export default async function DashboardPage() {
     { data: families },
     { data: settings },
     { data: swFull },
+    { data: swSchools },
   ] = await Promise.all([
     supabase.from('families').select(`
-      id, family_number, num_children, status, submitted_at,
+      id, family_number, family_surname, num_children, status, submitted_at,
       schools ( id, name, district_id, districts ( name ) ),
       children ( id )
-    `).eq('social_worker_id', sw.id),
+    `).eq('social_worker_id', sw.id).order('created_at', { ascending: true }),
     db().from('app_settings').select('key, value'),
     db().from('social_workers').select('submissions_enabled').eq('id', sw.id).single(),
+    supabase.from('social_worker_schools').select('school_id, schools ( id, name, districts ( name ) )').eq('social_worker_id', sw.id),
   ])
 
   const settingsMap = Object.fromEntries((settings ?? []).map((s: any) => [s.key, s.value]))
@@ -63,6 +65,12 @@ export default async function DashboardPage() {
     ? (settingsMap['submissions_closed_message'] ?? 'Family registration is currently closed.')
     : null
 
+  const schoolList = (swSchools ?? []).map((s: any) => ({
+    id: s.schools.id,
+    name: s.schools.name,
+    district_name: s.schools.districts?.name ?? '',
+  }))
+
   const cutoff = new Date(Date.now() - 72 * 60 * 60 * 1000).toISOString()
   const overdueCount = (families ?? []).filter(
     f => f.status === 'submitted' && f.submitted_at && f.submitted_at < cutoff
@@ -72,12 +80,6 @@ export default async function DashboardPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold text-gray-900">My Families</h1>
-        {submissionsOpen && (
-          <Link href="/dashboard/families/new"
-            className="bg-[#1B52C1] text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-[#1540A0]">
-            + Add Family
-          </Link>
-        )}
       </div>
 
       {!submissionsOpen && (
@@ -97,7 +99,11 @@ export default async function DashboardPage() {
 
       <IntakeCompleteButton intakeComplete={sw.intake_complete ?? false} />
 
-      <FamiliesList families={(families ?? []) as any} />
+      <FamiliesTable
+        families={(families ?? []) as any}
+        schools={schoolList}
+        submissionsOpen={submissionsOpen}
+      />
     </div>
   )
 }
