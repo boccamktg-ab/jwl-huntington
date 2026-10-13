@@ -32,7 +32,7 @@ export default function SimpleNav({ title, userName, links }: Props) {
             href={`mailto:Info@JWLHuntington.org?subject=${encodeURIComponent('Portal Help Request')}&body=${encodeURIComponent('Hi JWL team,\n\nI need help with the portal:\n\n')}`}
             className="text-blue-100 hover:text-white whitespace-nowrap border border-blue-400 rounded px-2 py-0.5 text-xs"
           >
-            Help
+            Email Help
           </a>
           <span className="text-blue-200 border-l border-blue-400 pl-4 whitespace-nowrap">{userName}</span>
           <form action="/api/auth/logout" method="POST">
@@ -76,7 +76,7 @@ export default function SimpleNav({ title, userName, links }: Props) {
             href={`mailto:Info@JWLHuntington.org?subject=${encodeURIComponent('Portal Help Request')}&body=${encodeURIComponent('Hi JWL team,\n\nI need help with the portal:\n\n')}`}
             className="text-blue-100 hover:text-white text-sm py-2"
           >
-            Help
+            Email Help
           </a>
           <form action="/api/auth/logout" method="POST" className="pt-1">
             <button className="text-blue-200 hover:text-white text-sm">Sign out</button>
