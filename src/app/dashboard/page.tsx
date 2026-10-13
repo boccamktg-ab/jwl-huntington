@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import IntakeCompleteButton from './IntakeCompleteButton'
 import FamiliesTable from './FamiliesTable'
+import HelpPanel from '@/components/HelpPanel'
 
 function db() {
   return adminSupabase(
@@ -96,6 +97,25 @@ export default async function DashboardPage() {
           <strong>Reminder:</strong> You have {overdueCount} {overdueCount === 1 ? 'family' : 'families'} that {overdueCount === 1 ? 'has' : 'have'} been submitted for more than 72 hours without approval. Please review and approve below.
         </div>
       )}
+
+      <HelpPanel steps={[
+        {
+          title: 'Add your families',
+          body: 'Use the table below to add each family. Assign a unique family number (e.g. your initials + a number like "JS-01"). The number just needs to be unique within your caseload — JWL uses it to identify the family.',
+        },
+        {
+          title: 'Share the family link',
+          body: 'Click into a family to find their unique URL. Copy and send it to the parent or guardian so they can enter their children\'s names, ages, gift requests, and clothing sizes from their own device. The link does not require a login.',
+        },
+        {
+          title: 'Review and approve',
+          body: 'Once the family has filled in their children\'s details, open the family and click Approve. Approval sends the family to JWL for gift matching — you cannot make changes after approving, so make sure all information looks correct first.',
+        },
+        {
+          title: 'Need to make changes?',
+          body: 'If a child\'s details were entered in Spanish, you\'ll see a translation card to review before approving. If anything looks wrong after submission, contact JWL directly at Info@JWLHuntington.org.',
+        },
+      ]} />
 
       <IntakeCompleteButton intakeComplete={sw.intake_complete ?? false} />
 

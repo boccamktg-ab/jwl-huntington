@@ -54,6 +54,7 @@ export default function FamilyActions({ familyId, status, childCount, expectedCo
       {/* Copy link */}
       <div>
         <p className="text-xs font-medium text-gray-500 mb-1">Family submission link</p>
+        <p className="text-xs text-gray-400 mb-2">Copy this link and send it to the parent or guardian. They can open it on any device — no login required — to enter their children's details.</p>
         <div className="flex gap-2">
           <input
             readOnly
@@ -68,6 +69,13 @@ export default function FamilyActions({ familyId, status, childCount, expectedCo
           </button>
         </div>
       </div>
+
+      {/* Approve help */}
+      {(status === 'draft' || status === 'submitted') && childCount > 0 && pendingTranslations === 0 && (
+        <p className="text-xs text-gray-400 border-t border-gray-100 pt-3">
+          Ready to approve? Double-check that all children's information is correct. Once approved, the family is sent to JWL for gift matching and <strong className="text-gray-500">no further edits can be made.</strong>
+        </p>
+      )}
 
       {/* Action buttons */}
       <div className="flex gap-2 pt-1">
