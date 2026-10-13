@@ -43,7 +43,15 @@ export default async function SocialWorkersPage() {
 
   return (
     <div className="space-y-8">
-      <h1 className="text-2xl font-semibold text-gray-900">Social Workers</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-semibold text-gray-900">Social Workers</h1>
+        <a
+          href="/api/admin/social-workers/export"
+          className="text-sm font-medium px-3 py-1.5 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 text-gray-700"
+        >
+          Export CSV
+        </a>
+      </div>
 
       {overdueTotal > 0 && (
         <div className="bg-amber-50 border border-amber-300 rounded-xl px-4 py-3 text-sm text-amber-800">

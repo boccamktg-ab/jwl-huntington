@@ -52,7 +52,15 @@ export default async function AdminChildrenPage({
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold text-gray-900">Approved Children</h1>
-        <span className="text-sm text-gray-500">{children.length} children</span>
+        <div className="flex items-center gap-3">
+          <span className="text-sm text-gray-500">{children.length} children</span>
+          <a
+            href="/api/admin/children/export"
+            className="text-sm font-medium px-3 py-1.5 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 text-gray-700"
+          >
+            Export CSV
+          </a>
+        </div>
       </div>
 
       <ChildrenFilters
