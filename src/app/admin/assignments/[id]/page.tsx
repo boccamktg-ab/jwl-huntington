@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import ExportButton from './ExportButton'
 import UnassignButton from './UnassignButton'
+import DeleteAssignmentButton from '../DeleteAssignmentButton'
 
 function adminClient() {
   return createClient(
@@ -57,7 +58,10 @@ export default async function AssignmentDetailPage({ params }: { params: Promise
             Created {new Date(assignment.created_at).toLocaleDateString()} · {children.length} children
           </p>
         </div>
-        <ExportButton assignmentId={assignment.id} exported={assignment.exported} memberName={member?.name} />
+        <div className="flex items-center gap-3">
+          <ExportButton assignmentId={assignment.id} exported={assignment.exported} memberName={member?.name} />
+          <DeleteAssignmentButton assignmentId={assignment.id} childCount={children.length} redirectTo="/admin/assignments" />
+        </div>
       </div>
 
       <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">

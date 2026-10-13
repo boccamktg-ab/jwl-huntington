@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
 import Link from 'next/link'
+import DeleteAssignmentButton from './DeleteAssignmentButton'
 
 function adminClient() {
   return createClient(
@@ -71,32 +72,46 @@ export default async function AssignmentsPage() {
               {assignments.map(a => {
                 const member = a.jwl_members as any
                 return (
-                  <tr key={a.id} className="hover:bg-gray-50">
-                    <td className="px-4 py-3">
-                      <p className="font-medium text-gray-900">{member?.name}</p>
-                      {member?.email && <p className="text-xs text-gray-400">{member.email}</p>}
-                    </td>
-                    <td className="px-4 py-3 text-gray-600">
-                      {(a.assignment_children as any[])?.length ?? 0} children
-                    </td>
-                    <td className="px-4 py-3 text-gray-500">
-                      {new Date(a.created_at).toLocaleDateString()}
-                    </td>
-                    <td className="px-4 py-3">
-                      {a.exported
-                        ? <span className="text-xs text-green-600 font-medium">✓ Exported</span>
-                        : <span className="text-xs text-gray-400">Not yet</span>
-                      }
-                    </td>
-                    <td className="px-4 py-3 text-right">
-                      <Link
-                        href={`/admin/assignments/${a.id}`}
-                        className="text-xs text-blue-600 hover:underline"
-                      >
-                        View / Export
-                      </Link>
-                    </td>
-                  </tr>
+                  {(() => {
+                    const childCount = (a.assignment_children as any[])?.length ?? 0
+                    const stale = childCount === 0
+                    return (
+                      <tr key={a.id} className={stale ? 'bg-red-50 hover:bg-red-100' : 'hover:bg-gray-50'}>
+                        <td className="px-4 py-3">
+                          <p className={`font-medium ${stale ? 'text-gray-400' : 'text-gray-900'}`}>{member?.name}</p>
+                          {member?.email && <p className="text-xs text-gray-400">{member.email}</p>}
+                        </td>
+                        <td className="px-4 py-3">
+                          {stale
+                            ? <span className="text-xs font-medium text-red-500">0 children — stale</span>
+                            : <span className="text-gray-600">{childCount} children</span>
+                          }
+                        </td>
+                        <td className="px-4 py-3 text-gray-500">
+                          {new Date(a.created_at).toLocaleDateString()}
+                        </td>
+                        <td className="px-4 py-3">
+                          {a.exported
+                            ? <span className="text-xs text-green-600 font-medium">✓ Exported</span>
+                            : <span className="text-xs text-gray-400">Not yet</span>
+                          }
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          <div className="flex items-center justify-end gap-3">
+                            {!stale && (
+                              <Link
+                                href={`/admin/assignments/${a.id}`}
+                                className="text-xs text-blue-600 hover:underline"
+                              >
+                                View / Export
+                              </Link>
+                            )}
+                            <DeleteAssignmentButton assignmentId={a.id} childCount={childCount} />
+                          </div>
+                        </td>
+                      </tr>
+                    )
+                  })()}
                 )
               })}
             </tbody>
