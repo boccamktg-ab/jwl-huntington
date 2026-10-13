@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
+import Link from 'next/link'
 import ApprovalActions from './ApprovalActions'
 import SwSubmissionsToggle from './SwSubmissionsToggle'
 
@@ -97,7 +98,7 @@ function SocialWorkerCard({ sw, overdueCount, showActions }: { sw: any; overdueC
     <div className={`bg-white rounded-xl border p-4 flex items-start justify-between gap-4 ${overdueCount > 0 ? 'border-amber-300' : 'border-gray-200'}`}>
       <div className="space-y-0.5">
         <div className="flex items-center gap-2 flex-wrap">
-          <span className="font-medium text-gray-900">{sw.name}</span>
+          <Link href={`/admin/social-workers/${sw.id}`} className="font-medium text-gray-900 hover:text-blue-600 hover:underline">{sw.name}</Link>
           <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${statusColors[sw.status]}`}>
             {sw.status}
           </span>
