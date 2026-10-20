@@ -81,30 +81,39 @@ export async function GET(request: NextRequest) {
           if (result.success) totalSent++
         }
       } else {
-        // For meetings: 1-day reminder goes to all members; 7-day goes to yes only
-        const { data: rsvps } = daysOut === 1
-          ? await admin
-              .from('jwl_meeting_rsvps')
-              .select('member_id, token, response, jwl_members(id, name, email)')
-              .eq('meeting_id', meeting.id)
-          : await admin
-              .from('jwl_meeting_rsvps')
-              .select('member_id, token, response, jwl_members(id, name, email)')
-              .eq('meeting_id', meeting.id)
-              .eq('response', 'yes')
+        // Fetch all approved members directly so we never miss someone without an RSVP row
+        const { data: allMembers } = await admin
+          .from('jwl_members')
+          .select('id, name, email')
+          .eq('status', 'approved')
+
+        // Load RSVP rows for token + response lookup
+        const { data: rsvpRows } = await admin
+          .from('jwl_meeting_rsvps')
+          .select('member_id, token, response')
+          .eq('meeting_id', meeting.id)
+
+        const rsvpMap: Record<string, { token: string | null; response: string | null }> =
+          Object.fromEntries((rsvpRows ?? []).map(r => [r.member_id, { token: r.token, response: r.response }]))
 
         // Build attendee list (confirmed yes only)
-        const attendees = (rsvps ?? []).filter((r: any) => r.response === 'yes').map((r: any) => {
-          const m = Array.isArray(r.jwl_members) ? r.jwl_members[0] : r.jwl_members
-          return m?.name
-        }).filter(Boolean)
+        const attendees = (rsvpRows ?? [])
+          .filter(r => r.response === 'yes')
+          .map(r => {
+            // name not in rsvpRows; resolve from allMembers
+            return (allMembers ?? []).find(m => m.id === r.member_id)?.name
+          })
+          .filter(Boolean) as string[]
 
-        for (const rsvp of rsvps ?? []) {
-          const member = Array.isArray(rsvp.jwl_members) ? rsvp.jwl_members[0] : rsvp.jwl_members
-          if (!member?.email) continue
+        for (const member of allMembers ?? []) {
+          if (!member.email) continue
 
-          const rsvpYesUrl = rsvp.token ? `${BASE}/api/meetings/rsvp/${rsvp.token}?response=yes` : `${BASE}/members/meetings`
-          const rsvpNoUrl = rsvp.token ? `${BASE}/api/meetings/rsvp/${rsvp.token}?response=no` : `${BASE}/members/meetings`
+          const rsvp = rsvpMap[member.id]
+          // 7-day: skip if response is not 'yes'; 1-day: send to everyone
+          if (daysOut === 7 && rsvp?.response !== 'yes') continue
+
+          const rsvpYesUrl = rsvp?.token ? `${BASE}/api/meetings/rsvp/${rsvp.token}?response=yes` : `${BASE}/members/meetings`
+          const rsvpNoUrl = rsvp?.token ? `${BASE}/api/meetings/rsvp/${rsvp.token}?response=no` : `${BASE}/members/meetings`
 
           const details = (meeting as any).description || (meeting as any).agenda_notes || ''
           const { subject, html } = emailMeetingReminderFull(

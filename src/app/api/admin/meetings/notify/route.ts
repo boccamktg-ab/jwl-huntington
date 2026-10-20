@@ -129,7 +129,8 @@ export async function POST(request: NextRequest) {
         }
       )
     } else if (type === 'reminder_7' || type === 'reminder_1') {
-      if (rsvp.response === 'no') continue
+      // 7-day: skip non-attendees; 1-day: send to everyone regardless of response
+      if (type === 'reminder_7' && rsvp.response !== 'yes') continue
       const daysOut = type === 'reminder_1' ? 1 : 7
       payload = emailMeetingReminder(
         member.name, meeting.meeting_date, meeting.meeting_time,
