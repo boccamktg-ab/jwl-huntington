@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { requireAdminFromRequest } from '@/lib/admin'
-import { sendEmail, emailMeetingPublished, emailMeetingReminder, emailMeetingRecap } from '@/lib/email'
+import { sendEmail, emailMeetingPublished, emailMeetingReminderFull, emailMeetingRecap } from '@/lib/email'
 
 function db() {
   return createClient(
@@ -29,11 +29,12 @@ async function ensureRsvpTokens(meetingId: string) {
     .select('id')
     .eq('status', 'approved')
 
-  for (const m of members ?? []) {
-    await supabase
-      .from('jwl_meeting_rsvps')
-      .upsert({ meeting_id: meetingId, member_id: m.id, response: null }, { onConflict: 'meeting_id,member_id', ignoreDuplicates: true })
-  }
+  if (!members?.length) return
+
+  const rows = members.map(m => ({ meeting_id: meetingId, member_id: m.id, response: null }))
+  await supabase
+    .from('jwl_meeting_rsvps')
+    .upsert(rows, { onConflict: 'meeting_id,member_id', ignoreDuplicates: true })
 }
 
 // Seed one invite token per member per shift for one-click email sign-up
@@ -129,13 +130,19 @@ export async function POST(request: NextRequest) {
         }
       )
     } else if (type === 'reminder_7' || type === 'reminder_1') {
-      // 7-day: skip non-attendees; 1-day: send to everyone regardless of response
+      // 7-day: skip non-yes; 1-day: send to everyone
       if (type === 'reminder_7' && rsvp.response !== 'yes') continue
       const daysOut = type === 'reminder_1' ? 1 : 7
-      payload = emailMeetingReminder(
-        member.name, meeting.meeting_date, meeting.meeting_time,
-        meeting.location, rsvp.response === 'yes',
-        rsvpUrl(rsvp.token, 'yes'), rsvpUrl(rsvp.token, 'no'), daysOut,
+      const attendees = (rsvps ?? [])
+        .filter((r: any) => r.response === 'yes')
+        .map((r: any) => (r as any).jwl_members?.name)
+        .filter(Boolean) as string[]
+      const fmtDate = (d: string) => new Date(d + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })
+      payload = emailMeetingReminderFull(
+        member.name, meeting.title, fmtDate(meeting.meeting_date),
+        meeting.meeting_time, meeting.location, attendees, daysOut,
+        rsvpUrl(rsvp.token, 'yes'), rsvpUrl(rsvp.token, 'no'),
+        (meeting as any).description || meeting.agenda_notes || '',
       )
     } else if (type === 'nudge') {
       // Only send to members who haven't responded yet
