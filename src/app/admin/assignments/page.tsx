@@ -71,11 +71,9 @@ export default async function AssignmentsPage() {
             <tbody className="divide-y divide-gray-100">
               {assignments.map(a => {
                 const member = a.jwl_members as any
+                const childCount = (a.assignment_children as any[])?.length ?? 0
+                const stale = childCount === 0
                 return (
-                  {(() => {
-                    const childCount = (a.assignment_children as any[])?.length ?? 0
-                    const stale = childCount === 0
-                    return (
                       <tr key={a.id} className={stale ? 'bg-red-50 hover:bg-red-100' : 'hover:bg-gray-50'}>
                         <td className="px-4 py-3">
                           <p className={`font-medium ${stale ? 'text-gray-400' : 'text-gray-900'}`}>{member?.name}</p>
@@ -110,8 +108,6 @@ export default async function AssignmentsPage() {
                           </div>
                         </td>
                       </tr>
-                    )
-                  })()}
                 )
               })}
             </tbody>
