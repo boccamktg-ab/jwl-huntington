@@ -1039,14 +1039,14 @@ export function emailMeetingReminderFull(
   attendees: string[], daysOut: number, rsvpYesUrl: string, rsvpNoUrl: string,
   details?: string,
 ) {
-  const when = daysOut === 1 ? 'tomorrow' : 'in one week'
+  const when = daysOut === 1 ? date : 'in one week'
   const firstName = memberName.split(' ')[0]
   const others = attendees.filter(n => n !== memberName)
   return {
-    subject: `Reminder: ${title} is ${when}`,
+    subject: daysOut === 1 ? `Reminder: ${title} — ${date}` : `Reminder: ${title} is ${when}`,
     html: wrap(`
-      <h2 style="margin:0 0 16px;font-size:20px;font-weight:700;">See you ${when}, ${firstName}!</h2>
-      ${p(`Just a reminder that <strong>${title}</strong> is coming up ${when}.`)}
+      <h2 style="margin:0 0 16px;font-size:20px;font-weight:700;">Reminder: ${title}</h2>
+      ${p(`Hi ${firstName}, just a reminder that <strong>${title}</strong> is on <strong>${date}</strong>.`)}
       ${infoBox([
         { label: 'Date', value: fmtDate(date) },
         { label: 'Time', value: fmtTime(time) },
@@ -1074,13 +1074,12 @@ export function emailEventReminderFull(
   allShiftCounts: { label: string; count: number }[],
   daysOut: number,
 ) {
-  const when = daysOut === 1 ? 'tomorrow' : 'in one week'
   const firstName = memberName.split(' ')[0]
   return {
-    subject: `Reminder: ${title} is ${when}`,
+    subject: daysOut === 1 ? `Reminder: ${title} — ${date}` : `Reminder: ${title} is in one week`,
     html: wrap(`
-      <h2 style="margin:0 0 16px;font-size:20px;font-weight:700;">See you ${when}, ${firstName}!</h2>
-      ${p(`Just a reminder that you're signed up for <strong>${title}</strong>, coming up ${when}.`)}
+      <h2 style="margin:0 0 16px;font-size:20px;font-weight:700;">Reminder: ${title}</h2>
+      ${p(`Hi ${firstName}, just a reminder that you're signed up for <strong>${title}</strong> on <strong>${date}</strong>.`)}
       ${infoBox([
         { label: 'Date', value: fmtDate(date) },
         { label: 'Location', value: location },
