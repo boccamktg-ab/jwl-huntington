@@ -3,6 +3,7 @@ import MemberActions from './MemberActions'
 import CreateMemberForm from './CreateMemberForm'
 import MembershipPanel from './MembershipPanel'
 import DuesReminderButton from './DuesReminderButton'
+import AdminChildrenRequestedEdit from './AdminChildrenRequestedEdit'
 
 function db() {
   return adminSupabase(
@@ -103,7 +104,7 @@ function MembersTable({ rows, currentYear }: { rows: any[]; currentYear: number 
             <th className="text-center px-4 py-3 text-gray-500 font-medium">Join yr</th>
             <th className="text-center px-4 py-3 text-gray-500 font-medium">Dues thru</th>
             <th className="text-center px-4 py-3 text-gray-500 font-medium">Dues status</th>
-            <th className="text-center px-4 py-3 text-gray-500 font-medium">Assigned</th>
+            <th className="text-center px-4 py-3 text-gray-500 font-medium">Assigned/Req</th>
             <th className="text-right px-4 py-3 text-gray-500 font-medium">Actions</th>
           </tr>
         </thead>
@@ -132,9 +133,11 @@ function MembersTable({ rows, currentYear }: { rows: any[]; currentYear: number 
                 <DuesStatusBadge status={m.duesStatus} />
               </td>
               <td className="px-4 py-3 text-center">
-                <span className={m.totalAssigned > 0 ? 'text-green-700 font-medium' : 'text-gray-400'}>
-                  {m.totalAssigned}
-                </span>
+                <AdminChildrenRequestedEdit
+                  memberId={m.id}
+                  current={m.children_requested ?? null}
+                  assigned={m.totalAssigned}
+                />
               </td>
               <td className="px-4 py-3 text-right">
                 <div className="flex flex-col items-end gap-1">
