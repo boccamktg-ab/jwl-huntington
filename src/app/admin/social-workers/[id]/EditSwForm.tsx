@@ -31,6 +31,12 @@ export default function EditSwForm({ sw, allSchools }: Props) {
   const [resetLoading, setResetLoading] = useState(false)
   const [resetSent, setResetSent] = useState(false)
   const [error, setError] = useState('')
+  const [setPwOpen, setSetPwOpen] = useState(false)
+  const [newPassword, setNewPassword] = useState('')
+  const [pwConfirm, setPwConfirm] = useState('')
+  const [pwLoading, setPwLoading] = useState(false)
+  const [pwError, setPwError] = useState('')
+  const [pwDone, setPwDone] = useState(false)
 
   function toggleSchool(id: string) {
     setForm(prev => ({
@@ -79,22 +85,97 @@ export default function EditSwForm({ sw, allSchools }: Props) {
     setTimeout(() => setResetSent(false), 4000)
   }
 
+  async function handleSetPassword(e: React.FormEvent) {
+    e.preventDefault()
+    setPwError('')
+    if (newPassword !== pwConfirm) { setPwError("Passwords don't match."); return }
+    if (newPassword.length < 8) { setPwError('Must be at least 8 characters.'); return }
+    setPwLoading(true)
+    const res = await fetch(`/api/admin/social-workers/${sw.id}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'set_password', password: newPassword }),
+    })
+    const json = await res.json()
+    setPwLoading(false)
+    if (!res.ok) { setPwError(json.error || 'Failed to set password.'); return }
+    setPwDone(true)
+    setSetPwOpen(false)
+    setNewPassword('')
+    setPwConfirm('')
+    setTimeout(() => setPwDone(false), 5000)
+  }
+
   if (!open) {
     return (
-      <div className="flex items-center gap-3">
-        <button
-          onClick={() => setOpen(true)}
-          className="text-xs text-blue-600 hover:text-blue-800 border border-blue-200 rounded px-2 py-1"
-        >
-          Edit
-        </button>
-        <button
-          onClick={handlePasswordReset}
-          disabled={resetLoading}
-          className="text-xs text-gray-500 hover:text-gray-700 border border-gray-200 rounded px-2 py-1 disabled:opacity-50"
-        >
-          {resetLoading ? 'Sending…' : resetSent ? 'Reset sent ✓' : 'Send password reset'}
-        </button>
+      <div className="space-y-3">
+        <div className="flex items-center gap-3 flex-wrap">
+          <button
+            onClick={() => setOpen(true)}
+            className="text-xs text-blue-600 hover:text-blue-800 border border-blue-200 rounded px-2 py-1"
+          >
+            Edit
+          </button>
+          <button
+            onClick={handlePasswordReset}
+            disabled={resetLoading}
+            className="text-xs text-gray-500 hover:text-gray-700 border border-gray-200 rounded px-2 py-1 disabled:opacity-50"
+          >
+            {resetLoading ? 'Sending…' : resetSent ? 'Reset sent ✓' : 'Send password reset email'}
+          </button>
+          <button
+            onClick={() => { setSetPwOpen(o => !o); setPwError(''); setPwDone(false) }}
+            className="text-xs text-orange-600 hover:text-orange-800 border border-orange-200 rounded px-2 py-1"
+          >
+            Set password directly
+          </button>
+        </div>
+
+        {pwDone && (
+          <p className="text-xs text-green-700 font-medium">✓ Password updated. Share it with {sw.name}.</p>
+        )}
+
+        {setPwOpen && (
+          <form onSubmit={handleSetPassword} className="bg-orange-50 border border-orange-200 rounded-lg p-4 space-y-3">
+            <p className="text-xs text-orange-800 font-medium">
+              Set a temporary password for {sw.name} and share it with them directly.
+            </p>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">New password</label>
+                <input
+                  type="password"
+                  required
+                  minLength={8}
+                  autoFocus
+                  value={newPassword}
+                  onChange={e => setNewPassword(e.target.value)}
+                  className="w-full border border-gray-300 rounded px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Confirm</label>
+                <input
+                  type="password"
+                  required
+                  minLength={8}
+                  value={pwConfirm}
+                  onChange={e => setPwConfirm(e.target.value)}
+                  className="w-full border border-gray-300 rounded px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
+                />
+              </div>
+            </div>
+            {pwError && <p className="text-xs text-red-600">{pwError}</p>}
+            <div className="flex gap-2">
+              <button type="submit" disabled={pwLoading}
+                className="bg-orange-600 text-white text-xs px-3 py-1.5 rounded hover:bg-orange-700 disabled:opacity-50">
+                {pwLoading ? 'Saving…' : 'Set password'}
+              </button>
+              <button type="button" onClick={() => { setSetPwOpen(false); setPwError('') }}
+                className="text-xs text-gray-500 hover:text-gray-700">Cancel</button>
+            </div>
+          </form>
+        )}
       </div>
     )
   }
