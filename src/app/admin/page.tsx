@@ -45,10 +45,14 @@ export default async function AdminDashboard() {
     jjwlMembersRes,
     jwlMembersRes,
     upcomingMeetingRes,
+    memberRequestsRes,
+    assignmentChildrenRes,
   ] = await Promise.all([
     isProgramsAdmin ? admin.from('families').select('id, status') : Promise.resolve({ data: null }),
     isProgramsAdmin ? admin.from('children').select('id, family_id, families(status, schools(name, districts(name)))') : Promise.resolve({ data: null }),
     isProgramsAdmin ? admin.from('schools').select('id, name, districts(name)').order('name') : Promise.resolve({ data: null }),
+    isProgramsAdmin ? admin.from('jwl_members').select('children_requested').eq('status', 'approved') : Promise.resolve({ data: null }),
+    isProgramsAdmin ? admin.from('assignment_children').select('child_id') : Promise.resolve({ data: null }),
     isMemberAdmin ? admin.from('jwl_members').select('id, name, email').eq('status', 'pending').order('name') : Promise.resolve({ data: null }),
     isMemberAdmin ? admin.from('admin_notifications').select('id, message, created_at').eq('read', false).order('created_at', { ascending: false }) : Promise.resolve({ data: null }),
     admin.from('grant_applications').select('id, status').neq('status', 'draft'),
@@ -65,6 +69,12 @@ export default async function AdminDashboard() {
   const children = childrenRes.data ?? []
   const approvedChildren = children.filter(c => (c.families as any)?.status === 'approved')
   const totalApprovedChildren = approvedChildren.length
+
+  // Member capacity stats
+  const memberRequests = memberRequestsRes.data ?? []
+  const totalRequested = memberRequests.reduce((sum, m) => sum + (m.children_requested ?? 0), 0)
+  const totalAssigned = (assignmentChildrenRes.data ?? []).length
+  const totalRemaining = Math.max(0, totalRequested - totalAssigned)
 
   const bySchool: Record<string, { school: string; district: string; count: number }> = {}
   for (const child of approvedChildren) {
@@ -159,7 +169,6 @@ export default async function AdminDashboard() {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <QuickLink href="/admin/meetings" title="Meetings" desc="Schedule meetings, send invites, post recaps" />
             <QuickLink href="/admin/members" title="Members" desc="Approve, manage dues and positions" />
-            <QuickLink href="/admin/member-positions" title="Positions" desc="Configure the position dropdown options" />
           </div>
         </section>
       )}
@@ -175,6 +184,39 @@ export default async function AdminDashboard() {
             <StatCard label="Awaiting approval" value={submittedFamilies} color={submittedFamilies > 0 ? 'amber' : 'gray'} href="/admin/families" />
             <StatCard label="Draft families" value={draftFamilies} color="gray" href="/admin/families" />
           </div>
+
+          {totalRequested > 0 && (
+            <div className="bg-white border border-gray-200 rounded-xl p-5">
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Member capacity</p>
+              <div className="grid grid-cols-3 gap-4 text-center">
+                <div>
+                  <p className="text-3xl font-bold text-blue-700">{totalRequested}</p>
+                  <p className="text-xs text-gray-500 mt-0.5">Children requested</p>
+                </div>
+                <div>
+                  <p className="text-3xl font-bold text-green-700">{totalAssigned}</p>
+                  <p className="text-xs text-gray-500 mt-0.5">Assigned</p>
+                </div>
+                <div>
+                  <p className={`text-3xl font-bold ${totalRemaining > 0 ? 'text-amber-600' : 'text-gray-400'}`}>{totalRemaining}</p>
+                  <p className="text-xs text-gray-500 mt-0.5">Still needed</p>
+                </div>
+              </div>
+              {totalRequested > 0 && (
+                <div className="mt-4">
+                  <div className="w-full bg-gray-100 rounded-full h-2 overflow-hidden">
+                    <div
+                      className="bg-green-500 h-2 rounded-full transition-all"
+                      style={{ width: `${Math.min(100, Math.round((totalAssigned / totalRequested) * 100))}%` }}
+                    />
+                  </div>
+                  <p className="text-xs text-gray-400 mt-1 text-right">
+                    {Math.min(100, Math.round((totalAssigned / totalRequested) * 100))}% fulfilled
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <QuickLink href="/admin/children" title="Children" desc="View, filter, and assign approved children" />
