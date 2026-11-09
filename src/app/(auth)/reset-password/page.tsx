@@ -15,9 +15,19 @@ export default function ResetPasswordPage() {
   const [ready, setReady] = useState(false)
 
   useEffect(() => {
-    // Supabase exchanges the token from the URL hash and establishes a session.
-    // onAuthStateChange fires with SIGNED_IN / PASSWORD_RECOVERY when ready.
     const supabase = createClient()
+
+    // PKCE flow: Supabase sends ?code=... in the URL; exchange it for a session.
+    const code = new URLSearchParams(window.location.search).get('code')
+    if (code) {
+      supabase.auth.exchangeCodeForSession(code).then(({ error }) => {
+        if (!error) setReady(true)
+        else setError('This reset link is invalid or has expired. Please request a new one.')
+      })
+      return
+    }
+
+    // Implicit flow fallback: listen for PASSWORD_RECOVERY from the hash token.
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
       if (event === 'PASSWORD_RECOVERY' || event === 'SIGNED_IN') {
         setReady(true)
@@ -58,6 +68,16 @@ export default function ResetPasswordPage() {
       <>
         <h2 className="text-lg font-medium text-gray-800 mb-3">Password updated</h2>
         <p className="text-sm text-gray-600">Your password has been reset. Redirecting you to sign in…</p>
+      </>
+    )
+  }
+
+  if (!ready && error) {
+    return (
+      <>
+        <h2 className="text-lg font-medium text-gray-800 mb-3">Reset your password</h2>
+        <div className="bg-red-50 border border-red-200 rounded-lg px-4 py-3 text-sm text-red-800 mb-4">{error}</div>
+        <Link href="/forgot-password" className="text-sm text-[#1B52C1] hover:underline">Request a new reset link</Link>
       </>
     )
   }
