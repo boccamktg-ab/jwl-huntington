@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { createClient as adminClient } from '@supabase/supabase-js'
 import { redirect } from 'next/navigation'
 import ProfileForm from './ProfileForm'
+import ChangePasswordForm from './ChangePasswordForm'
 
 export default async function ProfilePage() {
   const supabase = await createClient()
@@ -29,8 +30,8 @@ export default async function ProfilePage() {
   const currentDistrict = schools?.find(s => currentSchoolIds.includes(s.id))?.district_id ?? ''
 
   return (
-    <div className="max-w-lg">
-      <h1 className="text-2xl font-semibold text-gray-900 mb-6">My Profile</h1>
+    <div className="max-w-lg space-y-6">
+      <h1 className="text-2xl font-semibold text-gray-900">My Profile</h1>
       <ProfileForm
         sw={sw}
         districts={districts ?? []}
@@ -38,6 +39,7 @@ export default async function ProfilePage() {
         currentSchoolIds={currentSchoolIds}
         currentDistrictId={currentDistrict}
       />
+      <ChangePasswordForm />
     </div>
   )
 }
