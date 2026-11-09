@@ -4,6 +4,7 @@ import Link from 'next/link'
 import ApprovalActions from '../ApprovalActions'
 import SwSubmissionsToggle from '../SwSubmissionsToggle'
 import EditSwForm from './EditSwForm'
+import SetPasswordForm from './SetPasswordForm'
 
 function adminClient() {
   return createClient(
@@ -106,6 +107,7 @@ export default async function SocialWorkerDetailPage({ params }: { params: Promi
           sw={{ id: sw.id, name: sw.name, email: sw.email, swType: sw.sw_type, organization: sw.organization, schoolIds }}
           allSchools={schools}
         />
+        <SetPasswordForm swId={sw.id} swName={sw.name} />
       </div>
 
       {/* Families */}

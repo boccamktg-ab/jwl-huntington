@@ -58,11 +58,8 @@ export async function POST(
   }
 
   const { id } = await params
-  const { action } = await request.json()
-
-  if (action !== 'reset_password') {
-    return NextResponse.json({ error: 'Unknown action' }, { status: 400 })
-  }
+  const body = await request.json()
+  const { action, password } = body
 
   const db = adminClient()
 
@@ -74,12 +71,25 @@ export async function POST(
 
   if (!sw?.email) return NextResponse.json({ error: 'Social worker not found' }, { status: 404 })
 
-  const { error } = await db.auth.admin.generateLink({
-    type: 'recovery',
-    email: sw.email,
-  })
+  if (action === 'set_password') {
+    if (!password || password.length < 8) {
+      return NextResponse.json({ error: 'Password must be at least 8 characters' }, { status: 400 })
+    }
+    if (!sw.auth_id) return NextResponse.json({ error: 'No auth account linked' }, { status: 400 })
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    const { error } = await db.auth.admin.updateUserById(sw.auth_id, { password })
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json({ ok: true })
+  }
 
-  return NextResponse.json({ ok: true })
+  if (action === 'reset_password') {
+    const { error } = await db.auth.admin.generateLink({
+      type: 'recovery',
+      email: sw.email,
+    })
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json({ ok: true })
+  }
+
+  return NextResponse.json({ error: 'Unknown action' }, { status: 400 })
 }
