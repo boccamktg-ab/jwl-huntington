@@ -19,7 +19,7 @@ export default async function NewAssignmentPage() {
     { data: allChildren },
     { data: assignedLinks },
   ] = await Promise.all([
-    supabase.from('jwl_members').select('id, name, email').order('name'),
+    supabase.from('jwl_members').select('id, name, email, children_requested').order('name'),
     supabase.from('districts').select('id, name').order('name'),
     supabase.from('schools').select('id, name, district_id').order('name'),
     supabase.from('children').select(`
