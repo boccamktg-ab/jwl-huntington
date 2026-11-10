@@ -15,7 +15,7 @@ type LogEntry = {
 export default function BroadcastPage() {
   const [messageType, setMessageType] = useState<'season_open' | 'deadline_reminder'>('season_open')
   const [deadline, setDeadline] = useState('')
-  const [filter, setFilter] = useState<'all' | 'no_submissions'>('all')
+  const [filter, setFilter] = useState<'all' | 'no_submissions' | 'has_approved'>('all')
 const [confirming, setConfirming] = useState(false)
   const [sending, setSending] = useState(false)
   const [result, setResult] = useState<{ sent: number } | null>(null)
@@ -97,7 +97,11 @@ const [confirming, setConfirming] = useState(false)
               <div className="space-y-2">
                 <label className="block text-sm font-medium text-gray-700">Recipients</label>
                 <div className="flex gap-3">
-                  {(['all', 'no_submissions'] as const).map(f => (
+                  {([
+                    ['all', 'All active social workers'],
+                    ['has_approved', 'Only those with approved children (deadline reminder)'],
+                    ['no_submissions', 'Only those with no submissions yet'],
+                  ] as const).map(([f, label]) => (
                     <label key={f} className="flex items-center gap-2 cursor-pointer">
                       <input
                         type="radio"
@@ -105,9 +109,7 @@ const [confirming, setConfirming] = useState(false)
                         onChange={() => setFilter(f)}
                         className="text-[#1B52C1]"
                       />
-                      <span className="text-sm text-gray-700">
-                        {f === 'all' ? 'All active social workers' : 'Only those with no submissions yet'}
-                      </span>
+                      <span className="text-sm text-gray-700">{label}</span>
                     </label>
                   ))}
                 </div>
@@ -129,8 +131,10 @@ const [confirming, setConfirming] = useState(false)
             <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 space-y-3">
               <p className="text-sm font-medium text-amber-800">
                 You&apos;re about to send a <strong>{messageLabels[messageType]}</strong> email
-                {messageType === 'deadline_reminder' && filter === 'no_submissions'
-                  ? ' to social workers with no submissions'
+                {filter === 'no_submissions'
+                  ? ' to social workers with no submissions yet'
+                  : filter === 'has_approved'
+                  ? ' to social workers with approved children'
                   : ' to all active social workers'}.
                 This cannot be undone.
               </p>

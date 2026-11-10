@@ -16,7 +16,7 @@ export async function POST(request: NextRequest) {
   if (!admin) return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
 
   const { message_type, deadline, filter } = await request.json()
-  // filter: 'all' | 'no_submissions' — for deadline reminder
+  // filter: 'all' | 'no_submissions' | 'has_approved' — for deadline reminder
   if (!['season_open', 'deadline_reminder'].includes(message_type)) {
     return NextResponse.json({ error: 'Invalid message_type' }, { status: 400 })
   }
@@ -31,15 +31,25 @@ export async function POST(request: NextRequest) {
 
   if (!workers?.length) return NextResponse.json({ ok: true, sent: 0 })
 
-  // For deadline reminder with no_submissions filter, check who hasn't submitted
+  // For deadline reminder, optionally filter by submission status
   let targets = workers
-  if (message_type === 'deadline_reminder' && filter === 'no_submissions') {
+  if (message_type === 'deadline_reminder' && (filter === 'no_submissions' || filter === 'has_approved')) {
     const { data: submittedSWIds } = await supabase
       .from('families')
       .select('social_worker_id')
       .in('status', ['submitted', 'approved'])
     const submittedSet = new Set((submittedSWIds ?? []).map((r: any) => r.social_worker_id))
-    targets = workers.filter(w => !submittedSet.has(w.id))
+
+    if (filter === 'no_submissions') {
+      targets = workers.filter(w => !submittedSet.has(w.id))
+    } else if (filter === 'has_approved') {
+      const { data: approvedSWIds } = await supabase
+        .from('families')
+        .select('social_worker_id')
+        .eq('status', 'approved')
+      const approvedSet = new Set((approvedSWIds ?? []).map((r: any) => r.social_worker_id))
+      targets = workers.filter(w => approvedSet.has(w.id))
+    }
   }
 
   // Send emails
