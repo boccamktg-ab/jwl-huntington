@@ -51,14 +51,14 @@ export default async function AdminDashboard() {
     isProgramsAdmin ? admin.from('families').select('id, status') : Promise.resolve({ data: null }),
     isProgramsAdmin ? admin.from('children').select('id, family_id, families(status, schools(name, districts(name)))') : Promise.resolve({ data: null }),
     isProgramsAdmin ? admin.from('schools').select('id, name, districts(name)').order('name') : Promise.resolve({ data: null }),
-    isProgramsAdmin ? admin.from('jwl_members').select('children_requested').eq('status', 'approved') : Promise.resolve({ data: null }),
-    isProgramsAdmin ? admin.from('assignment_children').select('child_id') : Promise.resolve({ data: null }),
     isMemberAdmin ? admin.from('jwl_members').select('id, name, email').eq('status', 'pending').order('name') : Promise.resolve({ data: null }),
     isMemberAdmin ? admin.from('admin_notifications').select('id, message, created_at').eq('read', false).order('created_at', { ascending: false }) : Promise.resolve({ data: null }),
     admin.from('grant_applications').select('id, status').neq('status', 'draft'),
     admin.from('jjwl_members').select('id, status'),
     isMemberAdmin ? admin.from('jwl_members').select('id, status, dues_paid_through_year, join_year').eq('status', 'approved') : Promise.resolve({ data: null }),
     isMemberAdmin ? admin.from('jwl_meetings').select('id, title, meeting_date, meeting_time, location, status, jwl_meeting_rsvps(response)').eq('status', 'published').gte('meeting_date', today).order('meeting_date').limit(1) : Promise.resolve({ data: null }),
+    isProgramsAdmin ? admin.from('jwl_members').select('children_requested').eq('status', 'approved') : Promise.resolve({ data: null }),
+    isProgramsAdmin ? admin.from('assignment_children').select('child_id') : Promise.resolve({ data: null }),
   ])
 
   // HC stats
