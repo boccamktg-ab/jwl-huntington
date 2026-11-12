@@ -215,7 +215,9 @@ export async function GET(
         group.schoolName,
         group.districtName,
         child.gift_requests_en ?? '',
-        '', '', '',
+        child.top_size ?? '',
+        child.bottom_size ?? '',
+        child.shoe_size ?? '',
       ])
       dataRow.getCell(8).alignment = { wrapText: true }
     }
