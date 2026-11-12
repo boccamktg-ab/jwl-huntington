@@ -42,7 +42,6 @@ export async function GET(
           first_name, age, gender, gift_requests, gift_requests_en, top_size, bottom_size, shoe_size,
           families (
             family_number, num_children,
-            social_workers ( name, email, phone ),
             schools ( name, districts ( name ) )
           )
         )
@@ -76,7 +75,6 @@ export async function GET(
 
   const rows = children.map(child => {
     const fam = child.families as any
-    const sw = fam?.social_workers
     return {
       family_number:  fam?.family_number ?? '',
       family_size:    fam?.num_children ?? '',
@@ -85,13 +83,10 @@ export async function GET(
       gender:         child.gender ?? '',
       school:         fam?.schools?.name ?? '',
       district:       fam?.schools?.districts?.name ?? '',
-      gift_requests:  child.gift_requests_en ?? child.gift_requests ?? '',
+      gift_requests:  child.gift_requests_en ?? '',
       top_size:       child.top_size ?? '',
       bottom_size:    child.bottom_size ?? '',
       shoe_size:      child.shoe_size ?? '',
-      sw_name:        sw?.name ?? '',
-      sw_email:       sw?.email ?? '',
-      sw_phone:       sw?.phone ?? '',
     }
   })
 
@@ -106,14 +101,12 @@ export async function GET(
     const headers = [
       'Family #', 'Family Size', 'First Name', 'Age', 'Gender',
       'School', 'District', 'Gift Requests', 'Top Size', 'Bottom Size', 'Shoe Size',
-      'Social Worker', 'SW Email', 'SW Phone',
     ]
     const lines = [
       headers.join(','),
       ...rows.map(r => [
         r.family_number, r.family_size, r.first_name, r.age, r.gender,
         r.school, r.district, csvEscape(r.gift_requests), r.top_size, r.bottom_size, r.shoe_size,
-        r.sw_name, r.sw_email, r.sw_phone,
       ].join(',')),
     ]
     if (isAdmin) await db.from('assignments').update({ exported: true }).eq('id', id)
@@ -140,9 +133,6 @@ export async function GET(
     { header: 'Top Size',      key: 'top_size',      width: 12 },
     { header: 'Bottom Size',   key: 'bottom_size',   width: 12 },
     { header: 'Shoe Size',     key: 'shoe_size',     width: 12 },
-    { header: 'Social Worker', key: 'sw_name',       width: 20 },
-    { header: 'SW Email',      key: 'sw_email',      width: 28 },
-    { header: 'SW Phone',      key: 'sw_phone',      width: 16 },
   ]
   const headerRow = sheet.getRow(1)
   headerRow.font = { bold: true }
