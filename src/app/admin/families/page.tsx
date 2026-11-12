@@ -2,6 +2,9 @@ import { createClient } from '@supabase/supabase-js'
 import DeleteFamilyButton from './DeleteFamilyButton'
 import RejectFamilyButton from './RejectFamilyButton'
 import ReturnFamilyButton from './ReturnFamilyButton'
+import FamiliesFilters from './FamiliesFilters'
+
+export const dynamic = 'force-dynamic'
 
 function db() {
   return createClient(
@@ -25,29 +28,61 @@ const STATUS_COLORS: Record<string, string> = {
   rejected: 'bg-red-100 text-red-600',
 }
 
-export default async function AdminFamiliesPage() {
-  const { data: families } = await db()
-    .from('families')
-    .select(`
-      id, family_number, num_children, status, submitted_at,
-      social_workers ( name ),
-      schools ( name, districts ( name ) ),
-      children ( id )
-    `)
-    .order('status')
-    .order('family_number')
+export default async function AdminFamiliesPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ district?: string; school?: string; sw?: string; status?: string }>
+}) {
+  const filters = await searchParams
+  const supabase = db()
 
-  const draft     = (families ?? []).filter(f => f.status === 'draft')
-  const submitted = (families ?? []).filter(f => f.status === 'submitted')
-  const approved  = (families ?? []).filter(f => f.status === 'approved')
-  const rejected  = (families ?? []).filter(f => f.status === 'rejected')
+  const [
+    { data: allFamilies },
+    { data: districts },
+    { data: schools },
+    { data: socialWorkers },
+  ] = await Promise.all([
+    supabase
+      .from('families')
+      .select(`
+        id, family_number, num_children, status, submitted_at,
+        social_workers ( id, name ),
+        schools ( id, name, district_id, districts ( id, name ) ),
+        children ( id )
+      `)
+      .order('status')
+      .order('family_number'),
+    supabase.from('districts').select('id, name').order('name'),
+    supabase.from('schools').select('id, name, district_id').order('name'),
+    supabase.from('social_workers').select('id, name').eq('status', 'approved').order('name'),
+  ])
+
+  const families = (allFamilies ?? []).filter((f: any) => {
+    if (filters.status && f.status !== filters.status) return false
+    if (filters.district && f.schools?.districts?.id !== filters.district) return false
+    if (filters.school && f.schools?.id !== filters.school) return false
+    if (filters.sw && f.social_workers?.id !== filters.sw) return false
+    return true
+  })
+
+  const draft     = families.filter((f: any) => f.status === 'draft')
+  const submitted = families.filter((f: any) => f.status === 'submitted')
+  const approved  = families.filter((f: any) => f.status === 'approved')
+  const rejected  = families.filter((f: any) => f.status === 'rejected')
 
   return (
     <div className="space-y-8">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold text-gray-900">All Families</h1>
-        <span className="text-sm text-gray-500">{(families ?? []).length} total</span>
+        <span className="text-sm text-gray-500">{families.length} of {(allFamilies ?? []).length} total</span>
       </div>
+
+      <FamiliesFilters
+        districts={districts ?? []}
+        schools={schools ?? []}
+        socialWorkers={socialWorkers ?? []}
+        currentFilters={filters}
+      />
 
       {[
         { label: 'Submitted', rows: submitted, color: 'amber' },
@@ -109,8 +144,8 @@ export default async function AdminFamiliesPage() {
         ) : null
       )}
 
-      {(families ?? []).length === 0 && (
-        <p className="text-sm text-gray-400 text-center py-12">No families yet.</p>
+      {families.length === 0 && (
+        <p className="text-sm text-gray-400 text-center py-12">No families match your filters.</p>
       )}
     </div>
   )
