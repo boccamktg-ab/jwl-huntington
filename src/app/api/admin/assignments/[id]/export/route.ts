@@ -77,9 +77,15 @@ export async function GET(
       return schoolA.localeCompare(schoolB) || fnA - fnB || (a?.first_name ?? '').localeCompare(b?.first_name ?? '')
     })
 
-  // Translate any children still missing an English gift request
+  // Ensure every child with gift_requests has a real English translation.
+  // Re-translate if gift_requests_en is missing OR matches the original
+  // (meaning translation was never actually performed or was saved incorrectly).
   await Promise.all(children.map(async (child: any) => {
-    if (!child.gift_requests_en && child.gift_requests) {
+    const needsTranslation = child.gift_requests && (
+      !child.gift_requests_en ||
+      child.gift_requests_en.trim() === child.gift_requests.trim()
+    )
+    if (needsTranslation) {
       try {
         const translated = await translateGiftRequests(child.gift_requests)
         child.gift_requests_en = translated
@@ -89,6 +95,7 @@ export async function GET(
         }).eq('id', child.id)
       } catch {
         // non-fatal — leave blank rather than output Spanish
+        child.gift_requests_en = ''
       }
     }
   }))
