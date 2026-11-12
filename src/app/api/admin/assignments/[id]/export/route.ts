@@ -5,6 +5,8 @@ import { createServerClient } from '@supabase/ssr'
 import ExcelJS from 'exceljs'
 import { translateGiftRequests } from '@/lib/translate'
 
+const COL_COUNT = 11
+
 function adminClient() {
   return createServiceClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -43,6 +45,7 @@ export async function GET(
           id, first_name, age, gender, gift_requests, gift_requests_en, top_size, bottom_size, shoe_size,
           families (
             family_number, num_children,
+            social_workers ( name, email, phone ),
             schools ( name, districts ( name ) )
           )
         )
@@ -63,7 +66,7 @@ export async function GET(
 
   const format = request.nextUrl.searchParams.get('format') ?? 'xlsx'
 
-  // Sort by school, then family number within each school, then child name
+  // Sort by school, then family number, then child name
   const children = (assignment.assignment_children as any[])
     .map(ac => ac.children)
     .sort((a, b) => {
@@ -90,22 +93,29 @@ export async function GET(
     }
   }))
 
-  const rows = children.map((child: any) => {
+  // Group children by school, preserving sort order
+  type SchoolGroup = {
+    schoolName: string
+    districtName: string
+    sw: { name: string; email: string; phone: string } | null
+    children: any[]
+  }
+  const schoolMap = new Map<string, SchoolGroup>()
+  for (const child of children) {
     const fam = child.families as any
-    return {
-      family_number:  fam?.family_number ?? '',
-      family_size:    fam?.num_children ?? '',
-      first_name:     child.first_name,
-      age:            child.age ?? '',
-      gender:         child.gender ?? '',
-      school:         fam?.schools?.name ?? '',
-      district:       fam?.schools?.districts?.name ?? '',
-      gift_requests:  child.gift_requests_en ?? '',
-      top_size:       child.top_size ?? '',
-      bottom_size:    child.bottom_size ?? '',
-      shoe_size:      child.shoe_size ?? '',
+    const schoolName = fam?.schools?.name ?? '(No school)'
+    if (!schoolMap.has(schoolName)) {
+      const sw = fam?.social_workers
+      schoolMap.set(schoolName, {
+        schoolName,
+        districtName: fam?.schools?.districts?.name ?? '',
+        sw: sw ? { name: sw.name ?? '', email: sw.email ?? '', phone: sw.phone ?? '' } : null,
+        children: [],
+      })
     }
-  })
+    schoolMap.get(schoolName)!.children.push(child)
+  }
+  const schoolGroups = Array.from(schoolMap.values())
 
   const fileName = `${member?.name?.replace(/\s+/g, '_') ?? 'assignment'}_assignment`
 
@@ -114,18 +124,30 @@ export async function GET(
     return s.includes(',') || s.includes('"') || s.includes('\n') ? `"${s.replace(/"/g, '""')}"` : s
   }
 
+  const DATA_HEADERS = [
+    'Family #', 'Family Size', 'First Name', 'Age', 'Gender',
+    'School', 'District', 'Gift Requests', 'Top Size', 'Bottom Size', 'Shoe Size',
+  ]
+
   if (format === 'csv') {
-    const headers = [
-      'Family #', 'Family Size', 'First Name', 'Age', 'Gender',
-      'School', 'District', 'Gift Requests', 'Top Size', 'Bottom Size', 'Shoe Size',
-    ]
-    const lines = [
-      headers.join(','),
-      ...rows.map(r => [
-        r.family_number, r.family_size, r.first_name, r.age, r.gender,
-        r.school, r.district, csvEscape(r.gift_requests), r.top_size, r.bottom_size, r.shoe_size,
-      ].join(',')),
-    ]
+    const lines: string[] = [DATA_HEADERS.join(',')]
+    for (const group of schoolGroups) {
+      const sw = group.sw
+      const swLine = sw
+        ? `Social Worker: ${csvEscape(sw.name)},${csvEscape(sw.email)},${csvEscape(sw.phone)}`
+        : 'Social Worker: —'
+      lines.push(`--- ${csvEscape(group.schoolName)} (${csvEscape(group.districtName)}) --- ${swLine}`)
+      for (const child of group.children) {
+        const fam = child.families as any
+        lines.push([
+          fam?.family_number ?? '', fam?.num_children ?? '',
+          child.first_name, child.age ?? '', child.gender ?? '',
+          group.schoolName, group.districtName,
+          csvEscape(child.gift_requests_en ?? ''),
+          child.top_size ?? '', child.bottom_size ?? '', child.shoe_size ?? '',
+        ].join(','))
+      }
+    }
     if (isAdmin) await db.from('assignments').update({ exported: true }).eq('id', id)
     return new NextResponse(lines.join('\n'), {
       headers: {
@@ -135,26 +157,72 @@ export async function GET(
     })
   }
 
-  // Excel
+  // Excel — column definitions (no header row yet; we add per-school sections)
   const workbook = new ExcelJS.Workbook()
   const sheet = workbook.addWorksheet('Assignment')
   sheet.columns = [
-    { header: 'Family #',      key: 'family_number', width: 12 },
-    { header: 'Family Size',   key: 'family_size',   width: 12 },
-    { header: 'First Name',    key: 'first_name',    width: 16 },
-    { header: 'Age',           key: 'age',           width: 8  },
-    { header: 'Gender',        key: 'gender',        width: 12 },
-    { header: 'School',        key: 'school',        width: 30 },
-    { header: 'District',      key: 'district',      width: 30 },
-    { header: 'Gift Requests', key: 'gift_requests', width: 40 },
-    { header: 'Top Size',      key: 'top_size',      width: 12 },
-    { header: 'Bottom Size',   key: 'bottom_size',   width: 12 },
-    { header: 'Shoe Size',     key: 'shoe_size',     width: 12 },
+    { key: 'family_number', width: 12 },
+    { key: 'family_size',   width: 12 },
+    { key: 'first_name',    width: 16 },
+    { key: 'age',           width: 8  },
+    { key: 'gender',        width: 12 },
+    { key: 'school',        width: 30 },
+    { key: 'district',      width: 20 },
+    { key: 'gift_requests', width: 42 },
+    { key: 'top_size',      width: 12 },
+    { key: 'bottom_size',   width: 12 },
+    { key: 'shoe_size',     width: 12 },
   ]
-  const headerRow = sheet.getRow(1)
-  headerRow.font = { bold: true }
-  headerRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE8F0FE' } }
-  rows.forEach(r => sheet.addRow(r))
+
+  for (const group of schoolGroups) {
+    const sw = group.sw
+
+    // SW info banner row
+    const swRow = sheet.addRow([
+      `${group.schoolName}  ·  ${group.districtName}`,
+      '', '', '', '', '', '', '',
+      sw ? sw.name : '—',
+      sw ? sw.email : '',
+      sw ? sw.phone : '',
+    ])
+    sheet.mergeCells(swRow.number, 1, swRow.number, 8)
+    swRow.getCell(1).font = { bold: true, color: { argb: 'FF1B52C1' }, size: 11 }
+    swRow.getCell(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE8F0FE' } }
+    swRow.getCell(1).alignment = { vertical: 'middle' }
+    swRow.getCell(9).font = { bold: true }
+    swRow.getCell(9).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE8F0FE' } }
+    swRow.getCell(10).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE8F0FE' } }
+    swRow.getCell(11).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE8F0FE' } }
+    swRow.height = 20
+
+    // Column headers for this section
+    const colHeaderRow = sheet.addRow(DATA_HEADERS)
+    colHeaderRow.font = { bold: true }
+    colHeaderRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF3F4F6' } }
+    colHeaderRow.border = {
+      bottom: { style: 'thin', color: { argb: 'FFD1D5DB' } },
+    }
+
+    // Data rows
+    for (const child of group.children) {
+      const fam = child.families as any
+      const dataRow = sheet.addRow([
+        fam?.family_number ?? '',
+        fam?.num_children ?? '',
+        child.first_name,
+        child.age ?? '',
+        child.gender ?? '',
+        group.schoolName,
+        group.districtName,
+        child.gift_requests_en ?? '',
+        '', '', '',
+      ])
+      dataRow.getCell(8).alignment = { wrapText: true }
+    }
+
+    // Blank spacer row between schools
+    sheet.addRow([])
+  }
 
   if (isAdmin) await db.from('assignments').update({ exported: true }).eq('id', id)
 
