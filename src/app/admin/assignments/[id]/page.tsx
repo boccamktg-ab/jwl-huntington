@@ -4,6 +4,7 @@ import Link from 'next/link'
 import ExportButton from './ExportButton'
 import UnassignButton from './UnassignButton'
 import DeleteAssignmentButton from '../DeleteAssignmentButton'
+import AddChildrenForm from './AddChildrenForm'
 
 function adminClient() {
   return createClient(
@@ -17,22 +18,38 @@ export default async function AssignmentDetailPage({ params }: { params: Promise
   const { id } = await params
   const supabase = adminClient()
 
-  const { data: assignment } = await supabase
-    .from('assignments')
-    .select(`
-      id, created_at, exported,
-      jwl_members ( name, email ),
-      assignment_children (
-        children (
-          id, first_name, age, gender, gift_requests, gift_requests_en, top_size, bottom_size, shoe_size,
-          families ( family_number, schools ( name, districts ( name ) ) )
-        )
-      )
-    `)
-    .eq('id', id)
-    .single()
+  const [{ data: assignment }, { data: districts }, { data: schools }, { data: allChildren }, { data: assignedLinks }] =
+    await Promise.all([
+      supabase
+        .from('assignments')
+        .select(`
+          id, created_at, exported,
+          jwl_members ( name, email ),
+          assignment_children (
+            children (
+              id, first_name, age, gender, gift_requests, gift_requests_en, top_size, bottom_size, shoe_size,
+              families ( family_number, schools ( name, districts ( name ) ) )
+            )
+          )
+        `)
+        .eq('id', id)
+        .single(),
+      supabase.from('districts').select('id, name').order('name'),
+      supabase.from('schools').select('id, name, district_id').order('name'),
+      supabase.from('children').select(`
+        id, first_name, age, gender, gift_requests, gift_requests_en,
+        families ( id, family_number, status, schools ( id, name, district_id, districts ( id, name ) ) )
+      `),
+      supabase.from('assignment_children').select('child_id'),
+    ])
 
   if (!assignment) notFound()
+
+  const assignedIds = new Set(assignedLinks?.map((a: any) => a.child_id) ?? [])
+  const unassignedChildren = (allChildren ?? []).filter((c: any) => {
+    const fam = c.families as any
+    return fam?.status === 'approved' && !assignedIds.has(c.id)
+  }) as any[]
 
   const member = assignment.jwl_members as any
   const children = (assignment.assignment_children as any[])
@@ -58,7 +75,13 @@ export default async function AssignmentDetailPage({ params }: { params: Promise
             Created {new Date(assignment.created_at).toLocaleDateString()} · {children.length} children
           </p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 flex-wrap">
+          <AddChildrenForm
+            assignmentId={assignment.id}
+            children={unassignedChildren}
+            districts={districts ?? []}
+            schools={schools ?? []}
+          />
           <ExportButton assignmentId={assignment.id} exported={assignment.exported} memberName={member?.name} />
           <DeleteAssignmentButton assignmentId={assignment.id} childCount={children.length} redirectTo="/admin/assignments" />
         </div>
