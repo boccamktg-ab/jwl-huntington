@@ -46,7 +46,7 @@ export async function GET(
           families (
             family_number, num_children,
             social_workers ( name, email, phone ),
-            schools ( name, districts ( name ) )
+            schools ( name, code, districts ( name ) )
           )
         )
       )
@@ -103,6 +103,7 @@ export async function GET(
   // Group children by school, preserving sort order
   type SchoolGroup = {
     schoolName: string
+    schoolCode: string
     districtName: string
     sw: { name: string; email: string; phone: string } | null
     children: any[]
@@ -115,6 +116,7 @@ export async function GET(
       const sw = fam?.social_workers
       schoolMap.set(schoolName, {
         schoolName,
+        schoolCode: fam?.schools?.code ?? '',
         districtName: fam?.schools?.districts?.name ?? '',
         sw: sw ? { name: sw.name ?? '', email: sw.email ?? '', phone: sw.phone ?? '' } : null,
         children: [],
@@ -132,7 +134,7 @@ export async function GET(
   }
 
   const DATA_HEADERS = [
-    'Family #', 'Family Size', 'First Name', 'Age', 'Gender',
+    'School Code', 'Family #', 'Family Size', 'First Name', 'Age', 'Gender',
     'School', 'District', 'Gift Requests', 'Top Size', 'Bottom Size', 'Shoe Size',
   ]
 
@@ -147,6 +149,7 @@ export async function GET(
       for (const child of group.children) {
         const fam = child.families as any
         lines.push([
+          group.schoolCode,
           fam?.family_number ?? '', fam?.num_children ?? '',
           child.first_name, child.age ?? '', child.gender ?? '',
           group.schoolName, group.districtName,
@@ -168,6 +171,7 @@ export async function GET(
   const workbook = new ExcelJS.Workbook()
   const sheet = workbook.addWorksheet('Assignment')
   sheet.columns = [
+    { key: 'school_code',   width: 12 },
     { key: 'family_number', width: 12 },
     { key: 'family_size',   width: 12 },
     { key: 'first_name',    width: 16 },
@@ -184,22 +188,22 @@ export async function GET(
   for (const group of schoolGroups) {
     const sw = group.sw
 
-    // SW info banner row
+    // SW info banner row (12 cols: 1–9 = school label, 10–12 = SW info)
     const swRow = sheet.addRow([
       `${group.schoolName}  ·  ${group.districtName}`,
-      '', '', '', '', '', '', '',
+      '', '', '', '', '', '', '', '',
       sw ? sw.name : '—',
       sw ? sw.email : '',
       sw ? sw.phone : '',
     ])
-    sheet.mergeCells(swRow.number, 1, swRow.number, 8)
+    sheet.mergeCells(swRow.number, 1, swRow.number, 9)
     swRow.getCell(1).font = { bold: true, color: { argb: 'FF1B52C1' }, size: 11 }
     swRow.getCell(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE8F0FE' } }
     swRow.getCell(1).alignment = { vertical: 'middle' }
-    swRow.getCell(9).font = { bold: true }
-    swRow.getCell(9).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE8F0FE' } }
+    swRow.getCell(10).font = { bold: true }
     swRow.getCell(10).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE8F0FE' } }
     swRow.getCell(11).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE8F0FE' } }
+    swRow.getCell(12).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE8F0FE' } }
     swRow.height = 20
 
     // Column headers for this section
@@ -214,6 +218,7 @@ export async function GET(
     for (const child of group.children) {
       const fam = child.families as any
       const dataRow = sheet.addRow([
+        group.schoolCode,
         fam?.family_number ?? '',
         fam?.num_children ?? '',
         child.first_name,
@@ -226,7 +231,7 @@ export async function GET(
         child.bottom_size ?? '',
         child.shoe_size ?? '',
       ])
-      dataRow.getCell(8).alignment = { wrapText: true }
+      dataRow.getCell(9).alignment = { wrapText: true }
     }
 
     // Blank spacer row between schools

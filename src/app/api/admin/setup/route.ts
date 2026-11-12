@@ -30,6 +30,20 @@ export async function POST(request: NextRequest) {
   return NextResponse.json({ ok: true })
 }
 
+export async function PATCH(request: NextRequest) {
+  if (!await requireAdminFromRequest(request)) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
+  }
+
+  const { schoolId, code } = await request.json()
+  if (!schoolId) return NextResponse.json({ error: 'Missing schoolId' }, { status: 400 })
+
+  const { error } = await adminClient().from('schools').update({ code: code || null }).eq('id', schoolId)
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+  return NextResponse.json({ ok: true })
+}
+
 export async function DELETE(request: NextRequest) {
   if (!await requireAdminFromRequest(request)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })

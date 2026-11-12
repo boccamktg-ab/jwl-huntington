@@ -4,6 +4,7 @@ import AddDistrictForm from './AddDistrictForm'
 import JWLDuesUrlForm from './JWLDuesUrlForm'
 import AddSchoolForm from './AddSchoolForm'
 import RemoveSchoolButton from './RemoveSchoolButton'
+import SchoolCodeEdit from './SchoolCodeEdit'
 import SeasonSettings from './SeasonSettings'
 import SeasonReset from './SeasonReset'
 import JJWLRegistrationToggle from './JJWLRegistrationToggle'
@@ -19,7 +20,7 @@ function adminClient() {
 export default async function SetupPage() {
   const supabase = adminClient()
   const [{ data: districts }, { data: settings }] = await Promise.all([
-    supabase.from('districts').select('id, name, schools(id, name)').order('name'),
+    supabase.from('districts').select('id, name, schools(id, name, code)').order('name'),
     supabase.from('app_settings').select('key, value').in('key', ['submissions_open', 'submissions_closed_message', 'jwl_dues_url', 'jjwl_registration_open']),
   ])
 
@@ -77,8 +78,9 @@ export default async function SetupPage() {
               {(district.schools ?? [])
                 .sort((a: any, b: any) => a.name.localeCompare(b.name))
                 .map((school: any) => (
-                  <li key={school.id} className="flex items-center text-sm text-gray-600 pl-3 border-l-2 border-gray-100">
+                  <li key={school.id} className="flex items-center text-sm text-gray-600 pl-3 border-l-2 border-gray-100 gap-3">
                     <span className="flex-1">{school.name}</span>
+                    <SchoolCodeEdit schoolId={school.id} code={school.code ?? null} />
                     <RemoveSchoolButton schoolId={school.id} schoolName={school.name} />
                   </li>
                 ))}
