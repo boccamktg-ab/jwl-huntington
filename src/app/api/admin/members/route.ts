@@ -17,7 +17,7 @@ export async function PATCH(request: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
   }
 
-  const { memberId, action } = await request.json()
+  const { memberId, action, password } = await request.json()
   if (action === 'toggle_admin') {
     const { data: member } = await db().from('jwl_members').select('is_admin').eq('id', memberId).single()
     if (!member) return NextResponse.json({ error: 'Not found' }, { status: 404 })
@@ -54,6 +54,25 @@ export async function PATCH(request: NextRequest) {
     const { data: member } = await db().from('jwl_members').select('is_super_admin').eq('id', memberId).single()
     if (!member) return NextResponse.json({ error: 'Not found' }, { status: 404 })
     const { error } = await db().from('jwl_members').update({ is_super_admin: !member.is_super_admin }).eq('id', memberId)
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json({ ok: true })
+  }
+
+  if (action === 'reset_password') {
+    const { data: member } = await db().from('jwl_members').select('email').eq('id', memberId).maybeSingle()
+    if (!member?.email) return NextResponse.json({ error: 'Member not found' }, { status: 404 })
+    const { error } = await db().auth.admin.generateLink({ type: 'recovery', email: member.email })
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json({ ok: true })
+  }
+
+  if (action === 'set_password') {
+    if (!password || password.length < 8) {
+      return NextResponse.json({ error: 'Password must be at least 8 characters' }, { status: 400 })
+    }
+    const { data: member } = await db().from('jwl_members').select('auth_id').eq('id', memberId).maybeSingle()
+    if (!member?.auth_id) return NextResponse.json({ error: 'No auth account linked' }, { status: 400 })
+    const { error } = await db().auth.admin.updateUserById(member.auth_id, { password })
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
     return NextResponse.json({ ok: true })
   }
