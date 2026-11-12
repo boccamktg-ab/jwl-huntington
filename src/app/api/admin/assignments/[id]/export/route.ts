@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient as createServiceClient } from '@supabase/supabase-js'
 import { createServerClient } from '@supabase/ssr'
 import ExcelJS from 'exceljs'
+import { translateGiftRequests } from '@/lib/translate'
 
 function adminClient() {
   return createServiceClient(
@@ -39,7 +40,7 @@ export async function GET(
       jwl_members ( id, name, email, auth_id ),
       assignment_children (
         children (
-          first_name, age, gender, gift_requests, gift_requests_en, top_size, bottom_size, shoe_size,
+          id, first_name, age, gender, gift_requests, gift_requests_en, top_size, bottom_size, shoe_size,
           families (
             family_number, num_children,
             schools ( name, districts ( name ) )
@@ -73,7 +74,23 @@ export async function GET(
       return schoolA.localeCompare(schoolB) || fnA - fnB || (a?.first_name ?? '').localeCompare(b?.first_name ?? '')
     })
 
-  const rows = children.map(child => {
+  // Translate any children still missing an English gift request
+  await Promise.all(children.map(async (child: any) => {
+    if (!child.gift_requests_en && child.gift_requests) {
+      try {
+        const translated = await translateGiftRequests(child.gift_requests)
+        child.gift_requests_en = translated
+        await db.from('children').update({
+          gift_requests_en: translated,
+          translation_status: 'auto',
+        }).eq('id', child.id)
+      } catch {
+        // non-fatal — leave blank rather than output Spanish
+      }
+    }
+  }))
+
+  const rows = children.map((child: any) => {
     const fam = child.families as any
     return {
       family_number:  fam?.family_number ?? '',
