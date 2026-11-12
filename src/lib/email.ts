@@ -694,6 +694,19 @@ export function emailSWRegistrationRejected(swName: string, reason?: string) {
   }
 }
 
+export function emailSWFamilyReturned(swName: string, familyNumber: string | number, note?: string) {
+  return {
+    subject: `JWL Portal — Action needed: Family #${familyNumber} returned for edits`,
+    html: wrap(`
+      <h2 style="margin:0 0 16px;font-size:20px;font-weight:700;">Hi ${swName.split(' ')[0]},</h2>
+      ${p(`Family <strong>#${familyNumber}</strong> has been returned to you by the JWL admin for review and resubmission.`)}
+      ${note ? infoBox([{ label: 'Note from admin', value: note }]) : ''}
+      ${p('Please log in to your portal, review the family&apos;s information, make any necessary corrections, and resubmit.')}
+      ${btn('Go to your portal →', 'https://portal.jwlhuntington.org/login')}
+    `),
+  }
+}
+
 export function emailSWFamilyRejected(swName: string, familyName: string, reason?: string) {
   return {
     subject: `JWL Portal — Family submission update: ${familyName}`,

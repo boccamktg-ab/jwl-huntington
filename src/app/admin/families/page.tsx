@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js'
 import DeleteFamilyButton from './DeleteFamilyButton'
 import RejectFamilyButton from './RejectFamilyButton'
+import ReturnFamilyButton from './ReturnFamilyButton'
 
 function db() {
   return createClient(
@@ -92,6 +93,9 @@ export default async function AdminFamiliesPage() {
                         <div className="flex gap-2 items-center justify-end">
                           {f.status === 'submitted' && (
                             <RejectFamilyButton familyId={f.id} familyName={f.family_number?.toString() ?? 'Family'} />
+                          )}
+                          {f.status === 'approved' && (
+                            <ReturnFamilyButton familyId={f.id} familyNumber={f.family_number} />
                           )}
                           <DeleteFamilyButton familyId={f.id} familyNumber={f.family_number} />
                         </div>
