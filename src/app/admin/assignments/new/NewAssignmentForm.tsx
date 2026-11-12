@@ -3,7 +3,7 @@
 import { useState, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 
-type Member = { id: string; name: string; email: string; children_requested: number | null }
+type Member = { id: string; name: string; email: string; children_requested: number | null; children_assigned: number }
 type District = { id: string; name: string }
 type School = { id: string; name: string; district_id: string }
 type Child = {
@@ -183,11 +183,26 @@ export default function NewAssignmentForm({ members, districts, schools, childre
               className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-48"
             >
               <option value="">Select a member…</option>
-              {members.map(m => (
-                <option key={m.id} value={m.id}>
-                  {m.name}{m.children_requested ? ` (requested ${m.children_requested})` : ''}
-                </option>
-              ))}
+              {members.map(m => {
+                const req = m.children_requested
+                const assigned = m.children_assigned
+                let label = m.name
+                if (req) {
+                  const remaining = req - assigned
+                  if (assigned > 0) {
+                    label += remaining > 0
+                      ? ` — needs ${remaining} more (${assigned}/${req})`
+                      : assigned === req
+                      ? ` — fulfilled (${assigned}/${req})`
+                      : ` — over by ${-remaining} (${assigned}/${req})`
+                  } else {
+                    label += ` — needs ${req} (0/${req})`
+                  }
+                } else if (assigned > 0) {
+                  label += ` — ${assigned} assigned`
+                }
+                return <option key={m.id} value={m.id}>{label}</option>
+              })}
             </select>
             <button onClick={() => setAddingMember(true)} className="text-sm text-blue-600 hover:underline">
               + Add new member

@@ -18,6 +18,7 @@ export default async function NewAssignmentPage() {
     { data: schools },
     { data: allChildren },
     { data: assignedLinks },
+    { data: assignmentMemberLinks },
   ] = await Promise.all([
     supabase.from('jwl_members').select('id, name, email, children_requested').order('name'),
     supabase.from('districts').select('id, name').order('name'),
@@ -27,9 +28,23 @@ export default async function NewAssignmentPage() {
       families ( id, family_number, status, schools ( id, name, district_id, districts ( id, name ) ) )
     `),
     supabase.from('assignment_children').select('child_id'),
+    supabase.from('assignments').select('jwl_member_id, assignment_children(child_id)'),
   ])
 
   const assignedIds = new Set(assignedLinks?.map(a => a.child_id) ?? [])
+
+  // Build a map of member_id → total children currently assigned across all their assignments
+  const assignedCountByMember = new Map<string, number>()
+  for (const a of assignmentMemberLinks ?? []) {
+    const count = (a.assignment_children as any[])?.length ?? 0
+    const prev = assignedCountByMember.get(a.jwl_member_id) ?? 0
+    assignedCountByMember.set(a.jwl_member_id, prev + count)
+  }
+
+  const membersWithCounts = (members ?? []).map(m => ({
+    ...m,
+    children_assigned: assignedCountByMember.get(m.id) ?? 0,
+  }))
 
   const unassignedChildren = (allChildren ?? []).filter(c => {
     const fam = c.families as any
@@ -38,7 +53,7 @@ export default async function NewAssignmentPage() {
 
   return (
     <NewAssignmentForm
-      members={members ?? []}
+      members={membersWithCounts}
       districts={districts ?? []}
       schools={schools ?? []}
       children={unassignedChildren}
