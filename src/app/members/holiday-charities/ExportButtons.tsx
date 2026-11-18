@@ -2,12 +2,12 @@
 
 import { useState } from 'react'
 
-export default function ExportButtons({ assignmentId, memberName }: { assignmentId: string; memberName: string }) {
+export default function ExportButtons({ memberName }: { memberName: string }) {
   const [loading, setLoading] = useState<'xlsx' | 'csv' | null>(null)
 
   async function handleExport(format: 'xlsx' | 'csv') {
     setLoading(format)
-    const res = await fetch(`/api/admin/assignments/${assignmentId}/export?format=${format}`)
+    const res = await fetch(`/api/members/holiday-charities/export?format=${format}`)
     if (!res.ok) { alert('Export failed.'); setLoading(null); return }
     const blob = await res.blob()
     const url = URL.createObjectURL(blob)

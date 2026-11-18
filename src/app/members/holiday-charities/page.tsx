@@ -25,7 +25,7 @@ export default async function HolidayCharitiesPage() {
 
   if (!member) redirect('/login')
 
-  const { data: assignment } = await db()
+  const { data: assignments } = await db()
     .from('assignments')
     .select(`
       id, created_at, exported,
@@ -38,15 +38,13 @@ export default async function HolidayCharitiesPage() {
     `)
     .eq('jwl_member_id', member.id)
     .order('created_at', { ascending: false })
-    .limit(1)
-    .maybeSingle()
 
-  const children = (assignment?.assignment_children as any[])
-    ?.map(ac => ac.children)
+  const children = (assignments ?? [])
+    .flatMap(a => (a.assignment_children as any[]).map(ac => ac.children))
     .sort((a: any, b: any) =>
       (a?.families?.schools?.name ?? '').localeCompare(b?.families?.schools?.name ?? '') ||
       (a?.families?.family_number ?? '').localeCompare(b?.families?.family_number ?? '')
-    ) ?? []
+    )
 
   return (
     <div className="space-y-8">
@@ -56,7 +54,7 @@ export default async function HolidayCharitiesPage() {
           <p className="text-sm text-gray-500 mt-1">My assignment</p>
         </div>
         {children.length > 0 && (
-          <ExportButtons assignmentId={assignment!.id} memberName={member.name} />
+          <ExportButtons memberName={member.name} />
         )}
       </div>
 
