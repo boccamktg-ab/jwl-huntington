@@ -17,11 +17,16 @@ export default async function AdminChildrenPage({
   const filters = await searchParams
   const supabase = adminClient()
 
-  const [{ data: districts }, { data: schools }, { data: socialWorkers }] = await Promise.all([
+  const [{ data: districts }, { data: schools }, { data: socialWorkers }, { data: assignmentLinks }] = await Promise.all([
     supabase.from('districts').select('id, name').order('name'),
     supabase.from('schools').select('id, name, district_id').order('name'),
     supabase.from('social_workers').select('id, name').eq('status', 'approved').order('name'),
+    supabase.from('assignment_children').select('child_id, assignments ( jwl_members ( name ) )'),
   ])
+
+  const memberByChild = Object.fromEntries(
+    (assignmentLinks ?? []).map((row: any) => [row.child_id, row.assignments?.jwl_members?.name ?? null])
+  )
 
   // Build children query with filters
   let query = supabase
@@ -83,6 +88,7 @@ export default async function AdminChildrenPage({
                 <th className="text-left px-4 py-3 text-gray-500 font-medium">School</th>
                 <th className="text-left px-4 py-3 text-gray-500 font-medium">Gift requests</th>
                 <th className="text-left px-4 py-3 text-gray-500 font-medium">Sizes</th>
+                <th className="text-left px-4 py-3 text-gray-500 font-medium">Assigned to</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
@@ -108,6 +114,11 @@ export default async function AdminChildrenPage({
                         child.bottom_size ? `Bottom: ${child.bottom_size}` : null,
                         child.shoe_size ? `Shoes: ${child.shoe_size}` : null,
                       ].filter(Boolean).join(', ') || '—'}
+                    </td>
+                    <td className="px-4 py-3 text-xs">
+                      {memberByChild[child.id]
+                        ? <span className="inline-block bg-blue-50 text-blue-700 border border-blue-200 rounded px-2 py-0.5 font-medium">{memberByChild[child.id]}</span>
+                        : <span className="text-gray-300">—</span>}
                     </td>
                   </tr>
                 )
