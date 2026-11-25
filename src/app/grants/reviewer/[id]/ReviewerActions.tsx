@@ -251,6 +251,14 @@ export default function ReviewerActions({ applicationId, currentStatus, requeste
         </div>
       )}
 
+      {/* Reverse denial */}
+      {currentStatus === 'denied' && (
+        <button onClick={() => act('undeny')} disabled={!!loading}
+          className="text-sm px-4 py-2 bg-amber-100 text-amber-700 rounded-lg hover:bg-amber-200 disabled:opacity-50">
+          {loading === 'undeny' ? '…' : 'Reverse denial → Under Review'}
+        </button>
+      )}
+
       {error && <p className="text-sm text-red-600">{error}</p>}
 
       {/* Member Vote Section */}

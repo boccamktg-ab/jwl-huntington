@@ -41,7 +41,7 @@ export async function PATCH(request: NextRequest) {
     return NextResponse.json({ error: 'Missing application_id or action' }, { status: 400 })
   }
 
-  const validActions = ['under_review', 'needs_more_info', 'approve', 'unapprove', 'deny', 'paid_closed']
+  const validActions = ['under_review', 'needs_more_info', 'approve', 'unapprove', 'deny', 'undeny', 'paid_closed']
   if (!validActions.includes(action)) {
     return NextResponse.json({ error: 'Invalid action' }, { status: 400 })
   }
@@ -54,6 +54,9 @@ export async function PATCH(request: NextRequest) {
   if (action === 'unapprove') {
     updates.status = 'under_review'
     updates.approved_amount = null
+  } else if (action === 'undeny') {
+    updates.status = 'under_review'
+    updates.denial_reason = null
   } else if (action === 'approve') {
     if (!approved_amount || approved_amount <= 0) {
       return NextResponse.json({ error: 'approved_amount required' }, { status: 400 })
