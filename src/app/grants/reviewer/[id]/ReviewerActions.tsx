@@ -146,7 +146,7 @@ export default function ReviewerActions({ applicationId, currentStatus, requeste
       </div>
 
       {/* Approve */}
-      {!showDeny && (
+      {currentStatus === 'under_review' && !showDeny && (
         <div className="space-y-2">
           {!showApprove ? (
             <button onClick={() => setShowApprove(true)}
@@ -195,7 +195,7 @@ export default function ReviewerActions({ applicationId, currentStatus, requeste
       )}
 
       {/* Deny */}
-      {!showApprove && (
+      {currentStatus === 'under_review' && !showApprove && (
         <div className="space-y-2">
           {!showDeny ? (
             <button onClick={() => setShowDeny(true)}
