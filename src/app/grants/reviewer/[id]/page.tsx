@@ -272,7 +272,7 @@ export default async function ReviewerApplicationPage({ params }: { params: Prom
       )}
 
       {/* Review actions */}
-      {isOpen && (
+      {(isOpen || app.status === 'denied') && (
         <ReviewerActions
           applicationId={id}
           currentStatus={app.status}
